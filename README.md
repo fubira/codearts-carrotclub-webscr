@@ -39,5 +39,6 @@ yarn start
 | sitePass        | SITE_PASS     | undefined   | 解析するサイトのパスワード                |
 | slackToken      | SLACK_TOKEN   | undefined   | 解析結果の送信先Slackトークン             |
 | slackChannel    | SLACK_CHANNEL | undefined   | 解析結果の送信先Slackチャンネル           |
-| force           |               | false       | trueの場合、更新がなくてもSlack送信を行う |
+| noSend          |               | false       | trueの場合、Slack送信を行わない           |
+| forceSend       |               | false       | trueの場合、更新がなくてもSlack送信を行う |
 

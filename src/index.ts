@@ -6,13 +6,14 @@ import commandLineUsage from 'command-line-usage';
 import { WebClient } from '@slack/web-api';
 
 import { scraping, ScrapingDataType } from './carrotclub';
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 
 const logger = log4js.getLogger();
 
 const options = [
   { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
-  { name: 'force', type: Boolean, defaultValue: false }, 
+  { name: 'forceSend', type: Boolean, defaultValue: false }, 
+  { name: 'noSend', type: Boolean, defaultValue: false }, 
   { name: 'siteId', alias: 'i', type: String, defaultValue: process.env.SITE_ID || "" }, 
   { name: 'sitePass', alias: 'p', type: String, defaultValue: process.env.SITE_PASS || "" }, 
   { name: 'slackToken', alias: 't', type: String, defaultValue: process.env.SLACK_TOKEN || "" }, 
@@ -60,7 +61,9 @@ scraping(args.siteId, args.sitePass).then((scrData: Array<ScrapingDataType>) => 
   let cachedData: Array<ScrapingDataType> = []
 
   try {
-    cachedData = JSON.parse(readFileSync("./cached.dat", { encoding: "utf-8" }));
+    if (existsSync("./cached.dat")) {
+      cachedData = JSON.parse(readFileSync("./cached.dat", { encoding: "utf-8" }));
+    }
   } catch (e) {
     logger.error(e);
     exit(0);
@@ -72,7 +75,9 @@ scraping(args.siteId, args.sitePass).then((scrData: Array<ScrapingDataType>) => 
 
       if (!cache || cache.name !== latestData.name || cache.value !== latestData.value || args.force) {
         logger.info("new data found: ", JSON.stringify(latestData));
-        sendMessageToSlack(latestData);
+        if (!args.noSend) {
+          sendMessageToSlack(latestData);
+        }
       }
 
       cachedData = cachedData.filter((cachedValue) => cachedValue.link !== latestData.link);
