@@ -35,10 +35,21 @@ yarn start
 
 | 項目            | Env           | 値          | 説明                                      |
 | --------------- | ------------- |------------ | ----------------------------------------- |
-| siteId          | SITE_ID       | undefined   | 解析するサイトのユーザID                  |
-| sitePass        | SITE_PASS     | undefined   | 解析するサイトのパスワード                |
-| slackToken      | SLACK_TOKEN   | undefined   | 解析結果の送信先Slackトークン             |
-| slackChannel    | SLACK_CHANNEL | undefined   | 解析結果の送信先Slackチャンネル           |
-| noSend          |               | false       | trueの場合、Slack送信を行わない           |
-| forceSend       |               | false       | trueの場合、更新がなくてもSlack送信を行う |
+| site-id         | SITE_ID       | undefined   | 解析するサイトのユーザID                  |
+| site-pass       | SITE_PASS     | undefined   | 解析するサイトのパスワード                |
+| slack-token     | SLACK_TOKEN   | undefined   | 解析結果の送信先Slackトークン             |
+| slack-channel   | SLACK_CHANNEL | undefined   | 解析結果の送信先Slackチャンネル           |
+| no-send         |               | false       | trueの場合、Slack送信を行わない           |
+| force-send      |               | false       | trueの場合、更新がなくてもSlack送信を行う |
+| no-sandbox      |               | false       | trueの場合、puppeteerをno-sandboxで実行   |
 
+## Install Dependencies (for Debian)
+
+```sh
+sudo apt-get update && \
+sudo apt-get install -yq gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
+libexpat1 libfontconfig1 libgbm1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 \
+libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 \
+libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 \
+ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
+```

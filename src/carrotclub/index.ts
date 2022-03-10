@@ -9,8 +9,8 @@ export interface ScrapingDataType {
   info: string;
 }
 
-export const scraping = async (id: string, password: string): Promise<Array<ScrapingDataType>> => {
-  const browser = await puppeteer.launch();
+export const scraping = async (id: string, password: string, noSandbox: boolean): Promise<Array<ScrapingDataType>> => {
+  const browser = await puppeteer.launch({ args: noSandbox ? ['--no-sandbox'] : undefined });
   const page = await browser.newPage();
 
   // login

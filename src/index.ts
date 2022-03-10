@@ -12,12 +12,13 @@ const logger = log4js.getLogger();
 
 const options = [
   { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
-  { name: 'forceSend', type: Boolean, defaultValue: false }, 
-  { name: 'noSend', type: Boolean, defaultValue: false }, 
-  { name: 'siteId', alias: 'i', type: String, defaultValue: process.env.SITE_ID || "" }, 
-  { name: 'sitePass', alias: 'p', type: String, defaultValue: process.env.SITE_PASS || "" }, 
-  { name: 'slackToken', alias: 't', type: String, defaultValue: process.env.SLACK_TOKEN || "" }, 
-  { name: 'slackChannel', alias: 'c', type: String, defaultValue: process.env.SLACK_CHANNEL || "" }, 
+  { name: 'force-send', type: Boolean, defaultValue: false }, 
+  { name: 'no-send', type: Boolean, defaultValue: false }, 
+  { name: 'no-sandbox', type: Boolean, defaultValue: false }, 
+  { name: 'site-id', alias: 'i', type: String, defaultValue: process.env.SITE_ID || "" }, 
+  { name: 'site-pass', alias: 'p', type: String, defaultValue: process.env.SITE_PASS || "" }, 
+  { name: 'slack-token', alias: 't', type: String, defaultValue: process.env.SLACK_TOKEN || "" }, 
+  { name: 'slack-channel', alias: 'c', type: String, defaultValue: process.env.SLACK_CHANNEL || "" }, 
 ];
 const args = commandLineArgs(options);
 
@@ -26,13 +27,13 @@ if (args.help) {
   exit(0);
 }
 
-if (!args.siteId || !args.sitePass) {
+if (!args["site-id"] || !args["site-pass"]) {
   console.log("Please set Site ID and Password.");
   console.log(commandLineUsage([{ header: 'webscr', optionList: options }]));
   exit(0);
 }
 
-if (!args.slackToken) {
+if (!args["slack-token"]) {
   console.log("Please set SlackToken.");
   console.log(commandLineUsage([{ header: 'webscr', optionList: options }]));
   exit(0);
@@ -53,11 +54,14 @@ log4js.configure({
 });
 
 function sendMessageToSlack(data: ScrapingDataType) {
-  const client = new WebClient(args.slackToken);
-  client.chat.postMessage({ channel: args.slackChannel, text: `*${data.name}* _${data.info}_\n${data.value}` });
+  const client = new WebClient(args["slack-token"]);
+  client.chat.postMessage({
+    channel: args["slack-channel"],
+    text: `*${data.name}* _${data.info}_\n${data.value}`
+  });
 }
 
-scraping(args.siteId, args.sitePass).then((scrData: Array<ScrapingDataType>) => {
+scraping(args["site-id"], args["site-pass"], args["no-sandbox"]).then((scrData: Array<ScrapingDataType>) => {
   let cachedData: Array<ScrapingDataType> = []
 
   try {
