@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
-// import log4js from 'log4js';
-// const logger = log4js.getLogger();
+
+import log4js from 'log4js';
+const logger = log4js.getLogger();
 
 export interface ScrapingDataType {
   value: string;
@@ -37,6 +38,8 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
   const getHorsePageLatestInformation = async (link: string) => {
     const removeTab = (str: string) => str.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
     const removeNewline = (str: string) => str.replace(/[\n\t]+/g, "").trim();
+
+    logger.info("opening page: ", link);
     const page = await browser.newPage();
 
     await Promise.all([
@@ -62,7 +65,8 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
     const latestTextProp = textList && textList[0] && await textList[0].getProperty("textContent");
     const latestTextValue = removeTab(latestTextProp && await latestTextProp.jsonValue<any>());
     
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
+    logger.info("parse page completed.");
 
     return {
       link,
@@ -71,8 +75,12 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
       value: latestTextValue
     };
   }
-  
-  const values = await Promise.all(links.map((link) => getHorsePageLatestInformation(link)));
+
+  const values = [];
+  for (const link of links) {
+    values.push(await getHorsePageLatestInformation(link));
+  }
+
   browser.close();
 
   return values;
