@@ -22,7 +22,7 @@ const options = [
 ];
 const args = commandLineArgs(options);
 
-if (args.help) {
+if (args["help"]) {
   console.log(commandLineUsage([{ header: 'webscr', optionList: options }]));
   exit(0);
 }
@@ -77,9 +77,9 @@ scraping(args["site-id"], args["site-pass"], args["no-sandbox"]).then((scrData: 
     scrData.forEach((latestData) => {
       const cache = cachedData.find((cachedValue) => cachedValue.link === latestData.link);
 
-      if (!cache || cache.name !== latestData.name || cache.value !== latestData.value || args.force) {
+      if (!cache || cache.name !== latestData.name || cache.value !== latestData.value || args["force-send"]) {
         logger.info("new data found: ", JSON.stringify(latestData));
-        if (!args.noSend) {
+        if (!args["no-send"]) {
           sendMessageToSlack(latestData);
         }
       }
