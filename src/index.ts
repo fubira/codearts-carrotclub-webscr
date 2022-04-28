@@ -89,7 +89,7 @@ scraping(args["site-id"], args["site-pass"], args["no-sandbox"]).then((scrData: 
         }
       }
 
-      cachedData = cachedData.filter((cachedValue) => cachedValue.link !== latestData.link);
+      cachedData = cachedData.filter((cachedValue) => !((cachedValue.link === latestData.link) && (cachedValue.name === latestData.name)));
       cachedData.push(latestData);
     })
   } catch (e) {
