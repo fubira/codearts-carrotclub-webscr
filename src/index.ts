@@ -79,7 +79,7 @@ scraping(args["site-id"], args["site-pass"], args["no-sandbox"]).then((scrData: 
 
   try {
     scrData.forEach((latestData: ScrapingDataType) => {
-      const cache: ScrapingDataType = cachedData.find((cachedValue) => (cachedValue.link === latestData.link) && (cache.name === latestData.name));
+      const cache: ScrapingDataType = cachedData.find((cachedValue) => (cachedValue.link === latestData.link) && (cachedValue.name === latestData.name));
 
       if (!cache || cache.value !== latestData.value || args["force-send"]) {
         logger.info("new data found: ", JSON.stringify(latestData));
