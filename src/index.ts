@@ -54,7 +54,10 @@ log4js.configure({
 });
 
 function sendMessageToSlack(data: ScrapingDataType) {
-  const text = `*${data.name}* _${data.info}_\n${data.value}`;
+  const text = (data.info)
+    ? `*${data.name}* _${data.info}_ ${data.value}`
+    : `*${data.name}* ${data.value}`;
+
   const client = new WebClient(args["slack-token"]);
   client.chat.postMessage({
     channel: args["slack-channel"],
@@ -75,10 +78,10 @@ scraping(args["site-id"], args["site-pass"], args["no-sandbox"]).then((scrData: 
   }
 
   try {
-    scrData.forEach((latestData) => {
-      const cache = cachedData.find((cachedValue) => cachedValue.link === latestData.link);
+    scrData.forEach((latestData: ScrapingDataType) => {
+      const cache: ScrapingDataType = cachedData.find((cachedValue) => (cachedValue.link === latestData.link) && (cache.name === latestData.name));
 
-      if (!cache || cache.name !== latestData.name || cache.value !== latestData.value || args["force-send"]) {
+      if (!cache || cache.value !== latestData.value || args["force-send"]) {
         logger.info("new data found: ", JSON.stringify(latestData));
         const sendData = JSON.parse(JSON.stringify(latestData));
         if (!args["no-send"]) {
