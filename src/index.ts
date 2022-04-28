@@ -54,10 +54,11 @@ log4js.configure({
 });
 
 function sendMessageToSlack(data: ScrapingDataType) {
+  const text = `*${data.name}* _${data.info}_\n${data.value}`;
   const client = new WebClient(args["slack-token"]);
   client.chat.postMessage({
     channel: args["slack-channel"],
-    text: `*${data.name}* _${data.info}_\n${data.value}`
+    text
   });
 }
 
@@ -79,8 +80,9 @@ scraping(args["site-id"], args["site-pass"], args["no-sandbox"]).then((scrData: 
 
       if (!cache || cache.name !== latestData.name || cache.value !== latestData.value || args["force-send"]) {
         logger.info("new data found: ", JSON.stringify(latestData));
+        const sendData = JSON.parse(JSON.stringify(latestData));
         if (!args["no-send"]) {
-          sendMessageToSlack(latestData);
+          sendMessageToSlack(sendData);
         }
       }
 

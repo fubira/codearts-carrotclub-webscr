@@ -35,11 +35,10 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
   // get links
   const links = myHorseLinks; //.slice(0, 1);
 
-  const getHorsePageLatestInformation = async (link: string) => {
-    const removeTab = (str: string) => str.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
-    const removeNewline = (str: string) => str.replace(/[\n\t]+/g, "").trim();
+  const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
+  const removeNewline = (str: string) => str?.replace(/[\n\t]+/g, "").trim();
 
-    logger.info("opening page: ", link);
+  const getHorsePageLatestInformation = async (link: string) => {
     const page = await browser.newPage();
 
     await Promise.all([
@@ -66,20 +65,77 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
     const latestTextValue = removeTab(latestTextProp && await latestTextProp.jsonValue<any>());
     
     await page.waitForTimeout(1000);
-    logger.info("parse page completed.");
 
     return {
       link,
       name: nameValue,
       info: `${topBlockString} ${bottomBlockString}`,
-      value: latestTextValue
+      value: latestTextValue,
+    };
+  }
+
+  const getHorsePhotoLatestInformation = async (link: string) => {
+    const page = await browser.newPage();
+
+    await Promise.all([ page.goto(link), page.waitForNavigation(), ]);
+    const head = await page.$("#umaHead h2");
+    const nameProp = head && await head.getProperty("textContent");
+    const nameValue = nameProp && await nameProp.jsonValue<string>();
+
+    const photoLink = await page.$$("#umaPhoto ul.PhotoList a");
+    const photoLinkUrlProp = photoLink && photoLink[0] && await photoLink[0].getProperty("href");
+    const photoLinkUrlValue = removeTab(photoLinkUrlProp && await photoLinkUrlProp.jsonValue<any>());
+    const photoLinkInfoProp = photoLink && photoLink[0] && await photoLink[0].getProperty("textContent");
+    const photoLinkInfoValue = removeTab(photoLinkInfoProp && await photoLinkInfoProp.jsonValue<any>());
+
+    await page.waitForTimeout(1000);
+
+    return {
+      link,
+      name: `${nameValue} Photo`,
+      info: photoLinkInfoValue,
+      value: photoLinkUrlValue,
+    };
+  }
+
+  const getHorseVideoLatestInformation = async (link: string) => {
+    const page = await browser.newPage();
+
+    await Promise.all([ page.goto(link), page.waitForNavigation(), ]);
+    const head = await page.$("#umaHead h2");
+    const nameProp = head && await head.getProperty("textContent");
+    const nameValue = nameProp && await nameProp.jsonValue<string>();
+
+    const videoPageLink = await page.$$("#umaMovie ul.MovieList a");
+    const videoPageLinkUrlProp = videoPageLink && videoPageLink[0] && await videoPageLink[0].getProperty("href");
+    const videoPageLinkUrlValue = removeTab(videoPageLinkUrlProp && await videoPageLinkUrlProp.jsonValue<any>());
+
+    await Promise.all([ page.goto(videoPageLinkUrlValue), page.waitForNavigation(), ]);
+    const videoTitleHead = await page.$("#content h2");
+    const videoTitleProp = videoTitleHead && await videoTitleHead.getProperty("textContent");
+    const videoTitleValue = videoTitleProp && await videoTitleProp.jsonValue<string>();
+
+    const mp4Link = await page.$$("#content div.btnmp4 a");
+    const mp4LinkUrlProp = mp4Link && mp4Link[0] && await mp4Link[0].getProperty("href");
+    const mp4LinkUrlValue = removeTab(mp4LinkUrlProp && await mp4LinkUrlProp.jsonValue<any>());
+    
+    await page.waitForTimeout(1000);
+
+    return {
+      link,
+      name: `${nameValue} Video`,
+      info: videoTitleValue,
+      value: mp4LinkUrlValue,
     };
   }
 
   const values = [];
   for (const link of links) {
     values.push(await getHorsePageLatestInformation(link));
+    values.push(await getHorsePhotoLatestInformation(link));
+    values.push(await getHorseVideoLatestInformation(link));
   }
+  logger.info("page scraping complete.");
 
   browser.close();
 
