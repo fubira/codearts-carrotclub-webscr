@@ -55,8 +55,8 @@ log4js.configure({
 
 function sendMessageToSlack(data: ScrapingDataType) {
   const text = (data.info)
-    ? `*${data.name}* _${data.info}_ ${data.value}`
-    : `*${data.name}* ${data.value}`;
+    ? `*${data.name}* _${data.info}_\n${data.value}`
+    : `*${data.name}*\n${data.value}`;
 
   const client = new WebClient(args["slack-token"]);
   client.chat.postMessage({
