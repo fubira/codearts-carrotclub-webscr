@@ -33,7 +33,7 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
   }));
 
   // get links
-  const links = myHorseLinks; // .slice(0, 1);
+  const links = myHorseLinks; //.slice(0, 1);
 
   const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
   const removeNewline = (str: string) => str?.replace(/[\n\t]+/g, "").trim();
@@ -61,7 +61,7 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
     const bottomBlockInfoString = bottomBlockListValue &&  bottomBlockListValue[2];
     const bottomBlockString = removeNewline(bottomBlockInfoString).replace(/\(BMS.*\).*$/, '');
 
-    const textList = await page.$$("ul.hose-lst1");
+    const textList = await page.$$("ul.hose-lst1 li");
     const latestTextProp = textList && textList[0] && await textList[0].getProperty("textContent");
     const latestTextValue = removeTab(latestTextProp && await latestTextProp.jsonValue<any>());
     
