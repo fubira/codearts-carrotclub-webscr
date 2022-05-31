@@ -33,7 +33,7 @@ export const scraping = async (id: string, password: string, noSandbox: boolean)
   }));
 
   // get links
-  const links = myHorseLinks.slice(0, 1);
+  const links = myHorseLinks; // .slice(0, 1);
 
   const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
   const removeNewline = (str: string) => str?.replace(/[\n\t]+/g, "").trim();
