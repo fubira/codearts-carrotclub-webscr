@@ -3,6 +3,9 @@ import puppeteer from 'puppeteer';
 import log4js from 'log4js';
 const logger = log4js.getLogger();
 
+const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
+const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
+
 export interface ScrapingInfoType {
   date: string;
   courseId: string;
@@ -15,6 +18,7 @@ export interface ScrapingDataType {
   entries: string;
   training: string;
   blood: string;
+  result: string;
 }
 
 export interface ScrapingParams {
@@ -25,16 +29,17 @@ export interface ScrapingParams {
   "no-sandbox": boolean;
 }
 
-export const scraping = async (onCheck: (info: ScrapingInfoType) => boolean, onWrite: (info: ScrapingInfoType, data: ScrapingDataType) => void, args: { [key: string]: any }): Promise<void> => {
-  const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
-  const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
+export const scraping = async (
+  onGetCached: (info: ScrapingInfoType) => ScrapingDataType,
+  onWrite: (info: ScrapingInfoType, data: ScrapingDataType) => void,
+  args: { [key: string]: any }
+): Promise<void> => {
   const opts = {
     args: [
       args["no-sandbox"] && '--no-sandbox',
       args["proxy"] && `--proxy-server ${args["proxy"]}`,
     ].filter((v) => v),
   };
-
   const browser = await puppeteer.launch(opts);
   logger.info('Pupeteer Options: ', opts);
 
@@ -51,29 +56,30 @@ export const scraping = async (onCheck: (info: ScrapingInfoType) => boolean, onW
     const yearMonth = `${args["year"]}${String(month).padStart(2, '0')}`;
 
     try {
-      await page.waitForTimeout(randomWaitTime(1000));
+      await page.waitForTimeout(randomWaitTime(500));
       await page.goto(`https://s.keibabook.co.jp/cyuou/nittei/${yearMonth}`);
     } catch (err) {
       continue;
     }
 
+    // 指定した年月の全開催日を取得
     const holdElements = await page.$$("li > div");
-    const holdInfoList = await Promise.all(holdElements.map(async (hold) => {
-      // 指定日時の開催検出
-      const holdLinkElement = await hold.$("a");
-      const holdLinkProps = holdLinkElement && await holdLinkElement.getProperty('href');
-      const holdLinkValue = removeTab(holdLinkProps && await holdLinkProps.jsonValue<any>());
-      const holdTextElement = await hold.$('p.keibajyo');
-      const holdTextProps = holdLinkElement && await holdTextElement.getProperty('textContent');
-      const holdTextValue = removeTab(holdTextProps && await holdTextProps.jsonValue<any>());
+    const holdInfoList = await Promise.all(
+      holdElements.map(async (hold) => {
+        const holdLinkElement = await hold.$("a");
+        const holdLinkProps = holdLinkElement && await holdLinkElement.getProperty('href');
+        const holdLinkValue = removeTab(holdLinkProps && await holdLinkProps.jsonValue<any>());
+        const holdTextElement = await hold.$('p.keibajyo');
+        const holdTextProps = holdLinkElement && await holdTextElement.getProperty('textContent');
+        const holdTextValue = removeTab(holdTextProps && await holdTextProps.jsonValue<any>());
 
-      return { link: holdLinkValue, text: holdTextValue };
-    }));
+        return { link: holdLinkValue, text: holdTextValue };
+      })
+    );
 
     let wrote = 0;
-    const sortedHoldInfoList = holdInfoList;
-    
-    for (const holdInfo of sortedHoldInfoList) {
+    for (const holdInfo of holdInfoList) {
+      // 空の開催はスキップする
       if (!holdInfo.link || !holdInfo.text) {
         continue;
       }
@@ -102,6 +108,7 @@ export const scraping = async (onCheck: (info: ScrapingInfoType) => boolean, onW
         return { link: raceLinkValue, title: raceTextValue };
       }));
 
+      // レース取得順は念のためランダムに
       const sortedRaceInfoList = raceInfoList.sort(() => Math.random() - 0.5);
       for (const raceInfo of sortedRaceInfoList) {
         if (!raceInfo.link || !raceInfo.title) {
@@ -111,60 +118,84 @@ export const scraping = async (onCheck: (info: ScrapingInfoType) => boolean, onW
         const raceNo = raceInfo.link.slice(-2);
         const raceTitle = raceInfo.title || "";
 
-        // 指定レースの読み込みを実行すべきか否かのチェック
-        if (onCheck) {
-          const cancel = !onCheck({
+        // 指定レースへ遷移
+        await page.waitForTimeout(randomWaitTime(500));
+        await page.goto(raceInfo.link);
+
+        // 既に取得済みのデータを読み込む
+        let prevData: ScrapingDataType;
+        if (onGetCached) {
+          prevData = onGetCached({
             date: date,
             courseId: courseId,
             courseName: courseName,
             raceNo: raceNo,
             raceTitle: raceTitle
           });
-
-          if (cancel) {
-            continue;
-          }
         } 
 
-        // 指定レースへ遷移
-        await page.waitForTimeout(randomWaitTime(500));
-        await page.goto(raceInfo.link);
-
+        // 出馬表ページの取得
         const entriesLinkElement = await page.$('a[title="出馬表"]');
         const entriesLinkProp = entriesLinkElement && await entriesLinkElement.getProperty('href');
         const entriesLinkValue = removeTab(entriesLinkProp && await entriesLinkProp.jsonValue<any>());
-        const trainingLinkElement = await page.$('a[title="調教"]');
-        const trainingLinkProp = trainingLinkElement && await trainingLinkElement.getProperty('href');
-        const trainingLinkValue = removeTab(trainingLinkProp && await trainingLinkProp.jsonValue<any>());
-        const bloodLinkElement = await page.$('a[title="血統表"]');
-        const bloodLinkProp = bloodLinkElement && await bloodLinkElement.getProperty('href');
-        const bloodLinkValue = removeTab(bloodLinkProp && await bloodLinkProp.jsonValue<any>());
-        
-        let entriesHtml, trainingHtml, bloodHtml;
-        // 出馬表ページの取得
-        if (entriesLinkValue) {
+        let entriesHtml = prevData?.entries;
+        if (!entriesHtml && entriesLinkValue) {
+          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 出馬表を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(entriesLinkValue);
           entriesHtml = await page.content();
         }
-        
+        if (!entriesHtml) {
+          // 出馬表データが取得できない場合、事前情報状態なのでスキップ
+          continue;
+        }
+
         // 調教ページの取得
-        if (trainingLinkValue) {
+        const trainingLinkElement = await page.$('a[title="調教"]');
+        const trainingLinkProp = trainingLinkElement && await trainingLinkElement.getProperty('href');
+        const trainingLinkValue = removeTab(trainingLinkProp && await trainingLinkProp.jsonValue<any>());
+        let trainingHtml = prevData?.training;
+        if (!trainingHtml && trainingLinkValue) {
+          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 調教を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(trainingLinkValue);
           trainingHtml = await page.content();
         }
+        if (!trainingHtml) {
+          // 調教データが取得できない場合、事前情報状態なのでスキップ
+          continue;
+        }
         
         // 血統ページの取得
-        if (bloodLinkValue) {
+        const bloodLinkElement = await page.$('a[title="血統表"]');
+        const bloodLinkProp = bloodLinkElement && await bloodLinkElement.getProperty('href');
+        const bloodLinkValue = removeTab(bloodLinkProp && await bloodLinkProp.jsonValue<any>());
+        let bloodHtml = prevData?.blood;
+        if (!bloodHtml && bloodLinkValue) {
+          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 血統表を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(bloodLinkValue);
           bloodHtml = await page.content();
         }
-
-        // レース情報がない状態なら書き込みはしない
-        if (!entriesLinkValue || !trainingLinkValue || !bloodLinkValue) {
+        if (!bloodHtml) {
+          // 血統データが取得できない場合、事前情報状態なのでスキップ
           continue;
+        }
+
+        // 結果ページの取得
+        const resultLinkElement = await page.$('a[title="レース結果"]');
+        const resultLinkProp = resultLinkElement && await resultLinkElement.getProperty('href');
+        const resultLinkValue = removeTab(resultLinkProp && await resultLinkProp.jsonValue<any>());
+        let resultHtml = prevData?.result;
+        if (!resultHtml && resultLinkValue) {
+          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} レース結果を取得しています...`);
+          await page.waitForTimeout(randomWaitTime(500));
+          await page.goto(resultLinkValue);
+          resultHtml = await page.content();
+        }
+        if (!resultHtml) {
+          // 結果データが取得できない場合は出走前だが問題なし
+          // continue;
         }
 
         // 書き出し
@@ -178,6 +209,7 @@ export const scraping = async (onCheck: (info: ScrapingInfoType) => boolean, onW
           entries: entriesHtml,
           training: trainingHtml,
           blood: bloodHtml,
+          result: resultHtml,
         });
         wrote += 1;
       }

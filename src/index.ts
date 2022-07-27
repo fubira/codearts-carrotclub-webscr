@@ -5,7 +5,7 @@ import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
 import { scraping, ScrapingInfoType, ScrapingDataType } from './keibabook';
-import { mkdirSync, writeFileSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 
 const logger = log4js.getLogger();
 
@@ -45,24 +45,35 @@ log4js.configure({
 });
 
 /**
- * 該当ページのスクレイピングを実行するかのチェック
+ * 該当ページの既に取得済みのスクレイピング結果を返すハンドラ
  * 
  * @param info 
- * @returns trueならば実行 falseならば処理をスキップ
  */
-const onCheck = (info: ScrapingInfoType) => {
+const onGetCached = (info: ScrapingInfoType): ScrapingDataType => {
   const { date, courseName, raceNo, raceTitle } = info;
   const dir = `./data/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
+  const data = readFileSync(`${dir}/${fileName}.json`);
 
-  return !existsSync(`${dir}/${fileName}.json`);
+  try {
+    const json = JSON.parse(data.toString())?.data as ScrapingDataType;
+    return json;
+  } catch (err) {
+    logger.error(err);
+  }
+
+  return undefined;
 }
 
+/**
+ * スクレイピング結果を保存するハンドラ
+ * @param info 
+ * @param data 
+ */
 const onWrite = (info: ScrapingInfoType, data: ScrapingDataType) => {
   const { date, courseName, raceNo, raceTitle } = info;
   const dir = `./data/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
-  logger.info(`${dir}/${fileName}`);
 
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
@@ -71,7 +82,7 @@ const onWrite = (info: ScrapingInfoType, data: ScrapingDataType) => {
   writeFileSync(`${dir}/${fileName}.json`, JSON.stringify({info, data}, undefined, 2));
 }
 
-scraping(onCheck, onWrite, args).catch((err)=> {
+scraping(onGetCached, onWrite, args).catch((err)=> {
   logger.error(err);
 }).finally(() => {
   logger.info("complete.");

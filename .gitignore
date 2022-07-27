@@ -49,4 +49,4 @@ ssl/*.pem
 deploy/
 dist/
 .vs/
-data/
+/data*/
