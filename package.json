@@ -34,6 +34,7 @@
     "dotenv": "^16.0.0",
     "fast-glob": "^3.2.11",
     "log4js": "^6.4.2",
+    "node-html-parser": "^5.3.3",
     "puppeteer": "^13.5.1"
   }
 }
