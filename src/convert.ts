@@ -127,6 +127,92 @@ async function parseEntries(entriesHtml: string): Promise<DataEntry[]> {
   return result;
 }
 
+async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<any[]> {
+  // 調教画面のHTMLはタグが正しく閉じられていないので調整しておく
+  trainingHtml.replace(
+    /<table class="default cyokyo" id=""><tbody>/g,
+    '</tbody></table><table class="default cyokyo" id=""><tbody>'
+  );
+
+  const root = parse(trainingHtml);
+
+  /// レース情報取得
+  const trainingBodyList = root.querySelectorAll('table.cyokyo > tbody');
+
+  const result = trainingBodyList.map((tbody): any => {
+    // 2桁の月日に年を足す
+    function monthdayToDate(yeardate: string, monthday: string) {
+      let year = yeardate && Number(yeardate.slice(0, 4));
+      const raceMonth = yeardate && Number(yeardate.slice(4, 6));
+
+      const [tm, td] = (monthday || '').split('/');
+      const month = tm && Number(tm) || 0;
+      const day = td && Number(td) || 0;
+
+      if (month > raceMonth) {
+        year = year - 1;
+      }
+      return `${year}/${month}/${day}`;
+    }
+
+    const bracketId = Number(tbody.querySelector('td.waku p').textContent);
+    const horseId = Number(tbody.querySelector('td.umaban').textContent);
+    const horseName = tbody.querySelector('td.kbamei').textContent;
+    const comment = tbody.querySelector('td.tanpyo').textContent;
+    const status = tbody.querySelector('td.yajirusi').textContent;
+
+    const trainingHeaderList = tbody.querySelectorAll('dl.dl-table');
+    const trainingDataList = tbody.querySelectorAll('table.cyokyodata tbody');
+    const trainingData = trainingDataList.map((tbody, index) => {
+      const trainingHeader = trainingHeaderList[index];
+      const headerLeft = trainingHeader.querySelector('dt.left');
+      const headerRight = trainingHeader.querySelector('dt.right');
+      const [trainingDate, trainingCourse, trainingCourseCondition] = headerLeft.textContent.split(/\s/);
+      const trainingComment = headerRight.textContent;
+      
+      const trainingTimeList = tbody.querySelectorAll('tr.time td');
+      const firstValue = trainingTimeList[0].textContent;
+
+      let trainingCount = 1;
+      if (firstValue && firstValue.endsWith('回')) {
+        trainingTimeList.shift();
+        trainingCount = Number(firstValue.replace('回', ''));
+      }
+
+      const [trainingCourseElement] = trainingTimeList.slice(-1);
+      const trainingRapList = trainingTimeList.slice(0, -1);
+      const trainingPosition = trainingCourseElement?.textContent;
+  
+      const trainingRap = trainingRapList.map((td) => {
+        return (td.textContent && Number(td.textContent)) || null;
+      });
+      const trainingPartner = tbody.querySelector('tr.awase td.left')?.textContent;
+
+      return {
+        trainingDate: monthdayToDate(info.date, trainingDate),
+        trainingCourse,
+        trainingCourseCondition,
+        trainingComment,
+        trainingCount,
+        trainingPosition,
+        trainingRap,
+        trainingPartner,
+      };
+    });
+
+    return {
+      bracketId,
+      horseId,
+      horseName,
+      comment,
+      status,
+      trainingData
+    };
+  });
+
+  return result;
+}
+
 async function parseFile(file: string) {
   const dataJson = readFileSync(file);
   const { data, info } = JSON.parse(dataJson.toString()) as RaceData;
@@ -136,14 +222,16 @@ async function parseFile(file: string) {
 
   const course = await parseCourse(info, data.entries);
   const entries = await parseEntries(data.entries);
+  const training = await parseTraining(info, data.training); 
 
-  console.log(JSON.stringify(course));
-  console.log(JSON.stringify(entries));
+  console.log(JSON.stringify(course, null, 2));
+  console.log(JSON.stringify(entries, null, 2));
+  console.log(JSON.stringify(training, null, 2));
 }
 
 
 FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then((files) => {
-  const sortedFiles = files.slice(0, 20);
+  const sortedFiles = files.slice(0, 1);
 
   Promise.all(sortedFiles.map(async (file) => {
     await parseFile(file);
