@@ -1,37 +1,15 @@
 import puppeteer from 'puppeteer';
 
 import log4js from 'log4js';
+import { RaceInfo, RaceRawData, RaceData } from '../types';
 const logger = log4js.getLogger();
 
 const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
 const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
 
-export interface ScrapingInfoType {
-  date: string;
-  courseId: string;
-  courseName: string;
-  raceNo: string;
-  raceTitle: string;
-}
-
-export interface ScrapingDataType {
-  entries: string;
-  training: string;
-  blood: string;
-  result: string;
-}
-
-export interface ScrapingParams {
-  "year": string;
-  "site-id": string;
-  "site-pass": string;
-  "proxy-server": string;
-  "no-sandbox": boolean;
-}
-
 export const scraping = async (
-  onGetCached: (info: ScrapingInfoType) => ScrapingDataType,
-  onWrite: (info: ScrapingInfoType, data: ScrapingDataType) => void,
+  onGetCached: (info: RaceInfo) => RaceRawData,
+  onWrite: (cache: RaceData) => void,
   args: { [key: string]: any }
 ): Promise<void> => {
   const opts = {
@@ -100,7 +78,7 @@ export const scraping = async (
       // レースの検出
       const raceElements = await page.$$("td.left > a");
 
-      const raceInfoList = await Promise.all(raceElements.map(async (raceElement) => {
+      const raceList = await Promise.all(raceElements.map(async (raceElement) => {
         const raceLinkProp = raceElement && await raceElement.getProperty('href');
         const raceLinkValue = removeTab(raceLinkProp && await raceLinkProp.jsonValue<any>());
         const raceTextProp = raceElement && await raceElement.getProperty('textContent');
@@ -109,42 +87,47 @@ export const scraping = async (
       }));
 
       // レース取得順は念のためランダムに
-      const sortedRaceInfoList = raceInfoList.sort(() => Math.random() - 0.5);
-      for (const raceInfo of sortedRaceInfoList) {
-        if (!raceInfo.link || !raceInfo.title) {
+      const sortedRaceList = raceList.sort(() => Math.random() - 0.5);
+      for (const race of sortedRaceList) {
+        if (!race.link || !race.title) {
           continue;
         }
 
-        const raceNo = raceInfo.link.slice(-2);
-        const raceTitle = raceInfo.title || "";
+        const raceNo = race.link.slice(-2);
+        const raceTitle = race.title || "";
 
         // 指定レースへ遷移
         await page.waitForTimeout(randomWaitTime(500));
-        await page.goto(raceInfo.link);
+        await page.goto(race.link);
+
+        // レース情報
+        const raceInfo: RaceInfo = {
+          date: date,
+          courseId: courseId,
+          courseName: courseName,
+          raceNo: raceNo,
+          raceTitle: raceTitle
+        };
 
         // 既に取得済みのデータを読み込む
-        let prevData: ScrapingDataType;
+        let cachedRawData: RaceRawData;
         if (onGetCached) {
-          prevData = onGetCached({
-            date: date,
-            courseId: courseId,
-            courseName: courseName,
-            raceNo: raceNo,
-            raceTitle: raceTitle
-          });
+          cachedRawData = onGetCached(raceInfo);
         } 
 
         // 出馬表ページの取得
         const entriesLinkElement = await page.$('a[title="出馬表"]');
         const entriesLinkProp = entriesLinkElement && await entriesLinkElement.getProperty('href');
         const entriesLinkValue = removeTab(entriesLinkProp && await entriesLinkProp.jsonValue<any>());
-        let entriesHtml = prevData?.entries;
+        let entriesHtml = cachedRawData?.entries;
+
         if (!entriesHtml && entriesLinkValue) {
           logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 出馬表を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(entriesLinkValue);
           entriesHtml = await page.content();
         }
+
         if (!entriesHtml) {
           // 出馬表データが取得できない場合、事前情報状態なのでスキップ
           continue;
@@ -154,13 +137,15 @@ export const scraping = async (
         const trainingLinkElement = await page.$('a[title="調教"]');
         const trainingLinkProp = trainingLinkElement && await trainingLinkElement.getProperty('href');
         const trainingLinkValue = removeTab(trainingLinkProp && await trainingLinkProp.jsonValue<any>());
-        let trainingHtml = prevData?.training;
+        let trainingHtml = cachedRawData?.training;
+
         if (!trainingHtml && trainingLinkValue) {
           logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 調教を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(trainingLinkValue);
           trainingHtml = await page.content();
         }
+
         if (!trainingHtml) {
           // 調教データが取得できない場合、事前情報状態なのでスキップ
           continue;
@@ -170,13 +155,15 @@ export const scraping = async (
         const bloodLinkElement = await page.$('a[title="血統表"]');
         const bloodLinkProp = bloodLinkElement && await bloodLinkElement.getProperty('href');
         const bloodLinkValue = removeTab(bloodLinkProp && await bloodLinkProp.jsonValue<any>());
-        let bloodHtml = prevData?.blood;
+        let bloodHtml = cachedRawData?.blood;
+
         if (!bloodHtml && bloodLinkValue) {
           logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 血統表を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(bloodLinkValue);
           bloodHtml = await page.content();
         }
+
         if (!bloodHtml) {
           // 血統データが取得できない場合、事前情報状態なのでスキップ
           continue;
@@ -186,31 +173,29 @@ export const scraping = async (
         const resultLinkElement = await page.$('a[title="レース結果"]');
         const resultLinkProp = resultLinkElement && await resultLinkElement.getProperty('href');
         const resultLinkValue = removeTab(resultLinkProp && await resultLinkProp.jsonValue<any>());
-        let resultHtml = prevData?.result;
+        let resultHtml = cachedRawData?.result;
+
         if (!resultHtml && resultLinkValue) {
           logger.info(`${date} ${courseName}${raceNo}_${raceTitle} レース結果を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(resultLinkValue);
           resultHtml = await page.content();
         }
+
         if (!resultHtml) {
           // 結果データが取得できない場合は出走前だが問題なし
           // continue;
         }
 
         // 書き出し
-        onWrite && onWrite({
-          date: date,
-          courseId: courseId,
-          courseName: courseName,
-          raceNo: raceNo,
-          raceTitle: raceTitle
-        }, {
+        const raceRawData = {
           entries: entriesHtml,
           training: trainingHtml,
           blood: bloodHtml,
           result: resultHtml,
-        });
+        }
+        onWrite && onWrite({ info: raceInfo, data: raceRawData });
+
         wrote += 1;
       }
     }

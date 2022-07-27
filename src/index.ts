@@ -4,8 +4,9 @@ import { exit } from 'process';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
-import { scraping, ScrapingInfoType, ScrapingDataType } from './keibabook';
+import { scraping } from './keibabook';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
+import { RaceInfo, RaceRawData, RaceData } from './types';
 
 const logger = log4js.getLogger();
 
@@ -49,17 +50,19 @@ log4js.configure({
  * 
  * @param info 
  */
-const onGetCached = (info: ScrapingInfoType): ScrapingDataType => {
+const onGetCached = (info: RaceInfo): RaceRawData => {
   const { date, courseName, raceNo, raceTitle } = info;
   const dir = `./data/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
-  const data = readFileSync(`${dir}/${fileName}.json`);
 
-  try {
-    const json = JSON.parse(data.toString())?.data as ScrapingDataType;
-    return json;
-  } catch (err) {
-    logger.error(err);
+  if (existsSync(`${dir}/${fileName}.json`)) {
+    try {
+      const data = readFileSync(`${dir}/${fileName}.json`);
+      const rawData = JSON.parse(data.toString())?.data as RaceRawData;
+      return rawData;
+    } catch (err) {
+      logger.error(err);
+    }
   }
 
   return undefined;
@@ -67,11 +70,10 @@ const onGetCached = (info: ScrapingInfoType): ScrapingDataType => {
 
 /**
  * スクレイピング結果を保存するハンドラ
- * @param info 
  * @param data 
  */
-const onWrite = (info: ScrapingInfoType, data: ScrapingDataType) => {
-  const { date, courseName, raceNo, raceTitle } = info;
+const onWrite = (data: RaceData) => {
+  const { date, courseName, raceNo, raceTitle } = data.info;
   const dir = `./data/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
 
@@ -79,7 +81,7 @@ const onWrite = (info: ScrapingInfoType, data: ScrapingDataType) => {
     mkdirSync(dir, { recursive: true });
   }
 
-  writeFileSync(`${dir}/${fileName}.json`, JSON.stringify({info, data}, undefined, 2));
+  writeFileSync(`${dir}/${fileName}.json`, JSON.stringify(data, undefined, 2));
 }
 
 scraping(onGetCached, onWrite, args).catch((err)=> {
