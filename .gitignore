@@ -49,5 +49,6 @@ ssl/*.pem
 deploy/
 dist/
 .vs/
-/data*/
+
 /*.db
+/.site

@@ -16,7 +16,7 @@ pouchdb.plugin(pouchdbFind);
 const logger = log4js.getLogger();
 
 const options = [
-  { name: 'root', desc: "Root dir of data",  type: String, multiple: true, defaultOption: true },
+  { name: 'source', alias: 's', desc: "Source dir of site data", type: String, defaultValue: "./.site" },
   { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
 ];
 const args = commandLineArgs(options);
@@ -26,7 +26,7 @@ if (args["help"]) {
   exit(0);
 }
 
-if (!args["root"]) {
+if (!args["source"]) {
   console.log(commandLineUsage([{ header: 'convert', optionList: options }]));
   exit(0);
 }
@@ -331,8 +331,8 @@ async function parseFile(file: string) {
 }
 
 
-FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then(async (files) => {
-  const db = new pouchdb('data.db');
+FastGlob(`${args["source"]}/**/*.json`, { onlyFiles: true }).then(async (files) => {
+  const db = new pouchdb('./.db');
   const sortedFiles = files;
 
   for (const file of sortedFiles) {
@@ -345,10 +345,11 @@ FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then(async (files) =>
       const _rev = value._rev;
       await db.put({ _rev, ...data });
     }).catch(async () => {
-      console.log('put: ', data._id);
       await db.put(data);
     });
   }
 
+  db.createIndex({ index: { fields: ["course.date"] } });
+  db.createIndex({ index: { fields: ["training.horseName"] } });
   db.close();
 })

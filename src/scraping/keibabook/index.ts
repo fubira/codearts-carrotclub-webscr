@@ -31,6 +31,10 @@ export const scraping = async (
   await page.click('input[name="submitbutton"]');
 
   for (let month = 1; month <= 12; month ++) {
+    if (args["month"] !== undefined && args["month"] !== `${month}`) {
+      continue;
+    }
+
     const yearMonth = `${args["year"]}${String(month).padStart(2, '0')}`;
 
     try {
@@ -109,6 +113,8 @@ export const scraping = async (
           raceTitle: raceTitle
         };
 
+        logger.info(`=== ${date} ${courseName}${raceNo}_${raceTitle} `);
+
         // 既に取得済みのデータを読み込む
         let cachedRawData: Types.RaceRawData;
         if (onGetCached) {
@@ -122,13 +128,14 @@ export const scraping = async (
         let entriesHtml = cachedRawData?.entries;
 
         if (!entriesHtml && entriesLinkValue) {
-          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 出馬表を取得しています...`);
+          logger.info(`出馬表を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(entriesLinkValue);
           entriesHtml = await page.content();
         }
 
         if (!entriesHtml) {
+          logger.info(`> 出馬表データがありませんでした。このレースの取得を中止します`);
           // 出馬表データが取得できない場合、事前情報状態なのでスキップ
           continue;
         }
@@ -140,7 +147,7 @@ export const scraping = async (
         let trainingHtml = cachedRawData?.training;
 
         if (!trainingHtml && trainingLinkValue) {
-          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 調教を取得しています...`);
+          logger.info(`調教を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(trainingLinkValue);
           trainingHtml = await page.content();
@@ -148,6 +155,7 @@ export const scraping = async (
 
         if (!trainingHtml) {
           // 調教データが取得できない場合、事前情報状態なのでスキップ
+          logger.info(`> 調教データがありませんでした。このレースの取得を中止します`);
           continue;
         }
         
@@ -158,15 +166,15 @@ export const scraping = async (
         let bloodHtml = cachedRawData?.blood;
 
         if (!bloodHtml && bloodLinkValue) {
-          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} 血統表を取得しています...`);
+          logger.info(`血統表を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(bloodLinkValue);
           bloodHtml = await page.content();
         }
 
         if (!bloodHtml) {
+          logger.info(`> 血統表データがありませんでした。このレースの取得を中止します`);
           // 血統データが取得できない場合、事前情報状態なのでスキップ
-          continue;
         }
 
         // 結果ページの取得
@@ -176,7 +184,7 @@ export const scraping = async (
         let resultHtml = cachedRawData?.result;
 
         if (!resultHtml && resultLinkValue) {
-          logger.info(`${date} ${courseName}${raceNo}_${raceTitle} レース結果を取得しています...`);
+          logger.info(`レース結果を取得しています...`);
           await page.waitForTimeout(randomWaitTime(500));
           await page.goto(resultLinkValue);
           resultHtml = await page.content();

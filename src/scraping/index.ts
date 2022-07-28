@@ -15,19 +15,21 @@ const options = [
   { name: 'no-sandbox', type: Boolean, defaultValue: false }, 
   { name: 'site-id', alias: 'i', type: String, defaultValue: process.env.SITE_ID || "" }, 
   { name: 'site-pass', alias: 'p', type: String, defaultValue: process.env.SITE_PASS || "" }, 
+  { name: 'output-dir', alias: 'd', type: String, defaultValue: "./.site" }, 
   { name: 'proxy', alias: 'x', type: String, defaultValue: process.env.HTTP_PROXY || "" }, 
   { name: 'year', alias: 'y', type: String, defaultValue: `${new Date().getFullYear()}` }, 
+  { name: 'month', alias: 'm', type: String }, 
 ];
 const args = commandLineArgs(options);
 
 if (args["help"]) {
-  console.log(commandLineUsage([{ header: 'webscr', optionList: options }]));
+  console.log(commandLineUsage([{ header: 'tateyama-scraping', optionList: options }]));
   exit(0);
 }
 
 if (!args["site-id"] || !args["site-pass"]) {
   console.log("Please set Site ID and Password.");
-  console.log(commandLineUsage([{ header: 'webscr', optionList: options }]));
+  console.log(commandLineUsage([{ header: 'tateyama-scraping', optionList: options }]));
   exit(0);
 }
 
@@ -52,7 +54,7 @@ log4js.configure({
  */
 const onGetCached = (info: Types.RaceInfo): Types.RaceRawData => {
   const { date, courseName, raceNo, raceTitle } = info;
-  const dir = `./data/${date}`;
+  const dir = `${args["output-dir"]}/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
 
   if (existsSync(`${dir}/${fileName}.json`)) {
@@ -74,7 +76,7 @@ const onGetCached = (info: Types.RaceInfo): Types.RaceRawData => {
  */
 const onWrite = (data: Types.RaceData) => {
   const { date, courseName, raceNo, raceTitle } = data.info;
-  const dir = `./data/${date}`;
+  const dir = `${args["output-dir"]}/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
 
   if (!existsSync(dir)) {
