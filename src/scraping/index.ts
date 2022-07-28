@@ -6,7 +6,7 @@ import commandLineUsage from 'command-line-usage';
 
 import { scraping } from './keibabook';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
-import { RaceInfo, RaceRawData, RaceData } from './types';
+import { Types } from '../tateyama';
 
 const logger = log4js.getLogger();
 
@@ -50,7 +50,7 @@ log4js.configure({
  * 
  * @param info 
  */
-const onGetCached = (info: RaceInfo): RaceRawData => {
+const onGetCached = (info: Types.RaceInfo): Types.RaceRawData => {
   const { date, courseName, raceNo, raceTitle } = info;
   const dir = `./data/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
@@ -58,7 +58,7 @@ const onGetCached = (info: RaceInfo): RaceRawData => {
   if (existsSync(`${dir}/${fileName}.json`)) {
     try {
       const data = readFileSync(`${dir}/${fileName}.json`);
-      const rawData = JSON.parse(data.toString())?.data as RaceRawData;
+      const rawData = JSON.parse(data.toString())?.data as Types.RaceRawData;
       return rawData;
     } catch (err) {
       logger.error(err);
@@ -72,7 +72,7 @@ const onGetCached = (info: RaceInfo): RaceRawData => {
  * スクレイピング結果を保存するハンドラ
  * @param data 
  */
-const onWrite = (data: RaceData) => {
+const onWrite = (data: Types.RaceData) => {
   const { date, courseName, raceNo, raceTitle } = data.info;
   const dir = `./data/${date}`;
   const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;

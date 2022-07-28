@@ -9,7 +9,7 @@ import parse from 'node-html-parser';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
-import { RaceData, RaceInfo, DataCourse, DataEntry, CourseType, CourseDirection, CourseCondition, CourseWeather, HorseSex, DataTraining, DataResultOrder, DataResult, DataResultRefund } from './types';
+import { Types } from '../tateyama';
 import dayjs from 'dayjs';
 
 pouchdb.plugin(pouchdbFind);
@@ -45,7 +45,7 @@ log4js.configure({
   }
 });
 
-async function parseCourse(info: RaceInfo, entriesHtml: string): Promise<DataCourse> {
+async function parseCourse(info: Types.RaceInfo, entriesHtml: string): Promise<Types.DataCourse> {
   const root = parse(entriesHtml);
 
   /// レースコース情報取得
@@ -62,15 +62,15 @@ async function parseCourse(info: RaceInfo, entriesHtml: string): Promise<DataCou
     id: Number(info.courseId),
     name: info.courseName,
     distance: Number(distance),
-    type: type as CourseType,
-    direction: direction as CourseDirection,
-    weather: weather as CourseWeather,
-    condition: condition as CourseCondition,
+    type: type as Types.CourseType,
+    direction: direction as Types.CourseDirection,
+    weather: weather as Types.CourseWeather,
+    condition: condition as Types.CourseCondition,
     option: courseOpt,
   }
 }
 
-async function parseEntries(entriesHtml: string): Promise<DataEntry[]> {
+async function parseEntries(entriesHtml: string): Promise<Types.DataEntry[]> {
   const root = parse(entriesHtml);
 
   /// 馬情報取得
@@ -82,7 +82,7 @@ async function parseEntries(entriesHtml: string): Promise<DataEntry[]> {
 
   const tr = tbody.querySelectorAll('tr');
 
-  const result = tr.map((record): DataEntry => {
+  const result = tr.map((record): Types.DataEntry => {
     const bracketId = record.querySelector("td.waku > p").textContent.trim();
     const horseId = record.querySelector("td.umaban").textContent.trim();
     const horseName = record.querySelectorAll("td.left p")[0].textContent.trim();
@@ -99,7 +99,7 @@ async function parseEntries(entriesHtml: string): Promise<DataEntry[]> {
       bracketId: Number(bracketId),
       horseId: Number(horseId),
       horseName: horseName,
-      horseSex: horseSex as HorseSex,
+      horseSex: horseSex as Types.HorseSex,
       horseAge: Number(horseAge),
       jockyName: jockyName,
       handicap: Number(handicap),
@@ -113,7 +113,7 @@ async function parseEntries(entriesHtml: string): Promise<DataEntry[]> {
   return result;
 }
 
-async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<DataTraining[]> {
+async function parseTraining(info: Types.RaceInfo, trainingHtml: string): Promise<Types.DataTraining[]> {
   // 調教画面のHTMLはタグが正しく閉じられていないので調整しておく
   trainingHtml.replace(
     /<table class="default cyokyo" id=""><tbody>/g,
@@ -125,7 +125,7 @@ async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<Data
   /// レース情報取得
   const trainingBodyList = root.querySelectorAll('table.cyokyo > tbody');
 
-  const result = trainingBodyList.map((tbody): DataTraining => {
+  const result = trainingBodyList.map((tbody): Types.DataTraining => {
     // 2桁の月日に年を足す
     function monthdayToDate(yeardate: string, monthday: string) {
       let year = yeardate && Number(yeardate.slice(0, 4));
@@ -236,7 +236,7 @@ async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<Data
   return result;
 }
 
-async function parseResult(info: RaceInfo, resultHtml: string): Promise<DataResult> {
+async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Types.DataResult> {
   if (!resultHtml) {
     logger.warn('結果がありません: ', info.date, info.courseName, info.raceNo, info.raceTitle);
     return;
@@ -253,7 +253,7 @@ async function parseResult(info: RaceInfo, resultHtml: string): Promise<DataResu
 
   const resultRefundBodyList = root.querySelectorAll('table.kako-haraimoshi > tbody');
 
-  const refund: DataResultRefund = {};
+  const refund: Types.DataResultRefund = {};
   resultRefundBodyList.forEach((tbody) => {
     const refs = tbody.querySelectorAll('tr');
 
@@ -299,7 +299,7 @@ async function parseResult(info: RaceInfo, resultHtml: string): Promise<DataResu
 
 async function parseFile(file: string) {
   const dataJson = readFileSync(file);
-  const { data, info } = JSON.parse(dataJson.toString()) as RaceData;
+  const { data, info } = JSON.parse(dataJson.toString()) as Types.RaceData;
 
   logger.info(`${info.date} ${info.courseName}(${info.courseId}) ${info.raceNo}R ${info.raceTitle}`);
 

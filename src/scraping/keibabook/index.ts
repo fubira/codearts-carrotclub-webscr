@@ -1,15 +1,15 @@
 import puppeteer from 'puppeteer';
 
 import log4js from 'log4js';
-import { RaceInfo, RaceRawData, RaceData } from '../types';
+import { Types } from '../../tateyama';
 const logger = log4js.getLogger();
 
 const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
 const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
 
 export const scraping = async (
-  onGetCached: (info: RaceInfo) => RaceRawData,
-  onWrite: (cache: RaceData) => void,
+  onGetCached: (info: Types.RaceInfo) => Types.RaceRawData,
+  onWrite: (cache: Types.RaceData) => void,
   args: { [key: string]: any }
 ): Promise<void> => {
   const opts = {
@@ -101,7 +101,7 @@ export const scraping = async (
         await page.goto(race.link);
 
         // レース情報
-        const raceInfo: RaceInfo = {
+        const raceInfo: Types.RaceInfo = {
           date: date,
           courseId: courseId,
           courseName: courseName,
@@ -110,7 +110,7 @@ export const scraping = async (
         };
 
         // 既に取得済みのデータを読み込む
-        let cachedRawData: RaceRawData;
+        let cachedRawData: Types.RaceRawData;
         if (onGetCached) {
           cachedRawData = onGetCached(raceInfo);
         } 
