@@ -1,10 +1,10 @@
 {
-  "name": "codearts-webscr",
+  "name": "codearts-betai-tateyamakun",
   "version": "1.0.0",
-  "description": "",
-  "license": "MIT",
+  "description": "競馬AIたてやまくん",
+  "license": "UNLICENSED",
   "private": "true",
-  "main": "index.js",
+  "main": "learning/index.ts",
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "start": "ts-node src/learning/index.ts",
