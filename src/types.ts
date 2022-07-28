@@ -66,7 +66,7 @@ export interface DataCourse {
 export type HorseSex = '牡' | '牝' | 'セン';
 
 export interface DataEntry {
-  // 枠版
+  // 枠番
   bracketId: number;
 
   // 馬番
@@ -100,10 +100,60 @@ export interface DataEntry {
   oddsRank: number;
 
   // 血統
-  horseBlood?: string;
+  pedigree?: string;
 
   // 調教
-  trainingLogs?: string;
+  training?: DataTraining;
+}
+
+
+export interface DataLapGap {
+  lap?: number;
+  gap?: number;
+}
+
+export interface DataTraining {
+  // 枠番
+  bracketId: number;
+
+  // 馬番
+  horseId: number;
+
+  // 馬名
+  horseName: string;
+
+  // コメント
+  comment: string;
+
+  // 調子
+  status: string;
+
+  // 調教ログ
+  logs: {
+    // 日時 YYYYMMDD
+    date: string,
+
+    // 調教コース
+    course: string,
+
+    // 調教コース状態
+    condition: string,
+
+    // コメント
+    comment: string,
+
+    // 調教回数
+    count: number,
+
+    // 走行位置
+    position: string,
+
+    // ラップタイム
+    lap: DataLapGap[],
+
+    // 併せ相手
+    partner?: string,
+  }[],
 }
 
 export interface DataResult {
