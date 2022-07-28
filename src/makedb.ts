@@ -9,7 +9,7 @@ import parse from 'node-html-parser';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
-import { RaceData, RaceInfo, DataCourse, DataEntry, CourseType, CourseDirection, CourseCondition, CourseWeather, HorseSex, DataTraining } from './types';
+import { RaceData, RaceInfo, DataCourse, DataEntry, CourseType, CourseDirection, CourseCondition, CourseWeather, HorseSex, DataTraining, DataResultOrder, DataResult, DataResultRefund } from './types';
 import dayjs from 'dayjs';
 
 pouchdb.plugin(pouchdbFind);
@@ -52,10 +52,8 @@ async function parseCourse(info: RaceInfo, entriesHtml: string): Promise<DataCou
   const raceParams = root.querySelectorAll('div.racetitle_sub > p');
   const courseOpt = raceParams[0].textContent.trim(); 
   const courseInfo = raceParams[1].textContent.trim(); 
-  console.log(courseInfo);
 
   const [courseDist, courseState, courseWeather] = courseInfo.split(/\s/);
-  console.log({courseDist, courseState, courseWeather});
   const [distance] = courseDist.match(/(\d+)m/);
   const [type, direction] = courseState.match(/\((.*)・(.*)\)/);
   const [weather, condition] = courseWeather.match(/(.*)・(.*)/);
@@ -200,7 +198,6 @@ async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<Data
       const trainingCount = countValue;
       const trainingLapGap: Array<{ lap?: number, gap?: number }> = [];
 
-
       lapValue.forEach((value, index, array) => {
         const lap = Math.round(value * 10) / 10;
         const nextLap = (array.length > index) ? array[index + 1] : 0.0;
@@ -239,21 +236,85 @@ async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<Data
   return result;
 }
 
+async function parseResult(info: RaceInfo, resultHtml: string): Promise<DataResult> {
+  if (!resultHtml) {
+    logger.warn('結果がありません: ', info.date, info.courseName, info.raceNo, info.raceTitle);
+    return;
+  }
+  const root = parse(resultHtml);
+
+  /// レース情報取得
+  const resultOrderBody = root.querySelector('table.seiseki tbody');
+  const orderList = resultOrderBody.querySelectorAll('tr');
+  const order = orderList.map((tr, index) => {
+    const horseId = Number(tr.querySelector('td.umaban').textContent)
+    return { [index + 1]: horseId };
+  });
+
+  const resultRefundBodyList = root.querySelectorAll('table.kako-haraimoshi > tbody');
+
+  const refund: DataResultRefund = {};
+  resultRefundBodyList.forEach((tbody) => {
+    const refs = tbody.querySelectorAll('tr');
+
+    refs.forEach((tr) => {
+      const [typeElement, idsElement, valueElement] = tr.querySelectorAll('td');
+      const type = typeElement.textContent.trim();
+      const idsContent = idsElement.innerHTML.trim().split(/<br>/);
+      const valuesContent = valueElement.innerHTML.trim().split(/<br>/);
+
+      const ids = idsContent.map((v) => v.split('-').map((n) => Number(n)));
+      const values = valuesContent.map((v) => Number(v.replace(/[円,]/g, '').trim()));
+
+      if (type === '単勝') {
+        refund.win = (refund.win || []).concat(ids.map((horseId, index) => { return { horseId: horseId[0], amount: values[index] } }));
+      }
+      if (type === '複勝') {
+        refund.place = (refund.place || []).concat(ids.map((horseId, index) => { return { horseId: horseId[0], amount: values[index] } }));
+      }
+      if (type === '馬連') {
+        refund.quinella = (refund.quinella || []).concat(ids.map((horseId, index) => { return { horseId: [horseId[0], horseId[1]], amount: values[index] } }));
+      }
+      if (type === '馬単') {
+        refund.exacta = (refund.exacta || []).concat(ids.map((horseId, index) => { return { horseId: [horseId[0], horseId[1]], amount: values[index] } }));
+      }
+      if (type === 'ワイド') {
+        refund.quinellaPlace = (refund.quinellaPlace || []).concat(ids.map((horseId, index) => { return { horseId: [horseId[0], horseId[1]], amount: values[index] } }));
+      }
+      if (type === '3連複') {
+        refund.trio = (refund.trio || []).concat(ids.map((horseId, index) => { return { horseId: [horseId[0], horseId[1], horseId[2]], amount: values[index] } }));
+      }
+      if (type === '3連単') {
+        refund.trifecta = (refund.trifecta || []).concat(ids.map((horseId, index) => { return { horseId: [horseId[0], horseId[1], horseId[2]], amount: values[index] } }));
+      }
+    });
+  });
+
+  return {
+    order,
+    refund,
+  };
+}
+
+
 async function parseFile(file: string) {
   const dataJson = readFileSync(file);
   const { data, info } = JSON.parse(dataJson.toString()) as RaceData;
 
-  logger.info('-------------');
   logger.info(`${info.date} ${info.courseName}(${info.courseId}) ${info.raceNo}R ${info.raceTitle}`);
 
   if (data.entries.includes("このレースは中止になりました")) {
-    return {
-      cancelled: true,
-    }
+    return { cancelled: true }
   }
   const course = await parseCourse(info, data.entries);
   const entries = await parseEntries(data.entries);
   const trainings = await parseTraining(info, data.training);
+  const result = await parseResult(info, data.result);
+
+  if (!result || !trainings) {
+    console.log('skipped: ', JSON.stringify(course));
+    return { cancelled: true };
+  }
   
   entries.map((entry) => {
     const training = trainings.find((t) => t.horseId === entry.horseId)
@@ -264,13 +325,14 @@ async function parseFile(file: string) {
   return {
     _id: id,
     course,
-    entries
+    entries,
+    result
   };
 }
 
 
 FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then(async (files) => {
-  const db = new pouchdb('db');
+  const db = new pouchdb('data.db');
   const sortedFiles = files;
 
   for (const file of sortedFiles) {
@@ -279,8 +341,9 @@ FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then(async (files) =>
       continue;
     }
 
-    await db.get(data._id).then((value) => {
-      console.log('found: ', value._id);
+    await db.get(data._id).then(async (value) => {
+      const _rev = value._rev;
+      await db.put({ _rev, ...data });
     }).catch(async () => {
       console.log('put: ', data._id);
       await db.put(data);

@@ -50,4 +50,4 @@ deploy/
 dist/
 .vs/
 /data*/
-/racedb
+/*.db

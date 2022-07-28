@@ -156,6 +156,42 @@ export interface DataTraining {
   }[],
 }
 
+export interface DataResultOrder {
+  [index: number]: number;
+}
+
+export interface DataResultRefund {
+  win?: {
+    horseId: number;
+    amount: number;
+  }[],
+  place?: {
+    horseId: number;
+    amount: number;
+  }[],
+  quinella?: {
+    horseId: number[];
+    amount: number;
+  }[],
+  exacta?: {
+    horseId: number[];
+    amount: number;
+  }[],
+  quinellaPlace?: {
+    horseId: number[];
+    amount: number;
+  }[],
+  trio?: {
+    horseId: number[];
+    amount: number;
+  }[],
+  trifecta?: {
+    horseId: number[];
+    amount: number;
+  }[],
+}
+
 export interface DataResult {
-  _: null;
+  order: DataResultOrder[];
+  refund: DataResultRefund;
 }
