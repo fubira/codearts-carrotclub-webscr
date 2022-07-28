@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import pouchdb from 'pouchdb';
+import pouchdbFind from 'pouchdb-find';
 import log4js from 'log4js';
 import { readFileSync } from 'fs';
 import { exit } from 'process';
@@ -10,6 +12,7 @@ import commandLineUsage from 'command-line-usage';
 import { RaceData, RaceInfo, DataCourse, DataEntry, CourseType, CourseDirection, CourseCondition, CourseWeather, HorseSex, DataTraining } from './types';
 import dayjs from 'dayjs';
 
+pouchdb.plugin(pouchdbFind);
 const logger = log4js.getLogger();
 
 const options = [
@@ -49,14 +52,13 @@ async function parseCourse(info: RaceInfo, entriesHtml: string): Promise<DataCou
   const raceParams = root.querySelectorAll('div.racetitle_sub > p');
   const courseOpt = raceParams[0].textContent.trim(); 
   const courseInfo = raceParams[1].textContent.trim(); 
+  console.log(courseInfo);
 
-  const [,
-    distance,
-    type,
-    direction,
-    weather,
-    condition
-  ] = courseInfo.match(/(\d+)m\s\((.+)・(.+)\)\s(.+)・(.+?)\s/);
+  const [courseDist, courseState, courseWeather] = courseInfo.split(/\s/);
+  console.log({courseDist, courseState, courseWeather});
+  const [distance] = courseDist.match(/(\d+)m/);
+  const [type, direction] = courseState.match(/\((.*)・(.*)\)/);
+  const [weather, condition] = courseWeather.match(/(.*)・(.*)/);
 
   return {
     id: Number(info.courseId),
@@ -72,21 +74,6 @@ async function parseCourse(info: RaceInfo, entriesHtml: string): Promise<DataCou
 
 async function parseEntries(entriesHtml: string): Promise<DataEntry[]> {
   const root = parse(entriesHtml);
-
-  /// レース情報取得
-  const raceParams = root.querySelectorAll('div.racetitle_sub > p');
-  const raceOpt = raceParams[0].textContent.trim(); 
-  const raceCourseInfo = raceParams[1].textContent.trim(); 
-
-  const [,
-    courseDistance,
-    courseType,
-    courseDirection,
-    courseAir,
-    courseStat
-  ] = raceCourseInfo.match(/(\d+)m\s\((.+)・(.+)\)\s(.+)・(.+?)\s/);
-
-  console.log(raceOpt, courseDistance, courseType, courseDirection, courseAir, courseStat);
 
   /// 馬情報取得
   const tbody = root.querySelector('table.syutuba_sp tbody');
@@ -207,7 +194,6 @@ async function parseTraining(info: RaceInfo, trainingHtml: string): Promise<Data
 
         // 算出した2Fタイムを追加する
         lapValue.splice(-1, 0, last2);
-        console.log({ lapValue, last1, last3, avg3, last2 });
       }
 
       const [positionElement] = trainingTimeList.slice(-1);
@@ -260,6 +246,11 @@ async function parseFile(file: string) {
   logger.info('-------------');
   logger.info(`${info.date} ${info.courseName}(${info.courseId}) ${info.raceNo}R ${info.raceTitle}`);
 
+  if (data.entries.includes("このレースは中止になりました")) {
+    return {
+      cancelled: true,
+    }
+  }
   const course = await parseCourse(info, data.entries);
   const entries = await parseEntries(data.entries);
   const trainings = await parseTraining(info, data.training);
@@ -269,15 +260,32 @@ async function parseFile(file: string) {
     entry.training = training;
   })
 
-  console.log(JSON.stringify(course, null, 2));
-  console.log(JSON.stringify(entries, null, 2));
+  const id = `${info.date}:${info.courseId}:${info.raceNo}`;
+  return {
+    _id: id,
+    course,
+    entries
+  };
 }
 
 
-FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then((files) => {
-  const sortedFiles = files.slice(0, 1);
+FastGlob(`${args["root"]}/**/*.json`, { onlyFiles: true }).then(async (files) => {
+  const db = new pouchdb('db');
+  const sortedFiles = files;
 
-  Promise.all(sortedFiles.map(async (file) => {
-    await parseFile(file);
-  }));
+  for (const file of sortedFiles) {
+    const data = await parseFile(file);
+    if (data.cancelled) {
+      continue;
+    }
+
+    await db.get(data._id).then((value) => {
+      console.log('found: ', value._id);
+    }).catch(async () => {
+      console.log('put: ', data._id);
+      await db.put(data);
+    });
+  }
+
+  db.close();
 })
