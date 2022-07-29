@@ -193,19 +193,32 @@ export interface DBEntry {
   // 調教
   training?: DBTraining;
 }
-export type HorseSex = '牡' | '牝' | 'セン';
 
+export type HorseSex = '牡' | '牝' | 'セン';
 
 export interface DBResult {
   // 着順
-  order: DBResultOrder;
+  place: DBResultPlace[];
 
   // 払戻
   refund: DBResultRefund;
 }
 
-export interface DBResultOrder {
-  [index: number]: number;
+export interface DBResultPlace {
+  // 馬番号
+  horseId: number;
+
+  // 着順
+  order: number;
+
+  // 道中のポジション
+  position: number[];
+
+  // タイム (s)
+  timeSec: number;
+
+  // 上り3F (s)
+  last3fSec: number;
 }
 
 export interface DBResultRefund {

@@ -4,7 +4,7 @@ import { Types } from 'tateyama';
 
 pouchdb.plugin(pouchdbFind);
 
-const DB_PATH="./.db";
+const DB_PATH="./.db/";
 
 let _instance: PouchDB.Database<Types.DBRace>;
 

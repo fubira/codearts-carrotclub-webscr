@@ -28,6 +28,9 @@
   },
   "dependencies": {
     "@slack/web-api": "^6.7.0",
+    "@tensorflow/tfjs": "^3.19.0",
+    "@tensorflow/tfjs-node": "^3.19.0",
+    "@tensorflow/tfjs-node-gpu": "^3.19.0",
     "@types/pouchdb": "^6.4.0",
     "axios": "^0.26.0",
     "brain.js": "^2.0.0-beta.15",

@@ -33,8 +33,9 @@ function calcTrainingLogScore(log: Types.DBTrainingLog): [number, number, number
 export function makeTrainingData(data: Types.DBRace) {
   const result = data.entries.map((entry) => {
     const horseId = entry.horseId;
-    const totalOrders = Object.keys(data.result.order).length;
-    const resultOrder = data.result.order[horseId];
+    const totalOrders = Object.keys(data.result.place).length;
+    const horseResult = data.result.place.find((v) => v.horseId === horseId)
+    const resultOrder = horseResult.order;
     const resultOrderValue = (totalOrders - resultOrder) / totalOrders; 
     const entryLogGapArray: Array<number[]> = [[],[],[],[],[],[]];
 

@@ -207,12 +207,44 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
   /// レース情報取得
   const resultOrderBody = root.querySelector('table.seiseki tbody');
   const orderList = resultOrderBody.querySelectorAll('tr');
-  const order: Types.DBResultOrder = {};
-  
-  orderList.forEach((tr, index) => {
-    const horseId = Number(tr.querySelector('td.umaban').textContent)
-    order[horseId] = index + 1;
-  });
+  const place: Types.DBResultPlace[] = orderList.map((tr) => {
+    const TimeStringToSec = (timeStr: string) => {
+      const time = timeStr.trim();
+
+      // 競争中止等で空になる場合がある
+      if (!time.trim()) {
+        return 0;
+      }
+
+      // "9.99.9" という時間表示を秒に直す
+      const [, minStr, secStr] = timeStr.trim().match(/([0-9]+)?\.?([0-9][0-9]\.[0-9])/);
+      const min = (minStr && Number(minStr)) || 0;
+      const sec = (secStr && Number(secStr)) || 0;
+      return min * 60 + sec;
+    }
+
+    const tds = tr.querySelectorAll('td');
+
+    const tdOrder = tds[0];
+    const tdHorseId = tds[2];
+    const tdHorseInfo = tds[4];
+    const tdTime = tds[5];
+    const tdTimeValues = tdTime.querySelectorAll('p');
+
+    const order = Number(tdOrder.textContent);
+    const horseId = Number(tdHorseId.textContent)
+    const position = tdHorseInfo.querySelectorAll('dt.tuuka').filter((v) => v).map((p) => Number(p.textContent));
+    const timeSec = TimeStringToSec(tdTimeValues[0].textContent);
+    const last3fSec = TimeStringToSec(tdTimeValues[1].textContent.replace(/[()]/g, ''));
+
+    return {
+      horseId,
+      order,
+      position,
+      timeSec,
+      last3fSec,
+    };
+  }).sort((a, b) => a.horseId - b.horseId);
 
   const resultRefundBodyList = root.querySelectorAll('table.kako-haraimoshi > tbody');
 
@@ -254,7 +286,7 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
   });
 
   return {
-    order,
+    place,
     refund,
   };
 }
