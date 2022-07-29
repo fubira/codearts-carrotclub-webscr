@@ -29,6 +29,14 @@ export const scraping = async (
   await page.type('input[name="login_id"]', args["site-id"] || "");
   await page.type('input[name="pswd"]', args["site-pass"] || "");
   await page.click('input[name="submitbutton"]');
+  await page.waitForTimeout(randomWaitTime(500));
+  const errorElement = await page.$("p.error_message");
+
+  if (errorElement) {
+    logger.error('ログインできませんでした。ID/PASSWORDを確認してください');
+    browser.close();
+    return;
+  }
 
   for (let month = 1; month <= 12; month ++) {
     if (args["month"] !== undefined && args["month"] !== `${month}`) {

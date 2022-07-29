@@ -337,8 +337,5 @@ FastGlob(`${args["source"]}/**/*.json`, { onlyFiles: true }).then(async (files) 
     });
   }
 
-  db.createIndex({ index: { fields: ["date"] } });
-  db.createIndex({ index: { fields: ["training.horseName"] } });
-
   TateyamaDB.close();
 })
