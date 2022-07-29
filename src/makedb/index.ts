@@ -1,37 +1,18 @@
 import 'dotenv/config'
 import dayjs from 'dayjs';
-import FastGlob from 'fast-glob';
+import glob from 'fast-glob';
 import parse from 'node-html-parser';
 import { readFileSync } from 'fs';
-import { exit } from 'process';
-import commandLineArgs from 'command-line-args';
-import commandLineUsage from 'command-line-usage';
 
 import TateyamaDB from 'db';
 import logger from 'logger';
 
 import { Types } from 'tateyama';
 
-const options = [
-  { name: 'source', alias: 's', desc: "Source dir of site data", type: String, defaultValue: "./.site" },
-  { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
-];
-const args = commandLineArgs(options);
-
-if (args["help"]) {
-  console.log(commandLineUsage([{ header: 'convert', optionList: options }]));
-  exit(0);
-}
-
-if (!args["source"]) {
-  console.log(commandLineUsage([{ header: 'convert', optionList: options }]));
-  exit(0);
-}
-
-async function parseCourse(info: Types.RaceInfo, entriesHtml: string): Promise<Types.DataCourse> {
+async function parseCourse(_info: Types.ScrapeRaceInfo, entriesHtml: string): Promise<Types.DBCourse> {
   const root = parse(entriesHtml);
 
-  /// レースコース情報取得
+  // レースコース情報取得
   const raceParams = root.querySelectorAll('div.racetitle_sub > p');
   const courseOpt = raceParams[0].textContent.trim(); 
   const courseInfo = raceParams[1].textContent.trim(); 
@@ -42,8 +23,6 @@ async function parseCourse(info: Types.RaceInfo, entriesHtml: string): Promise<T
   const [weather, condition] = courseWeather.match(/(.*)・(.*)/);
 
   return {
-    id: Number(info.courseId),
-    name: info.courseName,
     distance: Number(distance),
     type: type as Types.CourseType,
     direction: direction as Types.CourseDirection,
@@ -53,19 +32,18 @@ async function parseCourse(info: Types.RaceInfo, entriesHtml: string): Promise<T
   }
 }
 
-async function parseEntries(entriesHtml: string): Promise<Types.DataEntry[]> {
+async function parseEntries(_info: Types.ScrapeRaceInfo, entriesHtml: string): Promise<Types.DBEntry[]> {
   const root = parse(entriesHtml);
 
   /// 馬情報取得
   const tbody = root.querySelector('table.syutuba_sp tbody');
-
   if (!tbody) {
     return;
   }
 
   const tr = tbody.querySelectorAll('tr');
 
-  const result = tr.map((record): Types.DataEntry => {
+  const result = tr.map((record): Types.DBEntry => {
     const bracketId = record.querySelector("td.waku > p").textContent.trim();
     const horseId = record.querySelector("td.umaban").textContent.trim();
     const horseName = record.querySelectorAll("td.left p")[0].textContent.trim();
@@ -96,7 +74,7 @@ async function parseEntries(entriesHtml: string): Promise<Types.DataEntry[]> {
   return result;
 }
 
-async function parseTraining(info: Types.RaceInfo, trainingHtml: string): Promise<Types.DataTraining[]> {
+async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): Promise<Types.DBTraining[]> {
   // 調教画面のHTMLはタグが正しく閉じられていないので調整しておく
   trainingHtml.replace(
     /<table class="default cyokyo" id=""><tbody>/g,
@@ -108,7 +86,7 @@ async function parseTraining(info: Types.RaceInfo, trainingHtml: string): Promis
   /// レース情報取得
   const trainingBodyList = root.querySelectorAll('table.cyokyo > tbody');
 
-  const result = trainingBodyList.map((tbody): Types.DataTraining => {
+  const result = trainingBodyList.map((tbody): Types.DBTraining => {
     // 2桁の月日に年を足す
     function monthdayToDate(yeardate: string, monthday: string) {
       let year = yeardate && Number(yeardate.slice(0, 4));
@@ -219,7 +197,7 @@ async function parseTraining(info: Types.RaceInfo, trainingHtml: string): Promis
   return result;
 }
 
-async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Types.DataResult> {
+async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Promise<Types.DBResult> {
   if (!resultHtml) {
     logger.warn('結果がありません: ', info.date, info.courseName, info.raceNo, info.raceTitle);
     return;
@@ -229,7 +207,7 @@ async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Ty
   /// レース情報取得
   const resultOrderBody = root.querySelector('table.seiseki tbody');
   const orderList = resultOrderBody.querySelectorAll('tr');
-  const order: Types.DataResultOrder = {};
+  const order: Types.DBResultOrder = {};
   
   orderList.forEach((tr, index) => {
     const horseId = Number(tr.querySelector('td.umaban').textContent)
@@ -238,7 +216,7 @@ async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Ty
 
   const resultRefundBodyList = root.querySelectorAll('table.kako-haraimoshi > tbody');
 
-  const refund: Types.DataResultRefund = {};
+  const refund: Types.DBResultRefund = {};
   resultRefundBodyList.forEach((tbody) => {
     const refs = tbody.querySelectorAll('tr');
 
@@ -282,23 +260,23 @@ async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Ty
 }
 
 
-async function parseFile(file: string): Promise<Types.DataRace | { cancelled?: true }> {
+async function parseScrapeFile(file: string): Promise<Types.DBRace> {
   const dataJson = readFileSync(file);
-  const { data, info } = JSON.parse(dataJson.toString()) as Types.RaceData;
+  const { rawHTML, ...data } = JSON.parse(dataJson.toString()) as Types.ScrapeRaceData;
 
-  logger.info(`${info.date} ${info.courseName}(${info.courseId}) ${info.raceNo}R ${info.raceTitle}`);
+  logger.info(`${data.date} ${data.courseName}(${data.courseId}) ${data.raceNo}R ${data.raceTitle}`);
 
-  if (data.entries.includes("このレースは中止になりました")) {
-    return { cancelled: true }
+  if (rawHTML.entries.includes("このレースは中止になりました")) {
+    return undefined;
   }
-  const course = await parseCourse(info, data.entries);
-  const entries = await parseEntries(data.entries);
-  const trainings = await parseTraining(info, data.training);
-  const result = await parseResult(info, data.result);
+
+  const course = await parseCourse(data, rawHTML.entries);
+  const entries = await parseEntries(data, rawHTML.entries);
+  const trainings = await parseTraining(data, rawHTML.training);
+  const result = await parseResult(data, rawHTML.result);
 
   if (!result || !trainings) {
-    console.log('skipped: ', JSON.stringify(course));
-    return { cancelled: true };
+    return undefined;
   }
   
   entries.map((entry) => {
@@ -306,9 +284,14 @@ async function parseFile(file: string): Promise<Types.DataRace | { cancelled?: t
     entry.training = training;
   })
 
-  const id = `${info.date}:${info.courseId}:${info.raceNo}`;
+  const id = `${data.date}:${data.courseId}:${data.raceNo}`;
   return {
     _id: id,
+    date: data.date,
+    courseId: Number(data.courseId),
+    courseName: data.courseName,
+    raceNo: Number(data.raceNo),
+    raceTitle: data.raceTitle,
     course,
     entries,
     result
@@ -316,26 +299,30 @@ async function parseFile(file: string): Promise<Types.DataRace | { cancelled?: t
 }
 
 
-FastGlob(`${args["source"]}/**/*.json`, { onlyFiles: true }).then(async (files) => {
-  const db = TateyamaDB.instance();
-  const sortedFiles = files;
+export default (options: any) => {
+  const sourceDir = options.sourceDir;
 
-  for (const file of sortedFiles) {
-    const result = await parseFile(file);
-    const data = result as Types.DataRace;
-    const cancelled = (result as any).cancelled;
+  glob(`${sourceDir}/**/*.json`, { onlyFiles: true }).then(async (files) => {
+    const db = TateyamaDB.instance();
 
-    if (cancelled) {
-      continue;
-    }
+    files.map(async (file) => {
+      const data = await parseScrapeFile(file) as Types.DBRace;
+      if (!data) {
+        return;
+      }
 
-    await db.get(data._id).then(async (value) => {
-      const _rev = value._rev;
-      await db.put({ _rev, ...data });
-    }).catch(async () => {
-      await db.put(data);
-    });
-  }
+      await db.get(data._id).then(async (value) => {
+        const _rev = value._rev;
+        await db.put({ _rev, ...data });
+      }).catch(async () => {
+        await db.put(data);
+      });
 
-  TateyamaDB.close();
-})
+    })
+
+    TateyamaDB.close();
+  });
+
+}
+
+

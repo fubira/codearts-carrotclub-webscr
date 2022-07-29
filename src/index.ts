@@ -2,6 +2,7 @@ import 'dotenv/config'
 import process from 'process';
 import { Command } from 'commander';
 
+import makedb from './makedb';
 import scrape from './scraping';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.3538.77 Safari/537.36';
@@ -28,5 +29,13 @@ program
   
     scrape(year, month, day, options);
   });
+
+program
+  .command('makedb')
+  .description('スクレイピングデータのDB化')
+  .option('-s, --source-dir', 'スクレイピングデータディレクトリの指定', ".site")
+  .action((options) => {
+    makedb(options);
+  })
 
 program.parse();

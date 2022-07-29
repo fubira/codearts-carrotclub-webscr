@@ -3,6 +3,9 @@
  */
 export type ScrapeRaceData = ScrapeRaceInfo & { rawHTML: ScrapeRaceRaw }
 
+/**
+ * keibabook smart レース情報
+ */
 export interface ScrapeRaceInfo {
   // 日付
   date: string;
@@ -21,7 +24,7 @@ export interface ScrapeRaceInfo {
 }
 
 /**
- * keibabook smart 生データ
+ * keibabook smart HTMLデータ
  */
 export interface ScrapeRaceRaw {
   // 出走表ページ 
@@ -40,18 +43,41 @@ export interface ScrapeRaceRaw {
   result?: string;
 }
 
-export type CourseType = '芝' | 'ダート';
-export type CourseDirection = '左' | '右';
-export type CourseWeather = '晴' | '曇' | '雨' | '小雨' | '雪' | '小雪';
-export type CourseCondition = '良' | '稍重' | '重' | '不良';
 
-export interface DataCourse {
-  // コースID
-  id: number;
+/**
+ * DB保存データ形定義
+ */
+
+export interface DBRace {
+  // データベースID
+  _id: string;
+
+  // レース日時
+  date: string;
+
+  // 競馬場ID
+  courseId: number;
 
   // 競馬場名
-  name: string;
+  courseName: string;
 
+  // レース番号
+  raceNo: number;
+
+  // レース名
+  raceTitle: string;
+  
+  // コース情報
+  course: DBCourse;
+
+  // 登録馬情報
+  entries: DBEntry[];
+
+  // レース結果
+  result: DBResult;
+}
+
+export interface DBCourse {
   // 距離
   distance: number;
   
@@ -71,9 +97,63 @@ export interface DataCourse {
   option: string;
 }
 
-export type HorseSex = '牡' | '牝' | 'セン';
+export type CourseType = '芝' | 'ダート';
+export type CourseDirection = '左' | '右';
+export type CourseWeather = '晴' | '曇' | '雨' | '小雨' | '雪' | '小雪';
+export type CourseCondition = '良' | '稍重' | '重' | '不良';
 
-export interface DataEntry {
+export interface DBTraining {
+  // 枠番
+  bracketId: number;
+
+  // 馬番
+  horseId: number;
+
+  // 馬名
+  horseName: string;
+
+  // コメント
+  comment: string;
+
+  // 調子
+  status: string;
+
+  // 調教ログ
+  logs: DBTrainingLog[];
+}
+
+export interface DBTrainingLog {
+  // 日時 YYYYMMDD
+  date: string,
+
+  // 調教コース
+  course: string,
+
+  // 調教コース状態
+  condition: string,
+
+  // コメント
+  comment: string,
+
+  // 調教回数
+  count: number,
+
+  // 走行位置
+  position: string,
+
+  // ラップタイム
+  lap: DBLapGap[],
+
+  // 併せ相手
+  partner?: string,
+}
+
+export interface DBLapGap {
+  lap?: number;
+  gap?: number;
+}
+
+export interface DBEntry {
   // 枠番
   bracketId: number;
 
@@ -111,105 +191,64 @@ export interface DataEntry {
   pedigree?: string;
 
   // 調教
-  training?: DataTraining;
+  training?: DBTraining;
+}
+export type HorseSex = '牡' | '牝' | 'セン';
+
+
+export interface DBResult {
+  // 着順
+  order: DBResultOrder;
+
+  // 払戻
+  refund: DBResultRefund;
 }
 
-
-export interface DataLapGap {
-  lap?: number;
-  gap?: number;
-}
-
-export interface DataTrainingLog {
-  // 日時 YYYYMMDD
-  date: string,
-
-  // 調教コース
-  course: string,
-
-  // 調教コース状態
-  condition: string,
-
-  // コメント
-  comment: string,
-
-  // 調教回数
-  count: number,
-
-  // 走行位置
-  position: string,
-
-  // ラップタイム
-  lap: DataLapGap[],
-
-  // 併せ相手
-  partner?: string,
-}
-
-export interface DataTraining {
-  // 枠番
-  bracketId: number;
-
-  // 馬番
-  horseId: number;
-
-  // 馬名
-  horseName: string;
-
-  // コメント
-  comment: string;
-
-  // 調子
-  status: string;
-
-  // 調教ログ
-  logs: DataTrainingLog[];
-}
-
-export interface DataResultOrder {
+export interface DBResultOrder {
   [index: number]: number;
 }
 
-export interface DataResultRefund {
+export interface DBResultRefund {
+  // 単勝
   win?: {
     horseId: number;
     amount: number;
   }[],
+
+  // 複勝
   place?: {
     horseId: number;
     amount: number;
   }[],
+
+  // 馬連
   quinella?: {
     horseId: number[];
     amount: number;
   }[],
+
+  // 馬単
   exacta?: {
     horseId: number[];
     amount: number;
   }[],
+
+  // ワイド
   quinellaPlace?: {
     horseId: number[];
     amount: number;
   }[],
+
+  // 三連複
   trio?: {
     horseId: number[];
     amount: number;
   }[],
+
+  // 三連単
   trifecta?: {
     horseId: number[];
     amount: number;
   }[],
-}
-
-export interface DataResult {
-  order: DataResultOrder;
-  refund: DataResultRefund;
-}
-
-export interface DataRace {
-  _id: string;
-  course: DataCourse;
-  entries: DataEntry[];
-  result: DataResult;
 }
 

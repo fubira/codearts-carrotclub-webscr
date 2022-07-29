@@ -33,15 +33,17 @@ async function pageKeibabookSmartLogin (page: puppeteer.Page, id: string, passwo
   await page.goto(`https://s.keibabook.co.jp/login/login`);
   await page.type('input[name="login_id"]', id || "");
   await page.type('input[name="pswd"]', password || "");
+
   await Promise.all([
     await page.click('input[name="submitbutton"]'),
-    await page.waitForNavigation({ waitUntil: ['load', 'networkidle2'] }),
+    await page.waitForNetworkIdle(),
   ]);
+
+  logger.info(`ユーザー[${id}]でログインしました`);
 
   const errorElement = await page.$("p.error_message");
   const errorElementProps = errorElement && await errorElement.getProperty('textContent');
   const errorText = removeTab(errorElementProps && await errorElementProps.jsonValue<any>());
-  console.log(errorText);
 
   if (errorText) {
     throw Error('ログインできませんでした。ID/PASSWORDを確認してください')
@@ -196,6 +198,8 @@ export const scraping = async (params: KeibabookScrapingParams): Promise<void> =
   const rangeMonth = params.month && Number(params.month);
   const rangeDay = params.day && Number(params.day);
   const rangeYearMonth = `${rangeYear}${String(rangeMonth).padStart(2, '0')}`;
+
+  logger.info(`取得範囲: ${rangeYear}.${rangeMonth || "*"}.${rangeDay || "*"}`);
 
   /**
    * データ取得ループ
