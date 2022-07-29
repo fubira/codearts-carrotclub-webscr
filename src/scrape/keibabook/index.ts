@@ -197,7 +197,6 @@ export const scraping = async (params: KeibabookScrapingParams): Promise<void> =
   const rangeYear = params.year && Number(params.year);
   const rangeMonth = params.month && Number(params.month);
   const rangeDay = params.day && Number(params.day);
-  const rangeYearMonth = `${rangeYear}${String(rangeMonth).padStart(2, '0')}`;
 
   logger.info(`取得範囲: ${rangeYear}.${rangeMonth || "*"}.${rangeDay || "*"}`);
 
@@ -205,18 +204,21 @@ export const scraping = async (params: KeibabookScrapingParams): Promise<void> =
    * データ取得ループ
    */
   for (let month = 1; month <= 12; month ++) {
-    if (rangeMonth && rangeMonth !== month) {
+    if (rangeMonth && (rangeMonth !== month)) {
+      console.log(rangeMonth, month, rangeMonth !== month);
       continue;
     }
 
     /**
      * 指定年月の開催日程一覧を取得
      */
-    const raceProgramList = await pageKeibabookSmartRaceProgram(page, rangeYearMonth);
+     const rangeYearMonth = `${rangeYear}${String(month).padStart(2, '0')}`;
+     const raceProgramList = await pageKeibabookSmartRaceProgram(page, rangeYearMonth);
 
     let wrote = 0;
     for (const raceProgram of raceProgramList) {
-      if (rangeDay && rangeDay !== Number(raceProgram.date.slice(-2))) {
+      if (rangeDay && (rangeDay !== Number(raceProgram.date.slice(-2)))) {
+        console.log(rangeDay, Number(raceProgram.date.slice(-2)));
         continue;
       }
 

@@ -4,7 +4,9 @@ import { Command } from 'commander';
 
 import makedb from './makedb';
 import dbutil from './dbutil';
-import scrape from './scraping';
+import scrape from './scrape';
+import train from './brain/train';
+import run from './brain/run';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.3538.77 Safari/537.36';
 
@@ -40,12 +42,30 @@ program
   })
 
 program
+  .command('train')
+  .description('機械学習の実行')
+  .argument('<id_regx>', '学習に使用するレースIDにマッチする正規表現文字列')
+  .option('--init', '起動時に学習データを初期化する', false)
+  .action((str, options) => {
+    train(str, options);
+  })
+
+program
+  .command('run')
+  .description('学習データをもとに予測を実行')
+  .argument('<id_regx>', '予測対象のレースIDにマッチする正規表現文字列')
+  .option('--init', '起動時に学習データを初期化する', false)
+  .action((str) => {
+    run(str);
+  })
+
+program
   .command('dbutil')
   .description('データベースの操作ツール')
   .argument('<sub-command>', 'string to sub command')
   .command('get')
-  .description('idを指定してデータを取得')
-  .argument('<id>', 'レース情報ID')
+  .description('DBからデータを取得')
+  .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
   .action((str) => {
     console.log(str);
     dbutil('get', str);

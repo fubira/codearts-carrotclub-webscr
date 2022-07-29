@@ -8,9 +8,6 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "start": "ts-node -r tsconfig-paths/register src/index.ts",
-    "scraping": "ts-node src/scraping/index.ts",
-    "learn": "ts-node src/learning/index.ts",
-    "makedb": "ts-node src/makedb/index.ts",
     "lint": "eslint src"
   },
   "author": "",

@@ -299,30 +299,27 @@ async function parseScrapeFile(file: string): Promise<Types.DBRace> {
 }
 
 
-export default (options: any) => {
+export default async (options: any) => {
   const sourceDir = options.sourceDir;
 
-  glob(`${sourceDir}/**/*.json`, { onlyFiles: true }).then(async (files) => {
-    const db = TateyamaDB.instance();
+  const db = await TateyamaDB.instance();
+  const files = await glob(`${sourceDir}/**/*.json`, { onlyFiles: true });
+  
+  for (const file of files) {
+    const data = await parseScrapeFile(file);
 
-    files.map(async (file) => {
-      const data = await parseScrapeFile(file) as Types.DBRace;
-      if (!data) {
-        return;
-      }
+    if (!data) {
+      continue;
+    }
 
-      await db.get(data._id).then(async (value) => {
-        const _rev = value._rev;
-        await db.put({ _rev, ...data });
-      }).catch(async () => {
-        await db.put(data);
-      });
+    try {
+      const { _rev } = await db.get(data._id);
 
-    })
+      await db.put({ _rev, ...data });
+    } catch (err) {
+      await db.put({ ...data });
+    }
+  }
 
-    TateyamaDB.close();
-  });
-
+  await TateyamaDB.close();
 }
-
-

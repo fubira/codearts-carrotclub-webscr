@@ -2,7 +2,7 @@ import TateyamaDB from 'db';
 import logger from 'logger';
 
 async function dbUtilGet(id: string) {
-  const db = TateyamaDB.instance();
+  const db = await TateyamaDB.instance();
 
   const { docs, warning } = await db.find({ selector: { _id: { $regex: `^${id}` } }});
 
