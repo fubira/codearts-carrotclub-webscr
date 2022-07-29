@@ -1,19 +1,16 @@
 import 'dotenv/config'
-import pouchdb from 'pouchdb';
-import pouchdbFind from 'pouchdb-find';
-import log4js from 'log4js';
-import { readFileSync } from 'fs';
-import { exit } from 'process';
+import dayjs from 'dayjs';
 import FastGlob from 'fast-glob';
 import parse from 'node-html-parser';
+import { readFileSync } from 'fs';
+import { exit } from 'process';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
-import { Types } from '../tateyama';
-import dayjs from 'dayjs';
+import TateyamaDB from 'db';
+import logger from 'logger';
 
-pouchdb.plugin(pouchdbFind);
-const logger = log4js.getLogger();
+import { Types } from 'tateyama';
 
 const options = [
   { name: 'source', alias: 's', desc: "Source dir of site data", type: String, defaultValue: "./.site" },
@@ -30,20 +27,6 @@ if (!args["source"]) {
   console.log(commandLineUsage([{ header: 'convert', optionList: options }]));
   exit(0);
 }
-
-log4js.configure({
-  appenders: {
-    out: {
-      type: 'stdout'
-    },
-  },
-  categories: {
-    default: {
-      appenders: ['out'],
-      level: 'debug'
-    }
-  }
-});
 
 async function parseCourse(info: Types.RaceInfo, entriesHtml: string): Promise<Types.DataCourse> {
   const root = parse(entriesHtml);
@@ -246,9 +229,11 @@ async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Ty
   /// レース情報取得
   const resultOrderBody = root.querySelector('table.seiseki tbody');
   const orderList = resultOrderBody.querySelectorAll('tr');
-  const order = orderList.map((tr, index) => {
+  const order: Types.DataResultOrder = {};
+  
+  orderList.forEach((tr, index) => {
     const horseId = Number(tr.querySelector('td.umaban').textContent)
-    return { [index + 1]: horseId };
+    order[horseId] = index + 1;
   });
 
   const resultRefundBodyList = root.querySelectorAll('table.kako-haraimoshi > tbody');
@@ -297,7 +282,7 @@ async function parseResult(info: Types.RaceInfo, resultHtml: string): Promise<Ty
 }
 
 
-async function parseFile(file: string) {
+async function parseFile(file: string): Promise<Types.DataRace | { cancelled?: true }> {
   const dataJson = readFileSync(file);
   const { data, info } = JSON.parse(dataJson.toString()) as Types.RaceData;
 
@@ -332,12 +317,15 @@ async function parseFile(file: string) {
 
 
 FastGlob(`${args["source"]}/**/*.json`, { onlyFiles: true }).then(async (files) => {
-  const db = new pouchdb('./.db');
+  const db = TateyamaDB.instance();
   const sortedFiles = files;
 
   for (const file of sortedFiles) {
-    const data = await parseFile(file);
-    if (data.cancelled) {
+    const result = await parseFile(file);
+    const data = result as Types.DataRace;
+    const cancelled = (result as any).cancelled;
+
+    if (cancelled) {
       continue;
     }
 
@@ -349,7 +337,8 @@ FastGlob(`${args["source"]}/**/*.json`, { onlyFiles: true }).then(async (files) 
     });
   }
 
-  db.createIndex({ index: { fields: ["course.date"] } });
+  db.createIndex({ index: { fields: ["date"] } });
   db.createIndex({ index: { fields: ["training.horseName"] } });
-  db.close();
+
+  TateyamaDB.close();
 })

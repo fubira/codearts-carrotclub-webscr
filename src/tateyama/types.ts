@@ -31,12 +31,6 @@ export type CourseDirection = '左' | '右';
 export type CourseWeather = '晴' | '曇' | '雨' | '小雨' | '雪' | '小雪';
 export type CourseCondition = '良' | '稍重' | '重' | '不良';
 
-export interface DataRace {
-  course: DataCourse;
-
-  entries: DataEntry[];
-}
-
 export interface DataCourse {
   // コースID
   id: number;
@@ -112,6 +106,32 @@ export interface DataLapGap {
   gap?: number;
 }
 
+export interface DataTrainingLog {
+  // 日時 YYYYMMDD
+  date: string,
+
+  // 調教コース
+  course: string,
+
+  // 調教コース状態
+  condition: string,
+
+  // コメント
+  comment: string,
+
+  // 調教回数
+  count: number,
+
+  // 走行位置
+  position: string,
+
+  // ラップタイム
+  lap: DataLapGap[],
+
+  // 併せ相手
+  partner?: string,
+}
+
 export interface DataTraining {
   // 枠番
   bracketId: number;
@@ -129,31 +149,7 @@ export interface DataTraining {
   status: string;
 
   // 調教ログ
-  logs: {
-    // 日時 YYYYMMDD
-    date: string,
-
-    // 調教コース
-    course: string,
-
-    // 調教コース状態
-    condition: string,
-
-    // コメント
-    comment: string,
-
-    // 調教回数
-    count: number,
-
-    // 走行位置
-    position: string,
-
-    // ラップタイム
-    lap: DataLapGap[],
-
-    // 併せ相手
-    partner?: string,
-  }[],
+  logs: DataTrainingLog[];
 }
 
 export interface DataResultOrder {
@@ -192,6 +188,14 @@ export interface DataResultRefund {
 }
 
 export interface DataResult {
-  order: DataResultOrder[];
+  order: DataResultOrder;
   refund: DataResultRefund;
 }
+
+export interface DataRace {
+  _id: string;
+  course: DataCourse;
+  entries: DataEntry[];
+  result: DataResult;
+}
+

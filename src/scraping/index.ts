@@ -1,14 +1,12 @@
 import 'dotenv/config'
-import log4js from 'log4js';
 import { exit } from 'process';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
+import logger from 'logger';
 
 import { scraping } from './keibabook';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { Types } from '../tateyama';
-
-const logger = log4js.getLogger();
 
 const options = [
   { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
@@ -32,20 +30,6 @@ if (!args["site-id"] || !args["site-pass"]) {
   console.log(commandLineUsage([{ header: 'tateyama-scraping', optionList: options }]));
   exit(0);
 }
-
-log4js.configure({
-  appenders: {
-    out: {
-      type: 'stdout'
-    },
-  },
-  categories: {
-    default: {
-      appenders: ['out'],
-      level: 'debug'
-    }
-  }
-});
 
 /**
  * 該当ページの既に取得済みのスクレイピング結果を返すハンドラ

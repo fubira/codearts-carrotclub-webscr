@@ -1,3 +1,5 @@
+import pouchdb from 'pouchdb';
+import pouchdbFind from 'pouchdb-find';
 import * as brain from 'brain.js';
 import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
 
@@ -6,13 +8,13 @@ import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 import { Types } from 'tateyama';
 import logger from 'logger';
-import TateyamaDB from 'db';
+
+pouchdb.plugin(pouchdbFind);
+const db = new pouchdb<Types.DataRace>('./.db');
+logger
 
 const options = [
   { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
-  { name: 'clean', alias: 'c', type: Boolean, defaultValue: false }, 
-  { name: 'train', alias: 't', type: Boolean, defaultValue: false }, 
-  { name: 'run', alias: 'r', type: Boolean, defaultValue: true }, 
 ];
 const args = commandLineArgs(options);
 
@@ -125,7 +127,6 @@ function makeTrainingData(data: Types.DataRace) {
 }
 
 async function main() {
-  const db = TateyamaDB.instance();
   const net = initializeNeuralNet();
 
   if (args["train"]) {
