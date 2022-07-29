@@ -1,89 +1,227 @@
 import puppeteer from 'puppeteer';
 
-import log4js from 'log4js';
-import { Types } from '../../tateyama';
-const logger = log4js.getLogger();
+import { Types } from 'tateyama';
+import logger from 'logger';
 
 const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
 const removeTab = (str: string) => str?.replace(/[\t]+/g, "").replace(/[\n]+/g, "\n").replace(/\n\u3000/g, "　").trim(); 
 
-export const scraping = async (
-  onGetCached: (info: Types.RaceInfo) => Types.RaceRawData,
-  onWrite: (cache: Types.RaceData) => void,
-  args: { [key: string]: any }
-): Promise<void> => {
+export interface KeibabookScrapingParams {
+  year?: string;
+  month?: string;
+  day?: string
+
+  noSandbox?: boolean;
+  proxy?: string;
+  userAgent?: string;
+
+  siteId: string;
+  sitePass: string;
+
+  onSaveCache: (data: Types.ScrapeRaceData) => void;
+  onLoadCache: (info: Types.ScrapeRaceInfo) => Types.ScrapeRaceRaw;
+}
+
+
+/**
+ * Keibabook Smart ログイン処理の実行
+ * @param page 
+ * @param id 
+ * @param password 
+ */
+async function pageKeibabookSmartLogin (page: puppeteer.Page, id: string, password: string) {
+  await page.goto(`https://s.keibabook.co.jp/login/login`);
+  await page.type('input[name="login_id"]', id || "");
+  await page.type('input[name="pswd"]', password || "");
+  await Promise.all([
+    await page.click('input[name="submitbutton"]'),
+    await page.waitForNavigation({ waitUntil: ['load', 'networkidle2'] }),
+  ]);
+
+  const errorElement = await page.$("p.error_message");
+  const errorElementProps = errorElement && await errorElement.getProperty('textContent');
+  const errorText = removeTab(errorElementProps && await errorElementProps.jsonValue<any>());
+  console.log(errorText);
+
+  if (errorText) {
+    throw Error('ログインできませんでした。ID/PASSWORDを確認してください')
+  }
+} 
+
+/**
+ * 開催日程の取得
+ * @param page 
+ */
+async function pageKeibabookSmartRaceProgram (page: puppeteer.Page, yearMonth: string) {
+  /**
+   * 指定年月の開催日程一覧を取得
+   */
+  try {
+    await page.goto(`https://s.keibabook.co.jp/cyuou/nittei/${yearMonth}`);
+    await page.waitForTimeout(randomWaitTime(500));
+  } catch (err) {
+    return undefined;
+  }
+
+  const programElements = await page.$$("li > div");
+  const programInfoList = await Promise.all(
+    programElements.map(async (hold) => {
+      const programLinkElement = await hold.$("a");
+      const programLinkProps = programLinkElement && await programLinkElement.getProperty('href');
+      const programLinkValue = removeTab(programLinkProps && await programLinkProps.jsonValue<any>());
+      const programTextElement = await hold.$('p.keibajyo');
+      const programTextProps = programLinkElement && await programTextElement.getProperty('textContent');
+      const programTextValue = removeTab(programTextProps && await programTextProps.jsonValue<any>());
+
+      const date = programLinkValue?.slice(-10).slice(0, 8);
+      const courseId = programLinkValue?.slice(-2);
+      const courseName = programTextValue;
+
+      return {
+        date,
+        courseId,
+        courseName,
+        link: programLinkValue,
+      };
+    })
+  );
+
+  return programInfoList.filter((program) => program.link && program.courseName);
+}
+
+/**
+ * レースページに移動し、各詳細データページのリンクアドレスを取得する
+ * @param page 
+ */
+ async function pageKeibabookSmartDetailLink (page: puppeteer.Page, racePageLink: string) {
+  // 指定レースへ遷移
+  try {
+    await page.goto(racePageLink);
+    await page.waitForTimeout(randomWaitTime(500));
+  } catch (err) {
+    return undefined;
+  }
+
+  // 出馬表ページの取得
+  const entriesLinkElement = await page.$('a[title="出馬表"]');
+  const entriesLinkProp = entriesLinkElement && await entriesLinkElement.getProperty('href');
+  const entriesLinkValue = removeTab(entriesLinkProp && await entriesLinkProp.jsonValue<any>());
+
+  // 調教ページの取得
+  const trainingLinkElement = await page.$('a[title="調教"]');
+  const trainingLinkProp = trainingLinkElement && await trainingLinkElement.getProperty('href');
+  const trainingLinkValue = removeTab(trainingLinkProp && await trainingLinkProp.jsonValue<any>());
+  
+  // 能力表ページの取得
+  const detailLinkElement = await page.$('a[title="能力表(HTML)"]');
+  const detailLinkProp = detailLinkElement && await detailLinkElement.getProperty('href');
+  const detailLinkValue = removeTab(detailLinkProp && await detailLinkProp.jsonValue<any>());
+  
+  // 血統ページの取得
+  // const bloodLinkElement = await page.$('a[title="血統表"]');
+  // const bloodLinkProp = bloodLinkElement && await bloodLinkElement.getProperty('href');
+  // const bloodLinkValue = removeTab(bloodLinkProp && await bloodLinkProp.jsonValue<any>());
+
+  // 結果ページの取得
+  const resultLinkElement = await page.$('a[title="レース結果"]');
+  const resultLinkProp = resultLinkElement && await resultLinkElement.getProperty('href');
+  const resultLinkValue = removeTab(resultLinkProp && await resultLinkProp.jsonValue<any>());
+
+  return {
+    entriesLink: entriesLinkValue,
+    trainingLink: trainingLinkValue,
+    detailLink: detailLinkValue,
+    resultLink: resultLinkValue,
+  }
+}
+
+/**
+ * 指定したページを取得する
+ * @param page 
+ */
+async function pageKeibabookSmartReadHtml (page: puppeteer.Page, link: string, cached: string) {
+  // 出馬表ページの取得
+  let html = cached;
+
+  if (!html && link) {
+    await page.goto(link);
+    await page.waitForTimeout(randomWaitTime(500));
+    html = await page.content();
+  }
+
+  if (!html) {
+    throw Error('HTMLの取得に失敗しました');
+  }
+
+  return html;
+}
+
+export const scraping = async (params: KeibabookScrapingParams): Promise<void> => {
+  /**
+   * Puppeteerの初期設定
+   */
   const opts = {
     args: [
-      args["no-sandbox"] && '--no-sandbox',
-      args["proxy"] && `--proxy-server ${args["proxy"]}`,
+      params.noSandbox && '--no-sandbox',
+      params.proxy && `--proxy-server ${params.proxy}`,
     ].filter((v) => v),
   };
-  const browser = await puppeteer.launch(opts);
   logger.info('Pupeteer Options: ', opts);
 
+  const browser = await puppeteer.launch(opts);
   const page = await browser.newPage();
-  page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.3538.77 Safari/537.36');
+  params.userAgent && page.setUserAgent(params.userAgent);
 
-  // login
-  await page.goto(`https://s.keibabook.co.jp/login/login`);
-  await page.type('input[name="login_id"]', args["site-id"] || "");
-  await page.type('input[name="pswd"]', args["site-pass"] || "");
-  await page.click('input[name="submitbutton"]');
-  await page.waitForTimeout(randomWaitTime(500));
-  const errorElement = await page.$("p.error_message");
-
-  if (errorElement) {
-    logger.error('ログインできませんでした。ID/PASSWORDを確認してください');
+  /**
+   * Keibabook smartにログインする
+   * 
+   * @note ログインできない場合は重要な情報が取れないため中断する
+   */
+  try {
+    await pageKeibabookSmartLogin(page, params.siteId, params.sitePass);
+  } catch (err) {
+    logger.error(err);
     browser.close();
     return;
   }
 
+  /**
+   * 取得する年月日情報を生成
+   * 
+   * 年は指定必須
+   * 月日が未指定ならば指定年の全ての月日、
+   * 日が未指定ならば指定年月の全ての日のデータを取得する
+   */
+  const rangeYear = params.year && Number(params.year);
+  const rangeMonth = params.month && Number(params.month);
+  const rangeDay = params.day && Number(params.day);
+  const rangeYearMonth = `${rangeYear}${String(rangeMonth).padStart(2, '0')}`;
+
+  /**
+   * データ取得ループ
+   */
   for (let month = 1; month <= 12; month ++) {
-    if (args["month"] !== undefined && args["month"] !== `${month}`) {
+    if (rangeMonth && rangeMonth !== month) {
       continue;
     }
 
-    const yearMonth = `${args["year"]}${String(month).padStart(2, '0')}`;
-
-    try {
-      await page.waitForTimeout(randomWaitTime(500));
-      await page.goto(`https://s.keibabook.co.jp/cyuou/nittei/${yearMonth}`);
-    } catch (err) {
-      continue;
-    }
-
-    // 指定した年月の全開催日を取得
-    const holdElements = await page.$$("li > div");
-    const holdInfoList = await Promise.all(
-      holdElements.map(async (hold) => {
-        const holdLinkElement = await hold.$("a");
-        const holdLinkProps = holdLinkElement && await holdLinkElement.getProperty('href');
-        const holdLinkValue = removeTab(holdLinkProps && await holdLinkProps.jsonValue<any>());
-        const holdTextElement = await hold.$('p.keibajyo');
-        const holdTextProps = holdLinkElement && await holdTextElement.getProperty('textContent');
-        const holdTextValue = removeTab(holdTextProps && await holdTextProps.jsonValue<any>());
-
-        return { link: holdLinkValue, text: holdTextValue };
-      })
-    );
+    /**
+     * 指定年月の開催日程一覧を取得
+     */
+    const raceProgramList = await pageKeibabookSmartRaceProgram(page, rangeYearMonth);
 
     let wrote = 0;
-    for (const holdInfo of holdInfoList) {
-      // 空の開催はスキップする
-      if (!holdInfo.link || !holdInfo.text) {
+    for (const raceProgram of raceProgramList) {
+      if (rangeDay && rangeDay !== Number(raceProgram.date.slice(-2))) {
         continue;
       }
 
-      const date = holdInfo.link?.slice(-10).slice(0, 8);
-      const courseId = holdInfo.link?.slice(-2);
-      const courseName = holdInfo.text;
-
       // 指定開催へ遷移
       try {
+        await page.goto(raceProgram.link);
         await page.waitForTimeout(randomWaitTime(500));
-        await page.goto(holdInfo.link);
       } catch (err) {
-        logger.error(`${err}: ${holdInfo.link}`);
+        logger.error(`${err}: ${raceProgram.link}`);
         continue;
       }
     
@@ -100,6 +238,7 @@ export const scraping = async (
 
       // レース取得順は念のためランダムに
       const sortedRaceList = raceList.sort(() => Math.random() - 0.5);
+
       for (const race of sortedRaceList) {
         if (!race.link || !race.title) {
           continue;
@@ -107,117 +246,53 @@ export const scraping = async (
 
         const raceNo = race.link.slice(-2);
         const raceTitle = race.title || "";
+        logger.info(`=== ${raceProgram.date} ${raceProgram.courseName} ${raceNo} ${raceTitle} `);
 
-        // 指定レースへ遷移
-        await page.waitForTimeout(randomWaitTime(500));
-        await page.goto(race.link);
+        // 指定レースページの詳細情報リンク取得
+        const pageLinks = await pageKeibabookSmartDetailLink(page, race.link);
 
         // レース情報
-        const raceInfo: Types.RaceInfo = {
-          date: date,
-          courseId: courseId,
-          courseName: courseName,
+        const raceInfo: Types.ScrapeRaceInfo = {
+          date: raceProgram.date,
+          courseId: raceProgram.courseId,
+          courseName: raceProgram.courseName,
           raceNo: raceNo,
           raceTitle: raceTitle
         };
 
-        logger.info(`=== ${date} ${courseName}${raceNo}_${raceTitle} `);
-
         // 既に取得済みのデータを読み込む
-        let cachedRawData: Types.RaceRawData;
-        if (onGetCached) {
-          cachedRawData = onGetCached(raceInfo);
+        let cachedRaw: Types.ScrapeRaceRaw;
+        if (params.onLoadCache) {
+          cachedRaw = params.onLoadCache(raceInfo);
         } 
 
-        // 出馬表ページの取得
-        const entriesLinkElement = await page.$('a[title="出馬表"]');
-        const entriesLinkProp = entriesLinkElement && await entriesLinkElement.getProperty('href');
-        const entriesLinkValue = removeTab(entriesLinkProp && await entriesLinkProp.jsonValue<any>());
-        let entriesHtml = cachedRawData?.entries;
+        // HTMLの取得
+        try {
+          const entriesHtml = await pageKeibabookSmartReadHtml(page, pageLinks.entriesLink, cachedRaw?.entries);
+          const trainingHtml = await pageKeibabookSmartReadHtml(page, pageLinks.trainingLink, cachedRaw?.training);
+          const detailHtml = await pageKeibabookSmartReadHtml(page, pageLinks.detailLink, cachedRaw?.detail);
+          const resultHtml = await pageKeibabookSmartReadHtml(page, pageLinks.resultLink, cachedRaw?.result);
+          // const bloodHtml = await pageKeibabookSmartReadHtml(page, pageLinks.bloodLink, cachedRaw?.blood);
 
-        if (!entriesHtml && entriesLinkValue) {
-          logger.info(`出馬表を取得しています...`);
-          await page.waitForTimeout(randomWaitTime(500));
-          await page.goto(entriesLinkValue);
-          entriesHtml = await page.content();
+          params.onSaveCache && params.onSaveCache({
+            ...raceInfo,
+            rawHTML: {
+              entries: entriesHtml,
+              training: trainingHtml,
+              detail: detailHtml,
+              result: resultHtml,
+            }
+          });
+
+          wrote += 1;
+        } catch (err) {
+          logger.warn(`${err}: このレースのデータ取得を中止します`);
         }
-
-        if (!entriesHtml) {
-          logger.info(`> 出馬表データがありませんでした。このレースの取得を中止します`);
-          // 出馬表データが取得できない場合、事前情報状態なのでスキップ
-          continue;
-        }
-
-        // 調教ページの取得
-        const trainingLinkElement = await page.$('a[title="調教"]');
-        const trainingLinkProp = trainingLinkElement && await trainingLinkElement.getProperty('href');
-        const trainingLinkValue = removeTab(trainingLinkProp && await trainingLinkProp.jsonValue<any>());
-        let trainingHtml = cachedRawData?.training;
-
-        if (!trainingHtml && trainingLinkValue) {
-          logger.info(`調教を取得しています...`);
-          await page.waitForTimeout(randomWaitTime(500));
-          await page.goto(trainingLinkValue);
-          trainingHtml = await page.content();
-        }
-
-        if (!trainingHtml) {
-          // 調教データが取得できない場合、事前情報状態なのでスキップ
-          logger.info(`> 調教データがありませんでした。このレースの取得を中止します`);
-          continue;
-        }
-        
-        // 血統ページの取得
-        const bloodLinkElement = await page.$('a[title="血統表"]');
-        const bloodLinkProp = bloodLinkElement && await bloodLinkElement.getProperty('href');
-        const bloodLinkValue = removeTab(bloodLinkProp && await bloodLinkProp.jsonValue<any>());
-        let bloodHtml = cachedRawData?.blood;
-
-        if (!bloodHtml && bloodLinkValue) {
-          logger.info(`血統表を取得しています...`);
-          await page.waitForTimeout(randomWaitTime(500));
-          await page.goto(bloodLinkValue);
-          bloodHtml = await page.content();
-        }
-
-        if (!bloodHtml) {
-          logger.info(`> 血統表データがありませんでした。このレースの取得を中止します`);
-          // 血統データが取得できない場合、事前情報状態なのでスキップ
-        }
-
-        // 結果ページの取得
-        const resultLinkElement = await page.$('a[title="レース結果"]');
-        const resultLinkProp = resultLinkElement && await resultLinkElement.getProperty('href');
-        const resultLinkValue = removeTab(resultLinkProp && await resultLinkProp.jsonValue<any>());
-        let resultHtml = cachedRawData?.result;
-
-        if (!resultHtml && resultLinkValue) {
-          logger.info(`レース結果を取得しています...`);
-          await page.waitForTimeout(randomWaitTime(500));
-          await page.goto(resultLinkValue);
-          resultHtml = await page.content();
-        }
-
-        if (!resultHtml) {
-          // 結果データが取得できない場合は出走前だが問題なし
-          // continue;
-        }
-
-        // 書き出し
-        const raceRawData = {
-          entries: entriesHtml,
-          training: trainingHtml,
-          blood: bloodHtml,
-          result: resultHtml,
-        }
-        onWrite && onWrite({ info: raceInfo, data: raceRawData });
-
-        wrote += 1;
       }
     }
 
     if (wrote > 0) {
-      await page.waitForTimeout(randomWaitTime(5000));
+      await page.waitForTimeout(randomWaitTime(10000));
     }
   }
   browser.close();

@@ -1,77 +1,80 @@
 import 'dotenv/config'
-import { exit } from 'process';
-import commandLineArgs from 'command-line-args';
-import commandLineUsage from 'command-line-usage';
+import fs from 'fs';
+
+import { Types } from 'tateyama';
 import logger from 'logger';
 
-import { scraping } from './keibabook';
-import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
-import { Types } from '../tateyama';
+import { scraping, KeibabookScrapingParams } from './keibabook';
 
-const options = [
-  { name: 'help', alias: 'h', type: Boolean, defaultValue: false }, 
-  { name: 'no-sandbox', type: Boolean, defaultValue: false }, 
-  { name: 'site-id', alias: 'i', type: String, defaultValue: process.env.SITE_ID || "" }, 
-  { name: 'site-pass', alias: 'p', type: String, defaultValue: process.env.SITE_PASS || "" }, 
-  { name: 'output-dir', alias: 'd', type: String, defaultValue: "./.site" }, 
-  { name: 'proxy', alias: 'x', type: String, defaultValue: process.env.HTTP_PROXY || "" }, 
-  { name: 'year', alias: 'y', type: String, defaultValue: `${new Date().getFullYear()}` }, 
-  { name: 'month', alias: 'm', type: String }, 
-];
-const args = commandLineArgs(options);
+export default (year: string | undefined, month: string | undefined, day: string | undefined, options: any) => {
+  /**
+   * キャッシュ用ファイルパスの取得
+   * @param race 
+   * @returns 
+   */
+  const getRaceCachePath = (info: Types.ScrapeRaceInfo) => {
+    const dir = `${options.outputDir}/${info.date}`;
+    const fileName = `${info.courseName}${String(info.raceNo).padStart(2, '0')}_${info.raceTitle}`;
 
-if (args["help"]) {
-  console.log(commandLineUsage([{ header: 'tateyama-scraping', optionList: options }]));
-  exit(0);
-}
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
 
-if (!args["site-id"] || !args["site-pass"]) {
-  console.log("Please set Site ID and Password.");
-  console.log(commandLineUsage([{ header: 'tateyama-scraping', optionList: options }]));
-  exit(0);
-}
+    return `${dir}/${fileName}.json`;
+  }
 
-/**
- * 該当ページの既に取得済みのスクレイピング結果を返すハンドラ
- * 
- * @param info 
- */
-const onGetCached = (info: Types.RaceInfo): Types.RaceRawData => {
-  const { date, courseName, raceNo, raceTitle } = info;
-  const dir = `${args["output-dir"]}/${date}`;
-  const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
+  /**
+   * 該当ページの既に取得済みのスクレイピング結果を返すハンドラ
+   * 
+   * @param info
+   */
+  const onLoadCache = (info: Types.ScrapeRaceInfo): Types.ScrapeRaceRaw => {
+    const path = getRaceCachePath(info);
+    let raw: Types.ScrapeRaceRaw;
 
-  if (existsSync(`${dir}/${fileName}.json`)) {
+    if (fs.existsSync(path)) {
+      try {
+        const json = fs.readFileSync(path);
+        const raceData = JSON.parse(json.toString()) as Types.ScrapeRaceData;
+
+        raw = raceData.rawHTML;
+      } catch (err) {
+        logger.error(err);
+      }
+    }
+
+    return raw;
+  }
+
+  /**
+   * スクレイピング結果を保存するハンドラ
+   * @param data 
+   */
+  const onSaveCache = (data: Types.ScrapeRaceData) => {
     try {
-      const data = readFileSync(`${dir}/${fileName}.json`);
-      const rawData = JSON.parse(data.toString())?.data as Types.RaceRawData;
-      return rawData;
+      fs.writeFileSync(getRaceCachePath(data), JSON.stringify(data, undefined, 2));
     } catch (err) {
       logger.error(err);
     }
   }
 
-  return undefined;
-}
+  /**
+   * スクレイピング処理の実行
+   */
+  const params: KeibabookScrapingParams = {
+    year,
+    month,
+    day,
+    ...options,
 
-/**
- * スクレイピング結果を保存するハンドラ
- * @param data 
- */
-const onWrite = (data: Types.RaceData) => {
-  const { date, courseName, raceNo, raceTitle } = data.info;
-  const dir = `${args["output-dir"]}/${date}`;
-  const fileName = `${courseName}${String(raceNo).padStart(2, '0')}_${raceTitle}`;
-
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
+    onSaveCache,
+    onLoadCache,
   }
 
-  writeFileSync(`${dir}/${fileName}.json`, JSON.stringify(data, undefined, 2));
-}
+  scraping(params).catch((err)=> {
+    logger.error(err);
+  }).finally(() => {
+    logger.info("complete.");
+  });
 
-scraping(onGetCached, onWrite, args).catch((err)=> {
-  logger.error(err);
-}).finally(() => {
-  logger.info("complete.");
-});
+}

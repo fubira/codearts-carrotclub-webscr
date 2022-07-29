@@ -1,29 +1,43 @@
-export interface ScrapingParams {
-  "year": string;
-  "site-id": string;
-  "site-pass": string;
-  "proxy-server": string;
-  "no-sandbox": boolean;
-}
+/**
+ * スクレイピングレースデータ
+ */
+export type ScrapeRaceData = ScrapeRaceInfo & { rawHTML: ScrapeRaceRaw }
 
-export interface RaceData {
-  info: RaceInfo;
-  data: RaceRawData;
-}
-
-export interface RaceInfo {
+export interface ScrapeRaceInfo {
+  // 日付
   date: string;
+
+  // コース番号
   courseId: string;
+
+  // コース名
   courseName: string;
+
+  // レース番号
   raceNo: string;
+
+  // レース名
   raceTitle: string;
 }
 
-export interface RaceRawData {
-  entries: string;
-  training: string;
-  blood: string;
-  result: string;
+/**
+ * keibabook smart 生データ
+ */
+export interface ScrapeRaceRaw {
+  // 出走表ページ 
+  entries?: string;
+
+  // 能力表ページ
+  detail?: string;
+
+  // 調教ページ
+  training?: string;
+
+  // 血統表ページ (deprecated)
+  blood?: string;
+
+  // 結果ページ
+  result?: string;
 }
 
 export type CourseType = '芝' | 'ダート';
