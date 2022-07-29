@@ -198,13 +198,13 @@ export type HorseSex = '牡' | '牝' | 'セン';
 
 export interface DBResult {
   // 着順
-  place: DBResultPlace[];
+  detail: DBResultDetail[];
 
   // 払戻
   refund: DBResultRefund;
 }
 
-export interface DBResultPlace {
+export interface DBResultDetail {
   // 馬番号
   horseId: number;
 
@@ -213,6 +213,9 @@ export interface DBResultPlace {
 
   // 道中のポジション
   position: number[];
+
+  // 道中不利
+  disadvantage: boolean[];
 
   // タイム (s)
   timeSec: number;

@@ -207,7 +207,7 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
   /// レース情報取得
   const resultOrderBody = root.querySelector('table.seiseki tbody');
   const orderList = resultOrderBody.querySelectorAll('tr');
-  const place: Types.DBResultPlace[] = orderList.map((tr) => {
+  const detail: Types.DBResultDetail[] = orderList.map((tr) => {
     const TimeStringToSec = (timeStr: string) => {
       const time = timeStr.trim();
 
@@ -233,14 +233,34 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
 
     const order = Number(tdOrder.textContent);
     const horseId = Number(tdHorseId.textContent)
-    const position = tdHorseInfo.querySelectorAll('dt.tuuka').filter((v) => v).map((p) => Number(p.textContent));
     const timeSec = TimeStringToSec(tdTimeValues[0].textContent);
     const last3fSec = TimeStringToSec(tdTimeValues[1].textContent.replace(/[()]/g, ''));
+
+    //
+    // 道中ポジションを数値に変換する
+    //
+    // 不利を受けた際の位置取りは丸囲い数値で表示されるため、数字に戻すには変換が必要
+    //
+    const convertPositionToNumber = (pstr: string) => {
+      const str = pstr
+        .replace(/[\u2460-\u2468]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x242F)) // ①-⑨
+        .replace(/[\u2469-\u2472]/g, (ch) => `1${String.fromCharCode(ch.charCodeAt(0) - 0x2439)}`); // ⑩-⑲
+      return Number(str);
+    }
+    const positionElement = tdHorseInfo.querySelectorAll('ul.tuka li').filter((v) => v.textContent);
+    const position = positionElement.map((p) => convertPositionToNumber(p.textContent));
+
+    // 道中不利があったかどうか
+    const hasDisadvantage = (pstr: string): boolean => {
+      return !!pstr.match(/[\u2460-\u2472]/);
+    }
+    const disadvantage = positionElement.map((p) => hasDisadvantage(p.textContent));
 
     return {
       horseId,
       order,
       position,
+      disadvantage,
       timeSec,
       last3fSec,
     };
@@ -286,7 +306,7 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
   });
 
   return {
-    place,
+    detail,
     refund,
   };
 }
