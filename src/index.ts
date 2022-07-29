@@ -3,6 +3,7 @@ import process from 'process';
 import { Command } from 'commander';
 
 import makedb from './makedb';
+import dbutil from './dbutil';
 import scrape from './scraping';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.3538.77 Safari/537.36';
@@ -36,6 +37,18 @@ program
   .option('-s, --source-dir', 'スクレイピングデータディレクトリの指定', ".site")
   .action((options) => {
     makedb(options);
+  })
+
+program
+  .command('dbutil')
+  .description('データベースの操作ツール')
+  .argument('<sub-command>', 'string to sub command')
+  .command('get')
+  .description('idを指定してデータを取得')
+  .argument('<id>', 'レース情報ID')
+  .action((str) => {
+    console.log(str);
+    dbutil('get', str);
   })
 
 program.parse();
