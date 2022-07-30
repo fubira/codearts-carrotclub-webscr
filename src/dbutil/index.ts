@@ -1,10 +1,9 @@
 import TateyamaDB from 'db';
 import logger from 'logger';
 
-async function dbUtilGet(id: string) {
-  const db = await TateyamaDB.instance();
+async function dbUtilGet(idReg: string) {
+  const { docs, warning } = await TateyamaDB.query(idReg);
 
-  const { docs, warning } = await db.find({ selector: { _id: { $regex: `^${id}` } }});
   if (docs) {
     logger.info(`${docs.length}件のデータがマッチしました`);
   }
@@ -13,7 +12,6 @@ async function dbUtilGet(id: string) {
   }
 
   for (const doc of docs) {
-    console.log(`${doc?._id} - ${doc?._rev}`);
     console.log(JSON.stringify(doc, undefined, 2));
   }
 }

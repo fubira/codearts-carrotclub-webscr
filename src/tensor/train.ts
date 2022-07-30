@@ -6,7 +6,7 @@ import TateyamaDB from 'db';
 import logger from 'logger';
 
 import { Types } from 'tateyama';
-import { makeTrainingData } from 'brain/data';
+import { makeTrainingData } from 'dataset/data';
 
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;

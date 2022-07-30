@@ -30,7 +30,20 @@ async function createIndex() {
   await _instance.createIndex({ index: { fields: ["training.horseName"] } });
 }
 
+async function query(idRegex: string) : Promise<{ docs: Types.DBRace[], warning: string }> {
+  const db = await instance();
+
+  const { docs, warning } = await db.find({
+    selector: { _id: { $regex: idRegex } }
+  });
+
+  db.close();
+  return { docs, warning };
+}
+
+
 export default {
   instance,
+  query,
   close,
 }

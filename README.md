@@ -29,23 +29,20 @@ yarn start makedb
 
 ./.db ディレクトリが生成されます。
 
-### 3. 学習実行
+### 3. DBからデータセットを生成
+
 
 ```sh
-yarn start train
+# 2022年1月～6月までのデータを学習用として出力
+yarn start dataset -o "20220[1-6]" train.json
+
+# 2022年7月のデータを検証用として出力
+yarn start dataset -o "202207" test.json
 ```
 
-### 4. 予想実行
+### 4. 機械学習と検証
 
 ```sh
-yarn start run
-```
-
-### 実行例
-
-```sh
-# 2022年の1～6月のデータを学習する
-yarn start train "20220[1-6]" --clean
-# 2022年の7～8月のデータを予想する
-yarn start run "202207"
+# 学習状況を初期化し、学習データとして train.json 検証データとして test.json を指定する
+yarn start run --init --train-data train.json --test-data test.json 
 ```

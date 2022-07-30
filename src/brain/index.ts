@@ -1,11 +1,6 @@
 import * as brain from 'brain.js';
 import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
-
-import TateyamaDB from 'db';
 import logger from 'logger';
-
-import { Types } from 'tateyama';
-import { makeTrainingData } from 'brain/data';
 
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
@@ -36,35 +31,28 @@ function finalizeNeuralNet(net: any) {
   writeFileSync(TRAIN_JSON, json);
 }
 
-
-export default async (idReg: string, options: { init: boolean, dry: boolean }) => {
+export default async (options: { init: boolean, trainData: string, testData: string }) => {
   try {
-    const db = await TateyamaDB.instance();
     const net = initializeNeuralNet({
       init: options.init
     });
-  
-    const { docs, warning } = await db.find({
-      selector: { _id: { $regex: idReg } }
-    });
-    if (docs) {
-      logger.info(`${docs.length}件のデータがマッチしました`);
+
+    const trainJSON = options.trainData && JSON.parse(readFileSync(options.trainData).toString());
+    const testJSON = options.testData && JSON.parse(readFileSync(options.testData).toString());
+    
+
+    if (trainJSON) {
+      net.train(trainJSON);
     }
-    if (warning) {
-      logger.warn(warning);
-    }
-  
-    const trainingData = docs.map((data: Types.DBRace) => makeTrainingData(data)).flat();
-    if (options.dry) {
-      logger.info(JSON.stringify(trainingData, null, 2));
-    } else {
-      net.train(trainingData);
+
+    if (testJSON) {
+      net.run(testJSON);
     }
 
     finalizeNeuralNet(net);
   } catch (err) {
     logger.error(err);
   } finally {
-    logger.info("train done.");
+    logger.info("train complete.");
   }
 }
