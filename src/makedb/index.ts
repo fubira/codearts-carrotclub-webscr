@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 import TateyamaDB from 'db';
 import logger from 'logger';
 
-import { Types } from 'tateyama';
+import { Helper, Types } from 'tateyama';
 
 async function parseCourse(_info: Types.ScrapeRaceInfo, entriesHtml: string): Promise<Types.DBCourse> {
   const root = parse(entriesHtml);
@@ -161,16 +161,18 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
       const trainingCount = countValue;
       const trainingLapGap: Array<Types.DBLapGap> = [];
 
-      let totalGap = 0;
+      let prevGap = 0;
       lapValue.forEach((value, index, array) => {
-        const lap = Math.round(value * 10) / 10;
+        const lap = Helper.RoundTime(value);
         const nextLap = (array.length > index) ? array[index + 1] : 0.0;
-        const gap = nextLap ? Math.round((lap - nextLap) * 10 ) / 10 : lap;
+        const gap = nextLap ? Helper.RoundTime(lap - nextLap) : lap;
+        const accel = prevGap !== 0 ? Helper.RoundTime(prevGap - gap) : 0;
 
         if (lap > 0) {
-          totalGap = Math.round((totalGap + gap) * 10) / 10;
-          trainingLapGap.push({ lap, gap, totalGap });
+          trainingLapGap.push({ lap, gap, accel });
+          prevGap = gap;
         }
+
       });
 
       const trainingPosition = positionElement?.textContent;

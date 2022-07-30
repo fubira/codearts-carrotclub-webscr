@@ -46,7 +46,9 @@ program
   .description('機械学習の実行')
   .argument('<id_regx>', '学習に使用するレースIDにマッチする正規表現文字列')
   .option('--init', '起動時に学習データを初期化する', false)
+  .option('--dry', 'データ生成の実を行い、学習を実行しない', false)
   .action((str, options) => {
+    console.log(options);
     train(str, options);
   })
 

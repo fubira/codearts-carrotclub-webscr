@@ -154,7 +154,7 @@ export interface DBTrainingLog {
 export interface DBLapGap {
   lap?: number;
   gap?: number;
-  totalGap?: number;
+  accel?: number;
 }
 
 export interface DBEntry {

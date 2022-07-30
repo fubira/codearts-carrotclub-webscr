@@ -1,6 +1,7 @@
 import { Types } from 'tateyama';
 
-function calcTrainingLogScore(log: Types.DBTrainingLog): [number, number, number, number] {
+function calcTrainingLogScore(log: Types.DBTrainingLog): [number, number, number, number, number, number, number, number] {
+  /*
   let baseGap: number[] = [];
   if (log.course.includes('美南Ｗ')) {
     baseGap = [14.0, 13.3, 12.2, 11.0];
@@ -28,6 +29,14 @@ function calcTrainingLogScore(log: Types.DBTrainingLog): [number, number, number
     (baseGap[2] / (log.lap[4]?.gap || 20)) * 1.2,
     (baseGap[3] / (log.lap[5]?.gap || 20)) * 1.4
   ];
+  */
+  const lap4 = log.lap.slice(-4);
+  return [
+    lap4[0]?.gap, lap4[0]?.accel,
+    lap4[1]?.gap, lap4[1]?.accel,
+    lap4[2]?.gap, lap4[2]?.accel,
+    lap4[3]?.gap, lap4[3]?.accel,
+  ];
 }
 
 export function makeTrainingData(data: Types.DBRace) {
@@ -43,13 +52,17 @@ export function makeTrainingData(data: Types.DBRace) {
       if (entry.training?.logs[index]) {
         entryLogGapArray[index] = calcTrainingLogScore(entry.training.logs[index]);
       } else {
-        entryLogGapArray[index] = [0, 0, 0, 0];
+        entryLogGapArray[index] = [0, 0, 0, 0, 0, 0, 0, 0];
       }
     }
 
     const entryLogGapFlat = entryLogGapArray?.flat(1) || [];
 
     return {
+      info: {
+        horseId,
+        horseName: entry.horseName,
+      },
       input: [
         ...entryLogGapFlat,
       ],

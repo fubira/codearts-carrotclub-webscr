@@ -46,3 +46,12 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
     case 'セン': return 2;
   }
 }
+
+/**
+ * 数値を小数点以下一桁で丸める
+ * @param value 
+ * @returns 
+ */
+export const RoundTime = (value: number) => {
+  return Math.round(value * 10) / 10;
+}

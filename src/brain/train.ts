@@ -10,7 +10,7 @@ import { makeTrainingData } from 'brain/data';
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
 
-function initializeNeuralNet(opts?: { init?: boolean }) {
+function initializeNeuralNet(opts?: { init?: boolean, dry?: boolean }) {
   const net = new brain.NeuralNetwork();
 
   if (!existsSync(LEARNING_DIR)) {
@@ -37,7 +37,7 @@ function finalizeNeuralNet(net: any) {
 }
 
 
-export default async (idReg: string, options: { init: boolean }) => {
+export default async (idReg: string, options: { init: boolean, dry: boolean }) => {
   try {
     const db = await TateyamaDB.instance();
     const net = initializeNeuralNet({
@@ -55,7 +55,11 @@ export default async (idReg: string, options: { init: boolean }) => {
     }
   
     const trainingData = docs.map((data: Types.DBRace) => makeTrainingData(data)).flat();
-    net.train(trainingData);
+    if (options.dry) {
+      logger.info(JSON.stringify(trainingData, null, 2));
+    } else {
+      net.train(trainingData);
+    }
 
     finalizeNeuralNet(net);
   } catch (err) {
