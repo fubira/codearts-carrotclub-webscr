@@ -49,8 +49,6 @@ function learning(data: Types.DBRace[], options) {
   finalizeNeuralNet(net);
 }
 
-function findData()
-
 
 export default async (idReg: string, options: { init: boolean }) => {
   try {
@@ -59,9 +57,13 @@ export default async (idReg: string, options: { init: boolean }) => {
     const { docs, warning } = await db.find({
       selector: { _id: { $regex: idReg } }
     });
-    warning && logger.warn(warning);
-    logger.info(`${docs.length}件のデータがマッチしました`);
-
+    if (docs) {
+      logger.info(`${docs.length}件のデータがマッチしました`);
+    }
+    if (warning) {
+      logger.warn(warning);
+    }
+  
     learning(docs, options);
 
   } catch (err) {

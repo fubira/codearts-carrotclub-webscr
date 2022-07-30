@@ -118,6 +118,7 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
       const trainingInfo = trainingInfoElements[index];
 
       // 情報枠 left(日付、コース、馬場状態)、right(コメント) の取得
+      const infoPrevious = trainingInfo.querySelectorAll('dt');
       const infoLeft = trainingInfo.querySelector('dt.left');
       const infoRight = trainingInfo.querySelector('dt.right');
       const [
@@ -126,6 +127,7 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
         trainingCourseCondition
       ] = infoLeft.textContent.split(/\s/);
       const trainingComment = infoRight.textContent;
+      const trainingPrev = infoPrevious[0].textContent.includes("前回");
 
       // 追切1本分のタイム情報
       const trainingTimeList = tbody.querySelectorAll('tr.time td');
@@ -157,15 +159,17 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
 
       const [positionElement] = trainingTimeList.slice(-1);
       const trainingCount = countValue;
-      const trainingLapGap: Array<{ lap?: number, gap?: number }> = [];
+      const trainingLapGap: Array<Types.DBLapGap> = [];
 
+      let totalGap = 0;
       lapValue.forEach((value, index, array) => {
         const lap = Math.round(value * 10) / 10;
         const nextLap = (array.length > index) ? array[index + 1] : 0.0;
         const gap = nextLap ? Math.round((lap - nextLap) * 10 ) / 10 : lap;
 
         if (lap > 0) {
-          trainingLapGap.push({ lap, gap });
+          totalGap = Math.round((totalGap + gap) * 10) / 10;
+          trainingLapGap.push({ lap, gap, totalGap });
         }
       });
 
@@ -174,6 +178,7 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
 
       return {
         date: monthdayToDate(info.date, trainingDate),
+        previous: trainingPrev,
         course: trainingCourse,
         condition: trainingCourseCondition,
         comment: trainingComment,

@@ -34,9 +34,13 @@ export default async (idReg: string) => {
     const { docs, warning } = await db.find({
       selector: { _id: { $regex: idReg } }
     });
-    warning && logger.warn(warning);
-    logger.info(`${docs.length}件のデータがマッチしました`);
-
+    if (docs) {
+      logger.info(`${docs.length}件のデータがマッチしました`);
+    }
+    if (warning) {
+      logger.warn(warning);
+    }
+  
     docs.forEach((data: Types.DBRace) => {
       const trainingData = makeTrainingData(data);
 

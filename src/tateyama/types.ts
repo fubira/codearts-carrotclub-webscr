@@ -126,6 +126,9 @@ export interface DBTrainingLog {
   // 日時 YYYYMMDD
   date: string,
 
+  // 前走直前追切
+  previous?: boolean,
+
   // 調教コース
   course: string,
 
@@ -151,6 +154,7 @@ export interface DBTrainingLog {
 export interface DBLapGap {
   lap?: number;
   gap?: number;
+  totalGap?: number;
 }
 
 export interface DBEntry {

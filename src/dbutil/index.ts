@@ -5,7 +5,9 @@ async function dbUtilGet(id: string) {
   const db = await TateyamaDB.instance();
 
   const { docs, warning } = await db.find({ selector: { _id: { $regex: `^${id}` } }});
-
+  if (docs) {
+    logger.info(`${docs.length}件のデータがマッチしました`);
+  }
   if (warning) {
     logger.warn(warning);
   }

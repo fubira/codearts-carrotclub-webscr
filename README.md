@@ -24,7 +24,7 @@ Smart有料アカウントを想定しているので、環境変数SITE_ID, SIT
 ### 2. スクレイピングしたデータを分析してDB化
 
 ```sh
-yarn makedb
+yarn start makedb
 ```
 
 ./.db ディレクトリが生成されます。
@@ -32,9 +32,20 @@ yarn makedb
 ### 3. 学習実行
 
 ```sh
-yarn learning
+yarn start train
 ```
 
 ### 4. 予想実行
 
-未定
+```sh
+yarn start run
+```
+
+### 実行例
+
+```sh
+# 2022年の1～6月のデータを学習する
+yarn start train "20220[1-6]" --clean
+# 2022年の7～8月のデータを予想する
+yarn start run "202207"
+```
