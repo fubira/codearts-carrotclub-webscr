@@ -204,6 +204,12 @@ export interface DBResult {
   refund: DBResultRefund;
 }
 
+export interface DBResultPeriod {
+  position: number;
+  
+  disadvantage?: boolean;
+}
+
 export interface DBResultDetail {
   // 馬番号
   horseId: number;
@@ -212,10 +218,7 @@ export interface DBResultDetail {
   order: number;
 
   // 道中のポジション
-  position: number[];
-
-  // 道中不利
-  disadvantage: boolean[];
+  period: DBResultPeriod[];
 
   // タイム (s)
   timeSec: number;

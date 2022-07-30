@@ -241,26 +241,27 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
     //
     // 不利を受けた際の位置取りは丸囲い数値で表示されるため、数字に戻すには変換が必要
     //
-    const convertPositionToNumber = (pstr: string) => {
+    const getPeriodPosition = (pstr: string) => {
       const str = pstr
         .replace(/[\u2460-\u2468]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x242F)) // ①-⑨
         .replace(/[\u2469-\u2472]/g, (ch) => `1${String.fromCharCode(ch.charCodeAt(0) - 0x2439)}`); // ⑩-⑲
       return Number(str);
     }
-    const positionElement = tdHorseInfo.querySelectorAll('ul.tuka li').filter((v) => v.textContent);
-    const position = positionElement.map((p) => convertPositionToNumber(p.textContent));
-
     // 道中不利があったかどうか
-    const hasDisadvantage = (pstr: string): boolean => {
+    const getPeriodDamage = (pstr: string): boolean => {
       return !!pstr.match(/[\u2460-\u2472]/);
     }
-    const disadvantage = positionElement.map((p) => hasDisadvantage(p.textContent));
+    const periodElement = tdHorseInfo.querySelectorAll('ul.tuka li').filter((v) => v.textContent);
+    const period = periodElement.map((p) => {
+      const position = getPeriodPosition(p.textContent);
+      const disadvantage = getPeriodDamage(p.textContent);
+      return { position, ...disadvantage && { disadvantage } };
+    });
 
     return {
       horseId,
       order,
-      position,
-      disadvantage,
+      period,
       timeSec,
       last3fSec,
     };
