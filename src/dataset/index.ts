@@ -6,8 +6,9 @@ import TateyamaDB from 'db';
 import { Types, Helper } from 'tateyama';
 
 const CSV_HEAD = [
-  "# result time",
-  "# result last3f",
+  "# cancelled",
+  "# result time rate",
+  "# result last3f sec",
   "# course turf",
   "# course dirt",
   "# course state firm",
@@ -114,19 +115,18 @@ export function generateDataset(data: Types.DBRace) {
   const isCourseDirectionLeft = data.course.direction === '左' ? 1 : 0;
   const isCourseDirectionRight = data.course.direction === '右' ? 1 : 0;
   const isCourseDistanceSprint = (data.course.distance <= 1400) ? 1 : 0;
-  const isCourseDistanceMile = (data.course.distance >= 1400 && data.course.distance) <= 1800 ? 1 : 0;
-  const isCourseDistanceMiddle = (data.course.distance >= 1800 && data.course.distance) <= 2200 ? 1 : 0;
+  const isCourseDistanceMile = (data.course.distance >= 1400 && data.course.distance <= 1800) ? 1 : 0;
+  const isCourseDistanceMiddle = (data.course.distance >= 1800 && data.course.distance <= 2200) ? 1 : 0;
   const isCourseDistanceLong = (data.course.distance >= 2200) ? 1 : 0;
 
   const result = data.entries.map((entry) => {
     const horseId = entry.horseId;
     const result = data.result.detail.find((d) => d.horseId === horseId);
-    if (!result) {
-      return;
-    }
+    const cancelled = (!result || !result.timeSec) ? 1 : 0
+
     const resultLast3fSec = result.last3fSec;
-    const resultTimeSec = result.timeSec;
-    
+    const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
+
     const isHorseMale = entry.horseSex === '牡' ? 1 : 0;
     const isHorseFemale = entry.horseSex === '牝' ? 1 : 0; 
     const isHorseGelding = entry.horseSex === 'セン' ? 1 : 0; 
@@ -221,7 +221,8 @@ export function generateDataset(data: Types.DBRace) {
     const lastTraningAccel = sumTrainingAccel(lastTraningLap);
 
     return [
-      resultTimeSec,
+      cancelled,
+      resultTimeRate,
       resultLast3fSec,
       isCourseTurf,
       isCourseDirt,
@@ -313,7 +314,7 @@ export function generateDataset(data: Types.DBRace) {
     ];
   });
 
-  return result;
+  return result.filter((v) => v[0] !== 1);
 }
 
 

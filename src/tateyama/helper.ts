@@ -52,6 +52,24 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
  * @param value 
  * @returns 
  */
-export const RoundTime = (value: number) => {
+ export const RoundTime = (value: number) => {
   return Math.round(value * 10) / 10;
+}
+
+/**
+ * タイムレートを算出する
+ * 
+ *   100 - ((秒数 / 距離) * 1000)
+ *
+ * @param value 
+ * @returns 
+ */
+ export const CalcTimeRate = (value: number, distance: number) => {
+  if (!distance) {
+    return 0;
+  } 
+
+  const time1000 = 100 - (value * 1000) / distance;
+
+  return Math.round(time1000 * 100) / 100;
 }

@@ -18,7 +18,7 @@ async function parseCourse(_info: Types.ScrapeRaceInfo, entriesHtml: string): Pr
   const courseInfo = raceParams[1].textContent.trim(); 
 
   const [courseDist, courseState, courseWeather] = courseInfo.split(/\s/);
-  const [distance] = courseDist.match(/(\d+)m/);
+  const [distance] = courseDist.match(/(\d+)/);
   const [type, direction] = courseState.match(/\((.*)・(.*)\)/);
   const [weather, condition] = courseWeather.match(/(.*)・(.*)/);
 
