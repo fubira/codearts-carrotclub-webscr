@@ -6,7 +6,7 @@ import makedb from './makedb';
 import dbutil from './dbutil';
 import scrape from './scrape';
 import dataset from './dataset';
-import run from './brain';
+import tensor from './tensor';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.3538.77 Safari/537.36';
 
@@ -59,7 +59,7 @@ program
   .option('-t, --train <csv-file>', '学習用データセットの指定', undefined)
   .option('-v, --test <csv-file>', '検証用データセットの指定', undefined)
   .action((options) => {
-    run({ ...options });
+    tensor({ ...options });
   });
 
 program

@@ -214,7 +214,11 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
   /// レース情報取得
   const resultOrderBody = root.querySelector('table.seiseki tbody');
   const orderList = resultOrderBody.querySelectorAll('tr');
-  const detail: Types.DBResultDetail[] = orderList.map((tr) => {
+
+  // 勝ち馬のタイム
+  let winningTime = 0.0;
+
+  const detail: Types.DBResultDetail[] = orderList.map((tr, index) => {
     const TimeStringToSec = (timeStr: string) => {
       const time = timeStr.trim();
 
@@ -242,6 +246,10 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
     const horseId = Number(tdHorseId.textContent)
     const timeSec = TimeStringToSec(tdTimeValues[0].textContent);
     const last3fSec = TimeStringToSec(tdTimeValues[1].textContent.replace(/[()]/g, ''));
+    if (index === 0) {
+      winningTime = timeSec;
+    }
+    const timeDiffSec = timeSec - winningTime; 
 
     //
     // 道中ポジションを数値に変換する
@@ -271,6 +279,7 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
       period,
       timeSec,
       last3fSec,
+      timeDiffSec,
     };
   }).sort((a, b) => a.horseId - b.horseId);
 

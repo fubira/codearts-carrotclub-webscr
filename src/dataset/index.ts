@@ -134,90 +134,90 @@ export function generateDataset(data: Types.DBRace) {
     const horseWeightDiff = entry.horseWeightDiff;
     const horseHandicap = entry.handicap;
 
-    const presentTraining = entry.training.logs.slice(-1)[0];
-    const fastestTraining = entry.training.logs.sort((a, b) => a.lap[0]?.lap - b.lap[0]?.lap )[0];
-    const lastTraining = entry.training.logs[0];
+    const presentTraining = entry.training?.logs.slice(-1)[0];
+    const fastestTraining = entry.training?.logs.sort((a, b) => a.lap[0]?.lap - b.lap[0]?.lap )[0];
+    const lastTraining = entry.training?.logs[0];
 
     const sumTrainingAccel = (lapgap: Types.DBLapGap[]) => {
-      return Helper.RoundTime(lapgap.map((p, index) => p.accel * (1 + index / 10))?.reduce((prev, curr) => prev + curr, 0));
+      return Helper.RoundTime(lapgap?.map((p, index) => p.accel * (1 + index / 10))?.reduce((prev, curr) => prev + curr, 0));
     }
 
-    const isPresentTrainingCourseHakodateWood = presentTraining.course.includes('函館Ｗ') ? 1 : 0;
-    const isPresentTrainingCourseHakodateDirt = presentTraining.course.includes('函館ダ') ? 1 : 0;
-    const isPresentTrainingCourseHakodateTurf = presentTraining.course.includes('函館芝') ? 1 : 0;
-    const isPresentTrainingCourseSapporoDirt = presentTraining.course.includes('札幌ダ') ? 1 : 0;
-    const isPresentTrainingCourseSapporoTurf = presentTraining.course.includes('札幌芝') ? 1 : 0;
-    const isPresentTrainingCourseMihoSlope = presentTraining.course.includes('美坂') ? 1 : 0;
-    const isPresentTrainingCourseMihoSouthW = presentTraining.course.includes('南Ｗ') ? 1 : 0;
-    const isPresentTrainingCourseMihoSouthP = presentTraining.course.includes('南Ｐ') ? 1 : 0;
-    const isPresentTrainingCourseRittoCWood = presentTraining.course.includes('栗ＣＷ') ? 1 : 0;
-    const isPresentTrainingCourseRittoSlope = presentTraining.course.includes('栗坂') ? 1 : 0;
-    const isPresentTrainingConditionFirm = presentTraining.condition === '良' ? 1 : 0;
-    const isPresentTrainingConditionGood = presentTraining.condition === '稍重' ? 1 : 0;
-    const isPresentTrainingConditionYielding = presentTraining.condition === '重' ? 1 : 0;
-    const isPresentTrainingConditionSoft = presentTraining.condition === '不良' ? 1 : 0;
+    const isPresentTrainingCourseHakodateWood = presentTraining?.course.includes('函館Ｗ') ? 1 : 0;
+    const isPresentTrainingCourseHakodateDirt = presentTraining?.course.includes('函館ダ') ? 1 : 0;
+    const isPresentTrainingCourseHakodateTurf = presentTraining?.course.includes('函館芝') ? 1 : 0;
+    const isPresentTrainingCourseSapporoDirt = presentTraining?.course.includes('札幌ダ') ? 1 : 0;
+    const isPresentTrainingCourseSapporoTurf = presentTraining?.course.includes('札幌芝') ? 1 : 0;
+    const isPresentTrainingCourseMihoSlope = presentTraining?.course.includes('美坂') ? 1 : 0;
+    const isPresentTrainingCourseMihoSouthW = presentTraining?.course.includes('南Ｗ') ? 1 : 0;
+    const isPresentTrainingCourseMihoSouthP = presentTraining?.course.includes('南Ｐ') ? 1 : 0;
+    const isPresentTrainingCourseRittoCWood = presentTraining?.course.includes('栗ＣＷ') ? 1 : 0;
+    const isPresentTrainingCourseRittoSlope = presentTraining?.course.includes('栗坂') ? 1 : 0;
+    const isPresentTrainingConditionFirm = presentTraining?.condition === '良' ? 1 : 0;
+    const isPresentTrainingConditionGood = presentTraining?.condition === '稍重' ? 1 : 0;
+    const isPresentTrainingConditionYielding = presentTraining?.condition === '重' ? 1 : 0;
+    const isPresentTrainingConditionSoft = presentTraining?.condition === '不良' ? 1 : 0;
 
-    const presentTraningLap = presentTraining.lap.slice(-4);
-    const presentTraningLap1f = presentTraningLap[0]?.lap || 99.0;
-    const presentTraningLap2f = presentTraningLap[1]?.lap || 99.0;
-    const presentTraningLap3f = presentTraningLap[2]?.lap || 99.0;
-    const presentTraningLap4f = presentTraningLap[3]?.lap || 99.0;
-    const presentTraningLapGap1f = presentTraningLap[0]?.gap || 99.0;
-    const presentTraningLapGap2f = presentTraningLap[1]?.gap || 99.0;
-    const presentTraningLapGap3f = presentTraningLap[2]?.gap || 99.0;
-    const presentTraningLapGap4f = presentTraningLap[3]?.gap || 99.0;
+    const presentTraningLap = presentTraining?.lap.slice(-4);
+    const presentTraningLap1f = presentTraningLap?.[0]?.lap || 99.0;
+    const presentTraningLap2f = presentTraningLap?.[1]?.lap || 99.0;
+    const presentTraningLap3f = presentTraningLap?.[2]?.lap || 99.0;
+    const presentTraningLap4f = presentTraningLap?.[3]?.lap || 99.0;
+    const presentTraningLapGap1f = presentTraningLap?.[0]?.gap || 99.0;
+    const presentTraningLapGap2f = presentTraningLap?.[1]?.gap || 99.0;
+    const presentTraningLapGap3f = presentTraningLap?.[2]?.gap || 99.0;
+    const presentTraningLapGap4f = presentTraningLap?.[3]?.gap || 99.0;
     const presentTraningAccel = sumTrainingAccel(presentTraningLap);
 
-    const isFastestTrainingCourseHakodateWood = fastestTraining.course.includes('函館Ｗ') ? 1 : 0;
-    const isFastestTrainingCourseHakodateDirt = fastestTraining.course.includes('函館ダ') ? 1 : 0;
-    const isFastestTrainingCourseHakodateTurf = fastestTraining.course.includes('函館芝') ? 1 : 0;
-    const isFastestTrainingCourseSapporoDirt = fastestTraining.course.includes('札幌ダ') ? 1 : 0;
-    const isFastestTrainingCourseSapporoTurf = fastestTraining.course.includes('札幌芝') ? 1 : 0;
-    const isFastestTrainingCourseMihoSlope = fastestTraining.course.includes('美坂') ? 1 : 0;
-    const isFastestTrainingCourseMihoSouthW = fastestTraining.course.includes('南Ｗ') ? 1 : 0;
-    const isFastestTrainingCourseMihoSouthP = fastestTraining.course.includes('南Ｐ') ? 1 : 0;
-    const isFastestTrainingCourseRittoCWood = fastestTraining.course.includes('栗ＣＷ') ? 1 : 0;
-    const isFastestTrainingCourseRittoSlope = fastestTraining.course.includes('栗坂') ? 1 : 0;
-    const isFastestTrainingConditionFirm = fastestTraining.condition === '良' ? 1 : 0;
-    const isFastestTrainingConditionGood = fastestTraining.condition === '稍重' ? 1 : 0;
-    const isFastestTrainingConditionYielding = fastestTraining.condition === '重' ? 1 : 0;
-    const isFastestTrainingConditionSoft = fastestTraining.condition === '不良' ? 1 : 0;
+    const isFastestTrainingCourseHakodateWood = fastestTraining?.course.includes('函館Ｗ') ? 1 : 0;
+    const isFastestTrainingCourseHakodateDirt = fastestTraining?.course.includes('函館ダ') ? 1 : 0;
+    const isFastestTrainingCourseHakodateTurf = fastestTraining?.course.includes('函館芝') ? 1 : 0;
+    const isFastestTrainingCourseSapporoDirt = fastestTraining?.course.includes('札幌ダ') ? 1 : 0;
+    const isFastestTrainingCourseSapporoTurf = fastestTraining?.course.includes('札幌芝') ? 1 : 0;
+    const isFastestTrainingCourseMihoSlope = fastestTraining?.course.includes('美坂') ? 1 : 0;
+    const isFastestTrainingCourseMihoSouthW = fastestTraining?.course.includes('南Ｗ') ? 1 : 0;
+    const isFastestTrainingCourseMihoSouthP = fastestTraining?.course.includes('南Ｐ') ? 1 : 0;
+    const isFastestTrainingCourseRittoCWood = fastestTraining?.course.includes('栗ＣＷ') ? 1 : 0;
+    const isFastestTrainingCourseRittoSlope = fastestTraining?.course.includes('栗坂') ? 1 : 0;
+    const isFastestTrainingConditionFirm = fastestTraining?.condition === '良' ? 1 : 0;
+    const isFastestTrainingConditionGood = fastestTraining?.condition === '稍重' ? 1 : 0;
+    const isFastestTrainingConditionYielding = fastestTraining?.condition === '重' ? 1 : 0;
+    const isFastestTrainingConditionSoft = fastestTraining?.condition === '不良' ? 1 : 0;
 
-    const fastestTraningLap = fastestTraining.lap.slice(-4);
-    const fastestTraningLap1f = fastestTraningLap[0]?.lap || 99.0;
-    const fastestTraningLap2f = fastestTraningLap[1]?.lap || 99.0;
-    const fastestTraningLap3f = fastestTraningLap[2]?.lap || 99.0;
-    const fastestTraningLap4f = fastestTraningLap[3]?.lap || 99.0;
-    const fastestTraningLapGap1f = fastestTraningLap[0]?.gap || 99.0;
-    const fastestTraningLapGap2f = fastestTraningLap[1]?.gap || 99.0;
-    const fastestTraningLapGap3f = fastestTraningLap[2]?.gap || 99.0;
-    const fastestTraningLapGap4f = fastestTraningLap[3]?.gap || 99.0;
+    const fastestTraningLap = fastestTraining?.lap.slice(-4);
+    const fastestTraningLap1f = fastestTraningLap?.[0]?.lap || 80.0;
+    const fastestTraningLap2f = fastestTraningLap?.[1]?.lap || 60.0;
+    const fastestTraningLap3f = fastestTraningLap?.[2]?.lap || 40.0;
+    const fastestTraningLap4f = fastestTraningLap?.[3]?.lap || 20.0;
+    const fastestTraningLapGap1f = fastestTraningLap?.[0]?.gap || 20.0;
+    const fastestTraningLapGap2f = fastestTraningLap?.[1]?.gap || 20.0;
+    const fastestTraningLapGap3f = fastestTraningLap?.[2]?.gap || 20.0;
+    const fastestTraningLapGap4f = fastestTraningLap?.[3]?.gap || 20.0;
     const fastestTraningAccel = sumTrainingAccel(fastestTraningLap);
 
-    const isLastTrainingCourseHakodateWood = lastTraining.course.includes('函館Ｗ') ? 1 : 0;
-    const isLastTrainingCourseHakodateDirt = lastTraining.course.includes('函館ダ') ? 1 : 0;
-    const isLastTrainingCourseHakodateTurf = lastTraining.course.includes('函館芝') ? 1 : 0;
-    const isLastTrainingCourseSapporoDirt = lastTraining.course.includes('札幌ダ') ? 1 : 0;
-    const isLastTrainingCourseSapporoTurf = lastTraining.course.includes('札幌芝') ? 1 : 0;
-    const isLastTrainingCourseMihoSlope = lastTraining.course.includes('美坂') ? 1 : 0;
-    const isLastTrainingCourseMihoSouthW = lastTraining.course.includes('南Ｗ') ? 1 : 0;
-    const isLastTrainingCourseMihoSouthP = lastTraining.course.includes('南Ｐ') ? 1 : 0;
-    const isLastTrainingCourseRittoCWood = lastTraining.course.includes('栗ＣＷ') ? 1 : 0;
-    const isLastTrainingCourseRittoSlope = lastTraining.course.includes('栗坂') ? 1 : 0;
-    const isLastTrainingConditionFirm = lastTraining.condition === '良' ? 1 : 0;
-    const isLastTrainingConditionGood = lastTraining.condition === '稍重' ? 1 : 0;
-    const isLastTrainingConditionYielding = lastTraining.condition === '重' ? 1 : 0;
-    const isLastTrainingConditionSoft = lastTraining.condition === '不良' ? 1 : 0;
+    const isLastTrainingCourseHakodateWood = lastTraining?.course.includes('函館Ｗ') ? 1 : 0;
+    const isLastTrainingCourseHakodateDirt = lastTraining?.course.includes('函館ダ') ? 1 : 0;
+    const isLastTrainingCourseHakodateTurf = lastTraining?.course.includes('函館芝') ? 1 : 0;
+    const isLastTrainingCourseSapporoDirt = lastTraining?.course.includes('札幌ダ') ? 1 : 0;
+    const isLastTrainingCourseSapporoTurf = lastTraining?.course.includes('札幌芝') ? 1 : 0;
+    const isLastTrainingCourseMihoSlope = lastTraining?.course.includes('美坂') ? 1 : 0;
+    const isLastTrainingCourseMihoSouthW = lastTraining?.course.includes('南Ｗ') ? 1 : 0;
+    const isLastTrainingCourseMihoSouthP = lastTraining?.course.includes('南Ｐ') ? 1 : 0;
+    const isLastTrainingCourseRittoCWood = lastTraining?.course.includes('栗ＣＷ') ? 1 : 0;
+    const isLastTrainingCourseRittoSlope = lastTraining?.course.includes('栗坂') ? 1 : 0;
+    const isLastTrainingConditionFirm = lastTraining?.condition === '良' ? 1 : 0;
+    const isLastTrainingConditionGood = lastTraining?.condition === '稍重' ? 1 : 0;
+    const isLastTrainingConditionYielding = lastTraining?.condition === '重' ? 1 : 0;
+    const isLastTrainingConditionSoft = lastTraining?.condition === '不良' ? 1 : 0;
 
-    const lastTraningLap = lastTraining.lap.slice(-4);
-    const lastTraningLap1f = lastTraningLap[0]?.lap || 99.0;
-    const lastTraningLap2f = lastTraningLap[1]?.lap || 99.0;
-    const lastTraningLap3f = lastTraningLap[2]?.lap || 99.0;
-    const lastTraningLap4f = lastTraningLap[3]?.lap || 99.0;
-    const lastTraningLapGap1f = lastTraningLap[0]?.gap || 99.0;
-    const lastTraningLapGap2f = lastTraningLap[1]?.gap || 99.0;
-    const lastTraningLapGap3f = lastTraningLap[2]?.gap || 99.0;
-    const lastTraningLapGap4f = lastTraningLap[3]?.gap || 99.0;
+    const lastTraningLap = lastTraining?.lap.slice(-4);
+    const lastTraningLap1f = lastTraningLap?.[0]?.lap || 99.0;
+    const lastTraningLap2f = lastTraningLap?.[1]?.lap || 99.0;
+    const lastTraningLap3f = lastTraningLap?.[2]?.lap || 99.0;
+    const lastTraningLap4f = lastTraningLap?.[3]?.lap || 99.0;
+    const lastTraningLapGap1f = lastTraningLap?.[0]?.gap || 99.0;
+    const lastTraningLapGap2f = lastTraningLap?.[1]?.gap || 99.0;
+    const lastTraningLapGap3f = lastTraningLap?.[2]?.gap || 99.0;
+    const lastTraningLapGap4f = lastTraningLap?.[3]?.gap || 99.0;
     const lastTraningAccel = sumTrainingAccel(lastTraningLap);
 
     return [
@@ -260,11 +260,11 @@ export function generateDataset(data: Types.DBRace) {
       presentTraningLap2f,
       presentTraningLap3f,
       presentTraningLap4f,
-      presentTraningLapGap1f,
-      presentTraningLapGap2f,
-      presentTraningLapGap3f,
-      presentTraningLapGap4f,
-      presentTraningAccel,
+      // presentTraningLapGap1f,
+      // presentTraningLapGap2f,
+      // presentTraningLapGap3f,
+      // presentTraningLapGap4f,
+      // presentTraningAccel,
       isFastestTrainingCourseHakodateWood,
       isFastestTrainingCourseHakodateDirt,
       isFastestTrainingCourseHakodateTurf,
@@ -283,11 +283,11 @@ export function generateDataset(data: Types.DBRace) {
       fastestTraningLap2f,
       fastestTraningLap3f,
       fastestTraningLap4f,
-      fastestTraningLapGap1f,
-      fastestTraningLapGap2f,
-      fastestTraningLapGap3f,
-      fastestTraningLapGap4f,
-      fastestTraningAccel,
+      // fastestTraningLapGap1f,
+      // fastestTraningLapGap2f,
+      // fastestTraningLapGap3f,
+      // fastestTraningLapGap4f,
+      // fastestTraningAccel,
       isLastTrainingCourseHakodateWood,
       isLastTrainingCourseHakodateDirt,
       isLastTrainingCourseHakodateTurf,
@@ -306,11 +306,11 @@ export function generateDataset(data: Types.DBRace) {
       lastTraningLap2f,
       lastTraningLap3f,
       lastTraningLap4f,
-      lastTraningLapGap1f,
-      lastTraningLapGap2f,
-      lastTraningLapGap3f,
-      lastTraningLapGap4f,
-      lastTraningAccel,
+      // lastTraningLapGap1f,
+      // lastTraningLapGap2f,
+      // lastTraningLapGap3f,
+      // lastTraningLapGap4f,
+      // lastTraningAccel,
     ];
   });
 
