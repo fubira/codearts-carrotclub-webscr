@@ -5,100 +5,6 @@ import logger from 'logger';
 import TateyamaDB from 'db';
 import { Types, Helper } from 'tateyama';
 
-const CSV_HEAD = [
-  "# cancelled",
-  "# result time rate",
-  "# result last3f sec",
-  "# course turf",
-  "# course dirt",
-  "# course state firm",
-  "# course state good",
-  "# course state yielding",
-  "# course state soft",
-  "# course dir left",
-  "# course dir right",
-  "# course distance sprint",
-  "# course distance mile",
-  "# course distance middle",
-  "# course distance long",
-  "# entry male",
-  "# entry female",
-  "# entry gelding",
-  "# entry weight",
-  "# entry weight diff",
-  "# entry handicap",
-  "# entry present training course hakodate wood",
-  "# entry present training course hakodate dirt",
-  "# entry present training course hakodate turf",
-  "# entry present training course sapporo dirt",
-  "# entry present training course sapporo turf",
-  "# entry present training course miho slope",
-  "# entry present training course miho south wood",
-  "# entry present training course miho south poly",
-  "# entry present training course ritto cw",
-  "# entry present training course ritto slope",
-  "# entry present training course state firm",
-  "# entry present training course state good",
-  "# entry present training course state yielding",
-  "# entry present training course state soft",
-  "# entry present training lap 4F",
-  "# entry present training lap 3F",
-  "# entry present training lap 2F",
-  "# entry present training lap 1F",
-  "# entry present training gap 4F",
-  "# entry present training gap 3F",
-  "# entry present training gap 2F",
-  "# entry present training gap 1F",
-  "# entry present training accel",
-  "# entry fastest training course hakodate wood",
-  "# entry fastest training course hakodate dirt",
-  "# entry fastest training course hakodate turf",
-  "# entry fastest training course sapporo dirt",
-  "# entry fastest training course sapporo turf",
-  "# entry fastest training course miho slope",
-  "# entry fastest training course miho south wood",
-  "# entry fastest training course miho south poly",
-  "# entry fastest training course ritto cw",
-  "# entry fastest training course ritto slope",
-  "# entry fastest training course state firm",
-  "# entry fastest training course state good",
-  "# entry fastest training course state yielding",
-  "# entry fastest training course state soft",
-  "# entry fastest training lap 4F",
-  "# entry fastest training lap 3F",
-  "# entry fastest training lap 2F",
-  "# entry fastest training lap 1F",
-  "# entry fastest training gap 4F",
-  "# entry fastest training gap 3F",
-  "# entry fastest training gap 2F",
-  "# entry fastest training gap 1F",
-  "# entry fastest training accel",
-  "# entry last training course hakodate wood",
-  "# entry last training course hakodate dirt",
-  "# entry last training course hakodate turf",
-  "# entry last training course sapporo dirt",
-  "# entry last training course sapporo turf",
-  "# entry last training course miho slope",
-  "# entry last training course miho south wood",
-  "# entry last training course miho south poly",
-  "# entry last training course ritto cw",
-  "# entry last training course ritto slope",
-  "# entry last training course state firm",
-  "# entry last training course state good",
-  "# entry last training course state yielding",
-  "# entry last training course state soft",
-  "# entry last training lap 4F",
-  "# entry last training lap 3F",
-  "# entry last training lap 2F",
-  "# entry last training lap 1F",
-  "# entry last training gap 4F",
-  "# entry last training gap 3F",
-  "# entry last training gap 2F",
-  "# entry last training gap 1F",
-  "# entry last training accel",
-];
-
-
 /**
  * 1レースごとの出走馬データを変換
  * @param data 
@@ -128,9 +34,9 @@ export function generateDataset(data: Types.DBRace) {
     const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
     const resultTimeDiffSec = Helper.RoundTime(result.timeDiffSec);
 
-    // const isHorseMale = entry.horseSex === '牡' ? 1 : 0;
-    // const isHorseFemale = entry.horseSex === '牝' ? 1 : 0; 
-    // const isHorseGelding = entry.horseSex === 'セン' ? 1 : 0; 
+    const isHorseMale = entry.horseSex === '牡' ? 1 : 0;
+    const isHorseFemale = entry.horseSex === '牝' ? 1 : 0; 
+    const isHorseGelding = entry.horseSex === 'セン' ? 1 : 0; 
     // const horseWeight = entry.horseWeight;
     const horseWeightDiff = entry.horseWeightDiff;
     const horseHandicap = entry.handicap;
@@ -201,7 +107,7 @@ export function generateDataset(data: Types.DBRace) {
     const fastestTraningLapGap3f = Helper.RoundTime(20.0 / (fastestTraningLap?.[1]?.gap || 20.0));
     const fastestTraningLapGap2f = Helper.RoundTime(20.0 / (fastestTraningLap?.[2]?.gap || 20.0));
     const fastestTraningLapGap1f = Helper.RoundTime(20.0 / (fastestTraningLap?.[3]?.gap || 20.0));
-    const fastestTraningAccel = fastestTraningLap && sumTrainingAccel(fastestTraningLap) || 0.0;
+    // const fastestTraningAccel = fastestTraningLap && sumTrainingAccel(fastestTraningLap) || 0.0;
 
     const hasLastTraining = lastTraining ? 1 : 0;
     const isLastTrainingCourseHakodateWood = lastTraining?.course.includes('函館Ｗ') ? 1 : 0;
@@ -231,7 +137,7 @@ export function generateDataset(data: Types.DBRace) {
     const lastTraningLapGap3f = Helper.RoundTime(20.0 / (lastTraningLap?.[1]?.gap || 20.0));
     const lastTraningLapGap2f = Helper.RoundTime(20.0 / (lastTraningLap?.[2]?.gap || 20.0));
     const lastTraningLapGap1f = Helper.RoundTime(20.0 / (lastTraningLap?.[3]?.gap || 20.0));
-    const lastTraningAccel = lastTraningLap && sumTrainingAccel(lastTraningLap) || 0.0;
+    // const lastTraningAccel = lastTraningLap && sumTrainingAccel(lastTraningLap) || 0.0;
 
     return {
       cancelled,
@@ -250,9 +156,9 @@ export function generateDataset(data: Types.DBRace) {
       isCourseDistanceMile,
       isCourseDistanceMiddle,
       isCourseDistanceLong,
-      // isHorseMale,
-      // isHorseFemale,
-      // isHorseGelding,
+      isHorseMale,
+      isHorseFemale,
+      isHorseGelding,
       // horseWeight,
       horseWeightDiff,
       horseHandicap,
@@ -310,7 +216,7 @@ export function generateDataset(data: Types.DBRace) {
       fastestTraningLapGap3f,
       fastestTraningLapGap2f,
       fastestTraningLapGap1f,
-      fastestTraningAccel,
+      // fastestTraningAccel,
 
       hasLastTraining,
       isLastTrainingCourseHakodateWood,
@@ -338,7 +244,7 @@ export function generateDataset(data: Types.DBRace) {
       lastTraningLapGap3f,
       lastTraningLapGap2f,
       lastTraningLapGap1f,
-      lastTraningAccel,
+      // lastTraningAccel,
     };
   });
 

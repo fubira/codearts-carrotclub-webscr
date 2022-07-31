@@ -53,7 +53,7 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
  * @returns 
  */
  export const RoundTime = (value: number) => {
-  return Math.round(value * 10) / 10;
+  return Math.round(value * 100) / 100;
 }
 
 /**
@@ -71,5 +71,5 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
 
   const time1000 = 100 - (value * 1000) / distance;
 
-  return Math.round(time1000 * 100) / 100;
+  return Math.round(time1000);
 }

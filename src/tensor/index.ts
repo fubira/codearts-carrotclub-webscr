@@ -7,7 +7,7 @@ const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
 
 function initializeNeuralNet(opts?: { init?: boolean }) {
   const net = new brain.NeuralNetwork({
-    hiddenLayers: [100],
+    hiddenLayers: [100, 40],
   });
 
   if (!existsSync(LEARNING_DIR)) {
@@ -42,6 +42,8 @@ async function train(rawData: number[][], options: { init: boolean }) {
   const data = rawData.map((d) => {
     d.shift();
     const timeDiff = d.shift();
+    d.shift();
+
     return {
       input: [ ...d ],
       output: { timeDiff: timeDiff }
@@ -65,6 +67,7 @@ async function run(rawData: number[][]) {
   const net = initializeNeuralNet();
 
   const data = rawData.map((d, index) => {
+    d.shift();
     d.shift();
     d.shift();
 
