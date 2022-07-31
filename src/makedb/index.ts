@@ -244,8 +244,10 @@ async function parseResult(info: Types.ScrapeRaceInfo, resultHtml: string): Prom
 
     const order = Number(tdOrder.textContent);
     const horseId = Number(tdHorseId.textContent)
-    const timeSec = TimeStringToSec(tdTimeValues[0].textContent);
-    const last3fSec = TimeStringToSec(tdTimeValues[1].textContent.replace(/[()]/g, ''));
+    const timeText = tdTimeValues[0].textContent;
+    const timeSec = TimeStringToSec(timeText);
+    const last3fText = tdTimeValues[1].textContent === '大差' ? '(60.0)': tdTimeValues[1].textContent;
+    const last3fSec = TimeStringToSec(last3fText.replace(/[()]/g, ''));
     if (index === 0) {
       winningTime = timeSec;
     }

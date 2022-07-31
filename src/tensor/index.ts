@@ -6,7 +6,9 @@ const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
 
 function initializeNeuralNet(opts?: { init?: boolean }) {
-  const net = new brain.NeuralNetwork();
+  const net = new brain.NeuralNetwork({
+    hiddenLayers: [100],
+  });
 
   if (!existsSync(LEARNING_DIR)) {
     mkdirSync(LEARNING_DIR);
@@ -64,23 +66,21 @@ async function run(rawData: number[][]) {
 
   const data = rawData.map((d, index) => {
     d.shift();
-    const timeDiff = d.shift();
+    d.shift();
 
     return {
       index: index + 1,
       input: [ ...d ],
-      output: { timeDiff: timeDiff }
+      output: { timeDiff: 0 }
     }
   }) .filter((v) => v.input.length !== 0);
 
   if (data) {
-    console.log(data);
-
     const result = data.map(({ input }) => net.run(input) as { timeDiff: number });
     
     const list = result.map((value, index) => { return { id: index + 1, output: value } });
 
-    list.sort((a, b) => a.output.timeDiff - b.output.timeDiff).forEach((value) => {
+    list.sort((a, b) => b.output.timeDiff - a.output.timeDiff).forEach((value) => {
       logger.info(`${value.id} - ${JSON.stringify(value.output)}`);
     })
   }

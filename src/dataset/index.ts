@@ -125,7 +125,7 @@ export function generateDataset(data: Types.DBRace) {
     const cancelled = (!result || !result.timeSec) ? 1 : 0
 
     // const resultLast3fSec = result.last3fSec;
-    // const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
+    const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
     const resultTimeDiffSec = Helper.RoundTime(result.timeDiffSec);
 
     // const isHorseMale = entry.horseSex === '牡' ? 1 : 0;
@@ -158,17 +158,20 @@ export function generateDataset(data: Types.DBRace) {
     const isPresentTrainingConditionGood = presentTraining?.condition === '稍重' ? 1 : 0;
     const isPresentTrainingConditionYielding = presentTraining?.condition === '重' ? 1 : 0;
     const isPresentTrainingConditionSoft = presentTraining?.condition === '不良' ? 1 : 0;
+    const isPresentTrainingCommentHard = presentTraining?.comment.includes('一杯') ? 1 : 0;
+    const isPresentTrainingCommentMiddle = (presentTraining?.comment.includes('強め') || presentTraining?.comment.includes('仕掛')) ? 1 : 0;
+    const isPresentTrainingCommentSoft = presentTraining?.comment.includes('馬なり') ? 1 : 0;
 
     const presentTraningLap = presentTraining?.lap.slice(-4);
-    const presentTraningLap4f = presentTraningLap?.[0]?.lap || 60.0;
+    // const presentTraningLap4f = presentTraningLap?.[0]?.lap || 60.0;
     // const presentTraningLap3f = presentTraningLap?.[1]?.lap || 45.0;
     // const presentTraningLap2f = presentTraningLap?.[2]?.lap || 30.0;
-    const presentTraningLap1f = presentTraningLap?.[3]?.lap || 15.0;
+    // const presentTraningLap1f = presentTraningLap?.[3]?.lap || 15.0;
     // const presentTraningLapGap4f = presentTraningLap?.[0]?.gap || 99.0;
-    // const presentTraningLapGap3f = presentTraningLap?.[1]?.gap || 99.0;
-    // const presentTraningLapGap2f = presentTraningLap?.[2]?.gap || 99.0;
-    // const presentTraningLapGap1f = presentTraningLap?.[3]?.gap || 99.0;
-    const presentTraningAccel = (presentTraningLap && sumTrainingAccel(presentTraningLap)) || 0.0;
+    const presentTraningLapGap3f = Helper.RoundTime(20.0 / (presentTraningLap?.[1]?.gap || 20.0));
+    const presentTraningLapGap2f = Helper.RoundTime(20.0 / (presentTraningLap?.[2]?.gap || 20.0));
+    const presentTraningLapGap1f = Helper.RoundTime(20.0 / (presentTraningLap?.[3]?.gap || 20.0));
+    // const presentTraningAccel = (presentTraningLap && sumTrainingAccel(presentTraningLap)) || 0.0;
 
     const hasFastestTraining = fastestTraining ? 1 : 0;
     const isFastestTrainingCourseHakodateWood = fastestTraining?.course.includes('函館Ｗ') ? 1 : 0;
@@ -185,16 +188,19 @@ export function generateDataset(data: Types.DBRace) {
     const isFastestTrainingConditionGood = fastestTraining?.condition === '稍重' ? 1 : 0;
     const isFastestTrainingConditionYielding = fastestTraining?.condition === '重' ? 1 : 0;
     const isFastestTrainingConditionSoft = fastestTraining?.condition === '不良' ? 1 : 0;
+    const isFastestTrainingCommentHard = fastestTraining?.comment.includes('一杯') ? 1 : 0;
+    const isFastestTrainingCommentMiddle = (fastestTraining?.comment.includes('強め') || fastestTraining?.comment.includes('仕掛')) ? 1 : 0;
+    const isFastestTrainingCommentSoft = fastestTraining?.comment.includes('馬なり') ? 1 : 0;
 
     const fastestTraningLap = fastestTraining?.lap.slice(-4);
-    const fastestTraningLap4f = fastestTraningLap?.[0]?.lap || 60.0;
+    // const fastestTraningLap4f = fastestTraningLap?.[0]?.lap || 60.0;
     // const fastestTraningLap3f = fastestTraningLap?.[1]?.lap || 45.0;
     // const fastestTraningLap2f = fastestTraningLap?.[2]?.lap || 30.0;
-    const fastestTraningLap1f = fastestTraningLap?.[3]?.lap || 15.0;
+    // const fastestTraningLap1f = fastestTraningLap?.[3]?.lap || 15.0;
     // const fastestTraningLapGap4f = fastestTraningLap?.[0]?.gap || 20.0;
-    // const fastestTraningLapGap3f = fastestTraningLap?.[1]?.gap || 20.0;
-    // const fastestTraningLapGap2f = fastestTraningLap?.[2]?.gap || 20.0;
-    // const fastestTraningLapGap1f = fastestTraningLap?.[3]?.gap || 20.0;
+    const fastestTraningLapGap3f = Helper.RoundTime(20.0 / (fastestTraningLap?.[1]?.gap || 20.0));
+    const fastestTraningLapGap2f = Helper.RoundTime(20.0 / (fastestTraningLap?.[2]?.gap || 20.0));
+    const fastestTraningLapGap1f = Helper.RoundTime(20.0 / (fastestTraningLap?.[3]?.gap || 20.0));
     const fastestTraningAccel = fastestTraningLap && sumTrainingAccel(fastestTraningLap) || 0.0;
 
     const hasLastTraining = lastTraining ? 1 : 0;
@@ -212,21 +218,24 @@ export function generateDataset(data: Types.DBRace) {
     const isLastTrainingConditionGood = lastTraining?.condition === '稍重' ? 1 : 0;
     const isLastTrainingConditionYielding = lastTraining?.condition === '重' ? 1 : 0;
     const isLastTrainingConditionSoft = lastTraining?.condition === '不良' ? 1 : 0;
+    const isLastTrainingCommentHard = fastestTraining?.comment.includes('一杯') ? 1 : 0;
+    const isLastTrainingCommentMiddle = (fastestTraining?.comment.includes('強め') || fastestTraining?.comment.includes('仕掛')) ? 1 : 0;
+    const isLastTrainingCommentSoft = fastestTraining?.comment.includes('馬なり') ? 1 : 0;
 
     const lastTraningLap = lastTraining?.lap.slice(-4);
-    const lastTraningLap4f = lastTraningLap?.[0]?.lap || 60.0;
+    // const lastTraningLap4f = lastTraningLap?.[0]?.lap || 60.0;
     // const lastTraningLap3f = lastTraningLap?.[1]?.lap || 45.0;
     // const lastTraningLap2f = lastTraningLap?.[2]?.lap || 30.0;
-    const lastTraningLap1f = lastTraningLap?.[3]?.lap || 15.0;
+    // const lastTraningLap1f = lastTraningLap?.[3]?.lap || 15.0;
     // const lastTraningLapGap4f = lastTraningLap?.[0]?.gap || 99.0;
-    // const lastTraningLapGap3f = lastTraningLap?.[1]?.gap || 99.0;
-    // const lastTraningLapGap2f = lastTraningLap?.[2]?.gap || 99.0;
-    // const lastTraningLapGap1f = lastTraningLap?.[3]?.gap || 99.0;
+    const lastTraningLapGap3f = Helper.RoundTime(20.0 / (lastTraningLap?.[1]?.gap || 20.0));
+    const lastTraningLapGap2f = Helper.RoundTime(20.0 / (lastTraningLap?.[2]?.gap || 20.0));
+    const lastTraningLapGap1f = Helper.RoundTime(20.0 / (lastTraningLap?.[3]?.gap || 20.0));
     const lastTraningAccel = lastTraningLap && sumTrainingAccel(lastTraningLap) || 0.0;
 
-    return [
+    return {
       cancelled,
-      // resultTimeRate,
+      resultTimeRate,
       // resultLast3fSec,
       resultTimeDiffSec,
       isCourseTurf,
@@ -262,15 +271,18 @@ export function generateDataset(data: Types.DBRace) {
       isPresentTrainingConditionGood,
       isPresentTrainingConditionYielding,
       isPresentTrainingConditionSoft,
-      presentTraningLap4f,
+      isPresentTrainingCommentHard,
+      isPresentTrainingCommentMiddle,
+      isPresentTrainingCommentSoft,
+      // presentTraningLap4f,
       // presentTraningLap3f,
       // presentTraningLap2f,
-      presentTraningLap1f,
-      // presentTraningLapGap1f,
-      // presentTraningLapGap2f,
-      // presentTraningLapGap3f,
+      // presentTraningLap1f,
       // presentTraningLapGap4f,
-      presentTraningAccel,
+      presentTraningLapGap3f,
+      presentTraningLapGap2f,
+      presentTraningLapGap1f,
+      // presentTraningAccel,
 
       hasFastestTraining,
       isFastestTrainingCourseHakodateWood,
@@ -287,14 +299,17 @@ export function generateDataset(data: Types.DBRace) {
       isFastestTrainingConditionGood,
       isFastestTrainingConditionYielding,
       isFastestTrainingConditionSoft,
-      fastestTraningLap4f,
+      isFastestTrainingCommentHard,
+      isFastestTrainingCommentMiddle,
+      isFastestTrainingCommentSoft,
+      // fastestTraningLap4f,
       // fastestTraningLap3f,
       // fastestTraningLap2f,
-      fastestTraningLap1f,
+      // fastestTraningLap1f,
       // fastestTraningLapGap4f,
-      // fastestTraningLapGap3f,
-      // fastestTraningLapGap2f,
-      // fastestTraningLapGap1f,
+      fastestTraningLapGap3f,
+      fastestTraningLapGap2f,
+      fastestTraningLapGap1f,
       fastestTraningAccel,
 
       hasLastTraining,
@@ -312,19 +327,22 @@ export function generateDataset(data: Types.DBRace) {
       isLastTrainingConditionGood,
       isLastTrainingConditionYielding,
       isLastTrainingConditionSoft,
-      lastTraningLap4f,
+      isLastTrainingCommentHard,
+      isLastTrainingCommentMiddle,
+      isLastTrainingCommentSoft,
+      // lastTraningLap4f,
       // lastTraningLap3f,
       // lastTraningLap2f,
-      lastTraningLap1f,
+      // lastTraningLap1f,
       // lastTraningLapGap4f,
-      // lastTraningLapGap3f,
-      // lastTraningLapGap2f,
-      // lastTraningLapGap1f,
+      lastTraningLapGap3f,
+      lastTraningLapGap2f,
+      lastTraningLapGap1f,
       lastTraningAccel,
-    ];
+    };
   });
 
-  return result.filter((v) => v[0] !== 1);
+  return result.filter((v) => v.cancelled !== 1).flat();
 }
 
 
@@ -341,15 +359,18 @@ export default async (idReg: string, options: { output: string }) => {
         logger.warn(warning);
       }
     }
-
-    const headerCsv = `${CSV_HEAD.join(',')}\n`;
-    writeFileSync(options.output, headerCsv, { flag: "w" });
     
-    while (docs.length > 0) {
-      const data = docs.splice(0, 100);
-      const line = data.flatMap((d) => generateDataset(d));
-      const csv = line.map((v) => `${v.join(',')}\n`).join('');
+    for (let count = 0; count < docs.length; count = count + 100) {
+      const dataset = docs.slice(count, count + 100).flatMap((d) => generateDataset(d));
 
+      // 最初のみヘッダを出力
+      if (count === 0) {
+        const header = Object.keys(dataset[0]).map((h) => `#${h}`).join(',');
+        writeFileSync(options.output, `${header}\n`, { flag: "w" });
+      }
+
+      // CSVを出力
+      const csv = dataset.map((v) => `${Object.values(v).join(',')}\n`).join('');
       if (options.output) {
         writeFileSync(options.output, csv, { flag: "a+" });
       } else {
