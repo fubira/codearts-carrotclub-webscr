@@ -135,9 +135,9 @@ export function generateDataset(data: Types.DBRace) {
     const horseWeightDiff = entry.horseWeightDiff;
     const horseHandicap = entry.handicap;
 
-    const presentTraining = entry.training?.logs.slice(-1)[0];
+    const presentTraining = entry.training?.logs.slice(-1)?.[0];
     const fastestTraining = entry.training?.logs.slice(1).sort((a, b) => a.lap[1]?.lap - b.lap[1]?.lap )[0];
-    const lastTraining = entry.training?.logs[0];
+    const lastTraining = entry.training?.logs.slice(1)?.[0];
 
     const sumTrainingAccel = (lapgap: Types.DBLapGap[]) => {
       return Helper.RoundTime(lapgap?.map((p, index) => p.accel * (1 + index / 10))?.reduce((prev, curr) => prev + curr, 0));

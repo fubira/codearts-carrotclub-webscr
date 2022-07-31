@@ -44,7 +44,7 @@ async function train(rawData: number[][], options: { init: boolean }) {
       input: [ ...d ],
       output: { timeDiff: timeDiff }
     }
-  }).filter((v) => v.input.length !== 0); 
+  }).filter((v) => v.input.length !== 0).sort(() => Math.random() - 0.5); 
 
   if (data) {
     const total = data.length;
