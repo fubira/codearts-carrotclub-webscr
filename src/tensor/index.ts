@@ -5,7 +5,7 @@ import logger from 'logger';
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
 
-function initializeNeuralNet(opts?: { init?: boolean, dry?: boolean }) {
+function initializeNeuralNet(opts?: { init?: boolean }) {
   const net = new brain.NeuralNetwork();
 
   if (!existsSync(LEARNING_DIR)) {
@@ -39,16 +39,21 @@ async function train(rawData: number[][], options: { init: boolean }) {
 
   const data = rawData.map((d) => {
     d.shift();
-    const time = d.shift();
-    d.shift();
+    const timeDiff = d.shift();
     return {
       input: [ ...d ],
-      output: { time: time }
+      output: { timeDiff: timeDiff }
     }
   }).filter((v) => v.input.length !== 0); 
 
   if (data) {
-    net.train([...data]);
+    const total = data.length;
+
+    for (let count = 0; count < data.length; count += 100) {
+      const trainData = data.slice(count, count + 100);
+      net.train([...trainData]);
+      console.log(`[${count} / ${total}] trained.`);
+    }
   }
 
   finalizeNeuralNet(net);
@@ -59,23 +64,23 @@ async function run(rawData: number[][]) {
 
   const data = rawData.map((d, index) => {
     d.shift();
-    const time = d.shift();
-    d.shift();
+    const timeDiff = d.shift();
 
     return {
       index: index + 1,
       input: [ ...d ],
-      output: { time: time }
+      output: { timeDiff: timeDiff }
     }
-  }) 
+  }) .filter((v) => v.input.length !== 0);
 
   if (data) {
+    console.log(data);
 
-    const result = data.map(({ input }) => net.run(input) as { time: number, l3f: number });
+    const result = data.map(({ input }) => net.run(input) as { timeDiff: number });
     
     const list = result.map((value, index) => { return { id: index + 1, output: value } });
 
-    list.sort((a, b) => b.output.time - a.output.time).forEach((value) => {
+    list.sort((a, b) => a.output.timeDiff - b.output.timeDiff).forEach((value) => {
       logger.info(`${value.id} - ${JSON.stringify(value.output)}`);
     })
   }
@@ -83,11 +88,25 @@ async function run(rawData: number[][]) {
   finalizeNeuralNet(net);
 }
 
+function verifyRawData(data: number[][]) {
+  data.map((line, lineIndex) => {
+    line.map((cell, cellIndex) => {
+      if (cell === null) {
+        logger.warn(line);
+        throw Error(`空のセルが存在します。 (${lineIndex} / ${cellIndex}})`)
+      }
+      if (isNaN(cell) || cell === Infinity) {
+        logger.warn(line);
+        throw Error(`数値が異常です。 (line: ${lineIndex} / cell: ${cellIndex}})`)
+      }
+    });
+  })
+} 
 
-export default async (options: { train?: string, test?: string, init: boolean }) => {
+export default async (trainCsvPath: string, testCsvPath: string, options: { train: boolean, test: boolean, init: boolean }) => {
   try {
-    const trainCsv = (options.train) && readFileSync(options.train).toString();
-    const testCsv = (options.test) && readFileSync(options.test).toString();
+    const trainCsv = readFileSync(trainCsvPath).toString();
+    const testCsv = readFileSync(testCsvPath).toString();
  
     const normalize = (data: number[][], dataOther?: number[][]) => {
       const all = [...data, ...dataOther];
@@ -95,17 +114,13 @@ export default async (options: { train?: string, test?: string, init: boolean })
       const min: number[] = Array(columns);
       const max: number[] = Array(columns);
       all.forEach((line) => {
-        line.forEach((column, index) => {
-          min[index] = Math.min(min[index] || Number.MAX_VALUE, column);
-          max[index] = Math.max(max[index] || Number.MIN_VALUE, column);
+        line.forEach((cell, index) => {
+          min[index] = Math.min(min[index] || Number.MAX_VALUE, cell);
+          max[index] = Math.max(max[index] || Number.MIN_VALUE, cell);
         })
       });
       
       for (let ci = 0; ci < columns; ci ++) {
-        if (min[ci] === 0 && max[ci] === 0) {
-          max[ci] = 1;
-          min[ci] = 0;
-        }
         if (min[ci] === max[ci]) {
           max[ci] = min[ci] + 1;
         }
@@ -113,7 +128,12 @@ export default async (options: { train?: string, test?: string, init: boolean })
 
       for (const line of data) {
         for (let ii = 0; ii < line.length; ii ++) {
-          line[ii] = (line[ii] - min[ii]) / (max[ii] - min[ii]);
+          const cell = (line[ii] - min[ii]) / (max[ii] - min[ii]);
+          if (isNaN(cell) || cell === Infinity) {
+            logger.info(cell, line[ii], min[ii], max[ii]);
+          }
+
+          line[ii] = cell;
         }
       }
       return data;
@@ -121,17 +141,21 @@ export default async (options: { train?: string, test?: string, init: boolean })
     const trainCsvline = trainCsv?.split(/\r?\n/g).filter((line) => !line.startsWith('#'));
     const trainRawData = trainCsvline?.map((l) => l.split(',').map((v) => Number(v)));
 
-    const trainNormalizedData = trainRawData && normalize(trainRawData);
     const testCsvline = testCsv?.split(/\r?\n/g).filter((line) => !line.startsWith('#'));
     const testRawData = testCsvline?.map((l) => l.split(',').map((v) => Number(v)));
+
+    const trainNormalizedData = trainRawData && normalize(trainRawData, testRawData);
     const testNormalizedData = testRawData && normalize(testRawData, trainRawData);
 
-    if (trainNormalizedData) {
+    verifyRawData(trainRawData);
+    verifyRawData(testRawData);
+
+    if (options.train) {
       logger.info("train start.");
       train(trainNormalizedData, options);
       logger.info("train complete.");
     }
-    if (testNormalizedData) {
+    if (options.test) {
       logger.info("test start.");
       run(testNormalizedData);
       logger.info("test complete.");

@@ -227,6 +227,9 @@ export interface DBResultDetail {
   // タイム (s)
   timeSec: number;
 
+  // 勝ち馬とのタイム差 (s)
+  timeDiffSec: number;
+
   // 上り3F (s)
   last3fSec: number;
 }

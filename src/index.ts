@@ -55,11 +55,13 @@ program
 program
   .command('run')
   .description('機械学習の実行')
+  .argument('<train-csv>', '学習データCSV')
+  .argument('<test-csv>', '検証データCSV')
   .option('--init', '起動時に学習状況を初期化する', false)
-  .option('-t, --train <csv-file>', '学習用データセットの指定', undefined)
-  .option('-v, --test <csv-file>', '検証用データセットの指定', undefined)
-  .action((options) => {
-    tensor({ ...options });
+  .option('-t, --no-train', '学習を行わない')
+  .option('-v, --no-test', '検証を行わない')
+  .action((trainCsv, testCsv, options) => {
+    tensor(trainCsv, testCsv, { ...options });
   });
 
 program

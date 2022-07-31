@@ -124,24 +124,26 @@ export function generateDataset(data: Types.DBRace) {
     const result = data.result.detail.find((d) => d.horseId === horseId);
     const cancelled = (!result || !result.timeSec) ? 1 : 0
 
-    const resultLast3fSec = result.last3fSec;
-    const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
+    // const resultLast3fSec = result.last3fSec;
+    // const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
+    const resultTimeDiffSec = Helper.RoundTime(result.timeDiffSec);
 
-    const isHorseMale = entry.horseSex === '牡' ? 1 : 0;
-    const isHorseFemale = entry.horseSex === '牝' ? 1 : 0; 
-    const isHorseGelding = entry.horseSex === 'セン' ? 1 : 0; 
-    const horseWeight = entry.horseWeight;
+    // const isHorseMale = entry.horseSex === '牡' ? 1 : 0;
+    // const isHorseFemale = entry.horseSex === '牝' ? 1 : 0; 
+    // const isHorseGelding = entry.horseSex === 'セン' ? 1 : 0; 
+    // const horseWeight = entry.horseWeight;
     const horseWeightDiff = entry.horseWeightDiff;
     const horseHandicap = entry.handicap;
 
     const presentTraining = entry.training?.logs.slice(-1)[0];
-    const fastestTraining = entry.training?.logs.sort((a, b) => a.lap[0]?.lap - b.lap[0]?.lap )[0];
+    const fastestTraining = entry.training?.logs.slice(1).sort((a, b) => a.lap[1]?.lap - b.lap[1]?.lap )[0];
     const lastTraining = entry.training?.logs[0];
 
     const sumTrainingAccel = (lapgap: Types.DBLapGap[]) => {
       return Helper.RoundTime(lapgap?.map((p, index) => p.accel * (1 + index / 10))?.reduce((prev, curr) => prev + curr, 0));
     }
 
+    const hasPresentTraining = presentTraining ? 1 : 0;
     const isPresentTrainingCourseHakodateWood = presentTraining?.course.includes('函館Ｗ') ? 1 : 0;
     const isPresentTrainingCourseHakodateDirt = presentTraining?.course.includes('函館ダ') ? 1 : 0;
     const isPresentTrainingCourseHakodateTurf = presentTraining?.course.includes('函館芝') ? 1 : 0;
@@ -158,16 +160,17 @@ export function generateDataset(data: Types.DBRace) {
     const isPresentTrainingConditionSoft = presentTraining?.condition === '不良' ? 1 : 0;
 
     const presentTraningLap = presentTraining?.lap.slice(-4);
-    const presentTraningLap1f = presentTraningLap?.[0]?.lap || 99.0;
-    const presentTraningLap2f = presentTraningLap?.[1]?.lap || 99.0;
-    const presentTraningLap3f = presentTraningLap?.[2]?.lap || 99.0;
-    const presentTraningLap4f = presentTraningLap?.[3]?.lap || 99.0;
-    const presentTraningLapGap1f = presentTraningLap?.[0]?.gap || 99.0;
-    const presentTraningLapGap2f = presentTraningLap?.[1]?.gap || 99.0;
-    const presentTraningLapGap3f = presentTraningLap?.[2]?.gap || 99.0;
-    const presentTraningLapGap4f = presentTraningLap?.[3]?.gap || 99.0;
-    const presentTraningAccel = sumTrainingAccel(presentTraningLap);
+    const presentTraningLap4f = presentTraningLap?.[0]?.lap || 60.0;
+    // const presentTraningLap3f = presentTraningLap?.[1]?.lap || 45.0;
+    // const presentTraningLap2f = presentTraningLap?.[2]?.lap || 30.0;
+    const presentTraningLap1f = presentTraningLap?.[3]?.lap || 15.0;
+    // const presentTraningLapGap4f = presentTraningLap?.[0]?.gap || 99.0;
+    // const presentTraningLapGap3f = presentTraningLap?.[1]?.gap || 99.0;
+    // const presentTraningLapGap2f = presentTraningLap?.[2]?.gap || 99.0;
+    // const presentTraningLapGap1f = presentTraningLap?.[3]?.gap || 99.0;
+    const presentTraningAccel = (presentTraningLap && sumTrainingAccel(presentTraningLap)) || 0.0;
 
+    const hasFastestTraining = fastestTraining ? 1 : 0;
     const isFastestTrainingCourseHakodateWood = fastestTraining?.course.includes('函館Ｗ') ? 1 : 0;
     const isFastestTrainingCourseHakodateDirt = fastestTraining?.course.includes('函館ダ') ? 1 : 0;
     const isFastestTrainingCourseHakodateTurf = fastestTraining?.course.includes('函館芝') ? 1 : 0;
@@ -184,16 +187,17 @@ export function generateDataset(data: Types.DBRace) {
     const isFastestTrainingConditionSoft = fastestTraining?.condition === '不良' ? 1 : 0;
 
     const fastestTraningLap = fastestTraining?.lap.slice(-4);
-    const fastestTraningLap1f = fastestTraningLap?.[0]?.lap || 80.0;
-    const fastestTraningLap2f = fastestTraningLap?.[1]?.lap || 60.0;
-    const fastestTraningLap3f = fastestTraningLap?.[2]?.lap || 40.0;
-    const fastestTraningLap4f = fastestTraningLap?.[3]?.lap || 20.0;
-    const fastestTraningLapGap1f = fastestTraningLap?.[0]?.gap || 20.0;
-    const fastestTraningLapGap2f = fastestTraningLap?.[1]?.gap || 20.0;
-    const fastestTraningLapGap3f = fastestTraningLap?.[2]?.gap || 20.0;
-    const fastestTraningLapGap4f = fastestTraningLap?.[3]?.gap || 20.0;
-    const fastestTraningAccel = sumTrainingAccel(fastestTraningLap);
+    const fastestTraningLap4f = fastestTraningLap?.[0]?.lap || 60.0;
+    // const fastestTraningLap3f = fastestTraningLap?.[1]?.lap || 45.0;
+    // const fastestTraningLap2f = fastestTraningLap?.[2]?.lap || 30.0;
+    const fastestTraningLap1f = fastestTraningLap?.[3]?.lap || 15.0;
+    // const fastestTraningLapGap4f = fastestTraningLap?.[0]?.gap || 20.0;
+    // const fastestTraningLapGap3f = fastestTraningLap?.[1]?.gap || 20.0;
+    // const fastestTraningLapGap2f = fastestTraningLap?.[2]?.gap || 20.0;
+    // const fastestTraningLapGap1f = fastestTraningLap?.[3]?.gap || 20.0;
+    const fastestTraningAccel = fastestTraningLap && sumTrainingAccel(fastestTraningLap) || 0.0;
 
+    const hasLastTraining = lastTraining ? 1 : 0;
     const isLastTrainingCourseHakodateWood = lastTraining?.course.includes('函館Ｗ') ? 1 : 0;
     const isLastTrainingCourseHakodateDirt = lastTraining?.course.includes('函館ダ') ? 1 : 0;
     const isLastTrainingCourseHakodateTurf = lastTraining?.course.includes('函館芝') ? 1 : 0;
@@ -210,20 +214,21 @@ export function generateDataset(data: Types.DBRace) {
     const isLastTrainingConditionSoft = lastTraining?.condition === '不良' ? 1 : 0;
 
     const lastTraningLap = lastTraining?.lap.slice(-4);
-    const lastTraningLap1f = lastTraningLap?.[0]?.lap || 99.0;
-    const lastTraningLap2f = lastTraningLap?.[1]?.lap || 99.0;
-    const lastTraningLap3f = lastTraningLap?.[2]?.lap || 99.0;
-    const lastTraningLap4f = lastTraningLap?.[3]?.lap || 99.0;
-    const lastTraningLapGap1f = lastTraningLap?.[0]?.gap || 99.0;
-    const lastTraningLapGap2f = lastTraningLap?.[1]?.gap || 99.0;
-    const lastTraningLapGap3f = lastTraningLap?.[2]?.gap || 99.0;
-    const lastTraningLapGap4f = lastTraningLap?.[3]?.gap || 99.0;
-    const lastTraningAccel = sumTrainingAccel(lastTraningLap);
+    const lastTraningLap4f = lastTraningLap?.[0]?.lap || 60.0;
+    // const lastTraningLap3f = lastTraningLap?.[1]?.lap || 45.0;
+    // const lastTraningLap2f = lastTraningLap?.[2]?.lap || 30.0;
+    const lastTraningLap1f = lastTraningLap?.[3]?.lap || 15.0;
+    // const lastTraningLapGap4f = lastTraningLap?.[0]?.gap || 99.0;
+    // const lastTraningLapGap3f = lastTraningLap?.[1]?.gap || 99.0;
+    // const lastTraningLapGap2f = lastTraningLap?.[2]?.gap || 99.0;
+    // const lastTraningLapGap1f = lastTraningLap?.[3]?.gap || 99.0;
+    const lastTraningAccel = lastTraningLap && sumTrainingAccel(lastTraningLap) || 0.0;
 
     return [
       cancelled,
-      resultTimeRate,
-      resultLast3fSec,
+      // resultTimeRate,
+      // resultLast3fSec,
+      resultTimeDiffSec,
       isCourseTurf,
       isCourseDirt,
       isCourseConditionFirmStandard,
@@ -236,12 +241,13 @@ export function generateDataset(data: Types.DBRace) {
       isCourseDistanceMile,
       isCourseDistanceMiddle,
       isCourseDistanceLong,
-      isHorseMale,
-      isHorseFemale,
-      isHorseGelding,
-      horseWeight,
+      // isHorseMale,
+      // isHorseFemale,
+      // isHorseGelding,
+      // horseWeight,
       horseWeightDiff,
       horseHandicap,
+      hasPresentTraining,
       isPresentTrainingCourseHakodateWood,
       isPresentTrainingCourseHakodateDirt,
       isPresentTrainingCourseHakodateTurf,
@@ -256,15 +262,17 @@ export function generateDataset(data: Types.DBRace) {
       isPresentTrainingConditionGood,
       isPresentTrainingConditionYielding,
       isPresentTrainingConditionSoft,
-      presentTraningLap1f,
-      presentTraningLap2f,
-      presentTraningLap3f,
       presentTraningLap4f,
+      // presentTraningLap3f,
+      // presentTraningLap2f,
+      presentTraningLap1f,
       // presentTraningLapGap1f,
       // presentTraningLapGap2f,
       // presentTraningLapGap3f,
       // presentTraningLapGap4f,
-      // presentTraningAccel,
+      presentTraningAccel,
+
+      hasFastestTraining,
       isFastestTrainingCourseHakodateWood,
       isFastestTrainingCourseHakodateDirt,
       isFastestTrainingCourseHakodateTurf,
@@ -279,15 +287,17 @@ export function generateDataset(data: Types.DBRace) {
       isFastestTrainingConditionGood,
       isFastestTrainingConditionYielding,
       isFastestTrainingConditionSoft,
-      fastestTraningLap1f,
-      fastestTraningLap2f,
-      fastestTraningLap3f,
       fastestTraningLap4f,
-      // fastestTraningLapGap1f,
-      // fastestTraningLapGap2f,
-      // fastestTraningLapGap3f,
+      // fastestTraningLap3f,
+      // fastestTraningLap2f,
+      fastestTraningLap1f,
       // fastestTraningLapGap4f,
-      // fastestTraningAccel,
+      // fastestTraningLapGap3f,
+      // fastestTraningLapGap2f,
+      // fastestTraningLapGap1f,
+      fastestTraningAccel,
+
+      hasLastTraining,
       isLastTrainingCourseHakodateWood,
       isLastTrainingCourseHakodateDirt,
       isLastTrainingCourseHakodateTurf,
@@ -302,15 +312,15 @@ export function generateDataset(data: Types.DBRace) {
       isLastTrainingConditionGood,
       isLastTrainingConditionYielding,
       isLastTrainingConditionSoft,
-      lastTraningLap1f,
-      lastTraningLap2f,
-      lastTraningLap3f,
       lastTraningLap4f,
-      // lastTraningLapGap1f,
-      // lastTraningLapGap2f,
-      // lastTraningLapGap3f,
+      // lastTraningLap3f,
+      // lastTraningLap2f,
+      lastTraningLap1f,
       // lastTraningLapGap4f,
-      // lastTraningAccel,
+      // lastTraningLapGap3f,
+      // lastTraningLapGap2f,
+      // lastTraningLapGap1f,
+      lastTraningAccel,
     ];
   });
 
@@ -338,7 +348,7 @@ export default async (idReg: string, options: { output: string }) => {
     while (docs.length > 0) {
       const data = docs.splice(0, 100);
       const line = data.flatMap((d) => generateDataset(d));
-      const csv = line.map((v) => v.join(',')).join('\n');
+      const csv = line.map((v) => `${v.join(',')}\n`).join('');
 
       if (options.output) {
         writeFileSync(options.output, csv, { flag: "a+" });
@@ -346,8 +356,6 @@ export default async (idReg: string, options: { output: string }) => {
         console.log(csv);
       }
     }
-
-
   } catch (err) {
     logger.error(err);
   }
