@@ -54,10 +54,10 @@ export function generateTrainingLapBase(docs: Types.DBRace[]) {
    * 調教IDごとの平均値をとる
    */
   Object.keys(lapTotal).map((trainingId) => {
-    const lap0 = Helper.RoundTime(lapTotal[trainingId][0].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][0].length);
-    const lap1 = Helper.RoundTime(lapTotal[trainingId][1].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][1].length);
-    const lap2 = Helper.RoundTime(lapTotal[trainingId][2].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][2].length);
-    const lap3 = Helper.RoundTime(lapTotal[trainingId][3].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][3].length);
+    const lap0 = Helper.Round2(lapTotal[trainingId][0].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][0].length);
+    const lap1 = Helper.Round2(lapTotal[trainingId][1].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][1].length);
+    const lap2 = Helper.Round2(lapTotal[trainingId][2].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][2].length);
+    const lap3 = Helper.Round2(lapTotal[trainingId][3].reduce((prev, curr) => prev + curr, 0) / lapTotal[trainingId][3].length);
 
     // console.log(`trainingId:${trainingId} length:${lapTotal[trainingId][0].length} value: ${[lap0, lap1, lap2, lap3]}`);
     result[trainingId] = [lap0, lap1, lap2, lap3];
@@ -68,18 +68,27 @@ export function generateTrainingLapBase(docs: Types.DBRace[]) {
 
 export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
   return docs.flatMap((data) => {
+    /**
+     * 基本情報
+     *
+     * 学習には無関係
+     * 確認のための分類・情報表示用
+     */
+    const infoDate = data.date;
+    const infoCourseId = data.courseId;
+    const infoCourse = data.courseName;
+    const infoRaceNo = data.raceNo;
+    const infoRaceTitle = data.raceTitle;
+
+    /**
+     * 相対値比較のために最大値, 合計値を取っておく
+     */
+    const maxHandicap = data.entries.sort((a, b) => b.handicap - a.handicap)[0].handicap;
+
+    const totalWinningRate = data.entries.map((e) => Helper.CalcWinningRate(e.odds)).reduce((prev, curr) => prev + curr);
+
     const result = data.entries.map((entry) => {
-      /**
-       * 基本情報
-       *
-       * 学習には無関係
-       * 確認のための分類・情報表示用
-       */
-      const infoDate = data.date;
-      const infoCourseId = data.courseId;
-      const infoCourse = data.courseName;
-      const infoRaceNo = data.raceNo;
-      const infoRaceTitle = data.raceTitle;
+  
       const infoBracketId = entry.bracketId;
       const infoHorseId = entry.horseId;
 
@@ -88,12 +97,11 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
        *
        * 答えとなるデータ
        *
-       * @note 学習時inputに含めないこと (答えを学習してしまう)
        */
       const result = data.result.detail.find((d) => d.horseId === infoHorseId);
       const outputScratch = (!result || !result.timeSec) ? 1 : 0
       const outputTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
-      const outputTimeDiffSec = Helper.RoundTime(result.timeDiffSec);
+      const outputTimeDiffSec = Helper.Round2(result.timeDiffSec);
 
       /**
        * 入力情報
@@ -104,7 +112,13 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
       /** @note 体重差は新馬・海外帰りなどで空になる場合がある  */
       const inputHorseWeightDiff = entry.horseWeightDiff || 0;
 
-      const inputHorseHandicap = entry.handicap;
+      /** ハンデはそのレースの最大からの相対値で取得する */
+      const inputHorseHandicap = entry.handicap - maxHandicap;
+      
+      /** オッズから基準勝率を割り出す */
+      const inputHorseWinPercent = Helper.Round2((Helper.CalcWinningRate(entry.odds) * 100) / totalWinningRate);
+
+
   /*
       const presentTraining = entry.training?.logs.slice(-1)?.[0];
       const presentTrainingId = presentTraining && makeTrainingKey(presentTraining);
@@ -144,6 +158,7 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
         outputTimeDiffSec,
         inputHorseWeightDiff,
         inputHorseHandicap,
+        inputHorseWinPercent,
         /*
         presentTrainingDiff4f: 0 && presentTrainingDiff4f,
         presentTrainingDiff3f,
@@ -186,32 +201,36 @@ function readBaseDataset(baseDataPath: string) {
  * @param dataset 
  */
 function writeDataset(outputPath: string, dataset: any[]) {
+  if (dataset.length <= 0) {
+    return;
+  }
+
   /**
    * 確認用にヘッダを書き出しておく
    */
-   const header = Object.keys(dataset[0]).map((h) => `${h}`).join(',');
-   writeFileSync(outputPath, `${header}\n`, { flag: "w" });
+  const header = Object?.keys(dataset[0]).map((h) => `${h}`).join(',');
+  writeFileSync(outputPath, `${header}\n`, { flag: "w" });
  
-   /**
-    * 一定量ずつファイル出力
-    */
-   while (dataset.length > 0) {
-     const trainData = dataset.splice(0, 100);
- 
-     const csv = trainData.map((v) => `${Object.values(v).join(',')}\n`).join('');
-     if (outputPath) {
-       writeFileSync(outputPath, csv, { flag: "a+" });
-     } else {
-       console.log(csv);
-     }
-   }
- }
+  /**
+   * 一定量ずつファイル出力
+   */
+  while (dataset.length > 0) {
+    const trainData = dataset.splice(0, 100);
+
+    const csv = trainData.map((v) => `${Object.values(v).join(',')}\n`).join('');
+    if (outputPath) {
+      writeFileSync(outputPath, csv, { flag: "a+" });
+    } else {
+      console.log(csv);
+    }
+  }
+}
 
  /**
   * 異常値がないかを調べる
   * @param dataset 
   */
- function verifyDataset(dataset: any[]) {
+function verifyDataset(dataset: any[]) {
   dataset.forEach((line, index) => {
     Object.keys(line).forEach((key) => {
       if (key.startsWith('info')) {

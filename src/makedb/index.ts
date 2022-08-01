@@ -163,10 +163,10 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
 
       let prevGap = 0;
       lapValue.forEach((value, index, array) => {
-        const lap = Helper.RoundTime(value);
+        const lap = Helper.Round2(value);
         const nextLap = (array.length > index) ? array[index + 1] : 0.0;
-        const gap = nextLap ? Helper.RoundTime(lap - nextLap) : lap;
-        const accel = prevGap !== 0 ? Helper.RoundTime(prevGap - gap) : 0;
+        const gap = nextLap ? Helper.Round2(lap - nextLap) : lap;
+        const accel = prevGap !== 0 ? Helper.Round2(prevGap - gap) : 0;
 
         if (lap > 0) {
           trainingLapGap.push({ lap, gap, accel });

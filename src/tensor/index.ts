@@ -88,20 +88,25 @@ async function run(rawData: number[][], header: string[][]) {
 
 
   if (dataset) {
-    const result = dataset.map(({ input }) => net.run(input) as { timeRate: number });
+    const result = dataset.map(({ input }) => net.run(input) as { timeDiff: number });
     
     const list = result.map((value, index) => {
+      const h = header[index];
       return {
-        header: [
-          ...header[index],
-        ],
+        header: {
+          raceId: `${h[0]}_${h[2]}_${h[3].padStart(2, '0')}R ${h[4]}`,
+          horseId: `[${h[5].padStart(2, ' ')}:${h[6].padStart(2, ' ')}]`,
+        },
         output: value,
       };
     });
 
-    list.sort((a, b) => b.output.timeRate - a.output.timeRate).forEach((value) => {
-      logger.info(`${JSON.stringify(value.header)} - ${JSON.stringify(value.output)}`);
-    })
+    list
+      .sort((a, b) => a.output.timeDiff - b.output.timeDiff)
+      .sort((a, b) => a.header.raceId.localeCompare(b.header.raceId))
+      .forEach((value) => {
+        logger.info(`${value.header.raceId} ${value.header.horseId} - ${JSON.stringify(value.output.timeDiff)}`);
+      });
   }
 
   finalizeNeuralNet(net);

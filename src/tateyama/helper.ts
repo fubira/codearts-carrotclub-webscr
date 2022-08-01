@@ -48,12 +48,16 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
 }
 
 /**
- * 数値を小数点以下一桁で丸める
+ * 数値を小数点以下で丸める
  * @param value 
  * @returns 
  */
- export const RoundTime = (value: number) => {
+ export const Round2 = (value: number) => {
   return Math.round(value * 100) / 100;
+}
+
+ export const Round3 = (value: number) => {
+  return Math.round(value * 1000) / 1000;
 }
 
 /**
@@ -73,3 +77,17 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
 
   return Math.round(time1000 * 100) / 100;
 }
+
+/**
+ * オッズから勝率レートを算出する
+ * 
+ * 
+ *   100 - ((秒数 / 距離) * 1000)
+ *
+ * @param value 
+ * @returns 
+ */
+export const CalcWinningRate = (value: number) => {
+  return 1 / (value || 1);
+}
+

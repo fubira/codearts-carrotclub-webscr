@@ -298,4 +298,5 @@ export interface Dataset {
   outputTimeDiffSec: number,
   inputHorseWeightDiff: number,
   inputHorseHandicap: number,
+  inputHorseWinPercent: number,
 }
