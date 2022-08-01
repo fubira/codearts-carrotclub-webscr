@@ -1,5 +1,5 @@
-import { writeFileSync } from 'fs';
-
+import { writeFileSync, readFileSync } from 'fs';
+import papa from 'papaparse';
 import logger from 'logger';
 
 import TateyamaDB from 'db';
@@ -132,48 +132,75 @@ export function generateDatasetAll(docs: Types.DBRace[], lapAvg: { [trainingId: 
   });
 }
 
-export default async (idReg: string, options: { output: string }) => {
+/**
+ * 基準データセットを読み込む
+ * @param baseDataPath 
+ * @returns 
+ */
+function readBaseDataset(baseDataPath: string) {
+  const baseFile = readFileSync(baseDataPath);
+  const { data } = papa.parse<string>(baseFile.toString());
+
+  return data;
+}
+
+/**
+ * データセットファイルを出力する
+ * 
+ * @param outputPath 
+ * @param dataset 
+ */
+function writeDataset(outputPath: string, dataset: any[]) {
+  /**
+   * ヘッダを書き出しておく
+   */
+   const header = Object.keys(dataset[0]).map((h) => `#${h}`).join(',');
+   writeFileSync(outputPath, `${header}\n`, { flag: "w" });
  
-  try {
-    const { docs, warning } = await TateyamaDB.query(idReg);
+   /**
+    * 一定量ずつファイル出力
+    */
+   while (dataset.length > 0) {
+     const trainData = dataset.splice(0, 100);
+ 
+     const csv = trainData.map((v) => `${Object.values(v).join(',')}\n`).join('');
+     if (outputPath) {
+       writeFileSync(outputPath, csv, { flag: "a+" });
+     } else {
+       console.log(csv);
+     }
+   }
+ }
 
-    if (options.output) {
-        if (docs) {
-        logger.info(`${docs.length}件のデータがマッチしました`);
-      }
-      if (warning) {
-        logger.warn(warning);
-      }
+export default async (idReg: string, options: { output: string, base: string }) => {
+  /**
+   * 指定範囲のデータをDBから取得
+   */
+  const { docs, warning } = await TateyamaDB.query(idReg);
+
+  if (options.output) {
+    if (docs) {
+      logger.info(`${docs.length}件のデータがマッチしました`);
     }
-    
-    /**
-     * 調教タイム基準値を生成
-     */
-    const lapbase = generateTrainingLapBase(docs);
-
-    /**
-     * 学習データセットを作成
-     */
-    const dataset = generateDatasetAll(docs, lapbase);
-
-    for (let count = 0; count < dataset.length; count = count + 100) {
-      const trainData = dataset.slice(count, count + 100);
-
-      // 最初のみヘッダを出力
-      if (count === 0) {
-        const header = Object.keys(trainData[0]).map((h) => `#${h}`).join(',');
-        writeFileSync(options.output, `${header}\n`, { flag: "w" });
-      }
-
-      // CSVを出力
-      const csv = trainData.map((v) => `${Object.values(v).join(',')}\n`).join('');
-      if (options.output) {
-        writeFileSync(options.output, csv, { flag: "a+" });
-      } else {
-        console.log(csv);
-      }
+    if (warning) {
+      logger.warn(warning);
     }
-  } catch (err) {
-    logger.error(err);
   }
+
+  /**
+   * 基準データCSVを読み込む
+   * 
+   * (検証データ作成時、学習データの平均値を基準にする)
+   */
+  const baseDataset = readBaseDataset(options.base);
+
+  /**
+   * 学習データセットを作成
+   */
+  const dataset = generateDatasetAll(docs, baseDataset);
+
+  /**
+   * データセットファイルの出力
+   */
+  writeDataset(options.output, dataset);
 }

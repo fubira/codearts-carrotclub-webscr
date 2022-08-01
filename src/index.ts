@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import process from 'process';
 import { Command } from 'commander';
+import logger from 'logger';
 
 import makedb from './makedb';
 import dbutil from './dbutil';
@@ -29,8 +30,12 @@ program
     const year = range.slice(0, 4);
     const month = range.slice(4, 6);
     const day = range.slice(6, 8);
-  
-    scrape(year, month, day, { ...options });
+
+    try {
+      scrape(year, month, day, { ...options });
+    } catch (err) {
+      logger.error(err);
+    }
   });
 
   program
@@ -38,30 +43,41 @@ program
   .description('スクレイピングデータのDB化')
   .option('-s, --source-dir <dir>', 'スクレイピングデータディレクトリの指定', ".site")
   .action((options) => {
-    makedb(options);
-    makedb({ ...options });
+    try {
+      makedb({ ...options });
+    } catch (err) {
+      logger.error(err);
+    }
   });
 
 program
   .command('dataset')
   .description('データセットの生成')
   .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
-  .option('-o, --output <csv-file>', '出力ファイル', "output.csv")
-  .action((str, options) => {
-    console.log(str, options);
-    dataset(str, { ...options });
+  .option('-o, --output <output_csv>', '出力ファイル名を指定する', 'output.csv')
+  .option('-b, --base <base_csv>', '検証データを作成する際、基準となる学習データセットCSVを指定する')
+  .action((idRegex, options) => {
+    try {
+      dataset(idRegex, { ...options });
+    } catch (err) {
+      logger.error(err);
+    }
   })
 
 program
   .command('run')
   .description('機械学習の実行')
-  .argument('<train-csv>', '学習データCSV')
-  .argument('<test-csv>', '検証データCSV')
+  .argument('<train-csv>', '学習データセットCSV')
+  .argument('<test-csv>', '検証データセットCSV')
   .option('--init', '起動時に学習状況を初期化する', false)
   .option('-t, --no-train', '学習を行わない')
   .option('-v, --no-test', '検証を行わない')
   .action((trainCsv, testCsv, options) => {
-    tensor(trainCsv, testCsv, { ...options });
+    try {
+      tensor(trainCsv, testCsv, { ...options });
+    } catch (err) {
+      logger.error(err);
+    }
   });
 
 program
@@ -72,7 +88,11 @@ program
   .description('DBからデータを取得')
   .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
   .action((str) => {
-    dbutil('get', str);
+    try {
+      dbutil('get', str);
+    } catch (err) {
+      logger.error(err);
+    }
   });
 
 program.parse();
