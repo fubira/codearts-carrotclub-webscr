@@ -69,7 +69,7 @@ export const HorseSexToNumber = (value: Types.HorseSex) => {
     return 0;
   } 
 
-  const time1000 = 100 - (value * 1000) / distance;
+  const time1000 = 100 - ((value || 100) * 1000) / distance;
 
-  return Math.round(time1000);
+  return Math.round(time1000 * 100) / 100;
 }
