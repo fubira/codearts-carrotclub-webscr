@@ -296,7 +296,22 @@ export interface Dataset {
   outputScratch: number,
   outputTimeRate: number,
   outputTimeDiffSec: number,
-  inputHorseWeightDiff: number,
-  inputHorseHandicap: number,
+  // inputHorseIsMale: number,
+  // inputHorseIsFemale: number,
+  // inputHorseWeightDiff: number,
   inputHorseWinPercent: number,
+  inputHorseHandicap: number,
+  /*
+  inputPresentTrainingAccel3f: number,
+  inputPresentTrainingAccel2f: number,
+  inputPresentTrainingAccel1f: number,
+  */
+  // inputPresentTrainingDiff3f: number,
+  inputPresentTrainingAccel: number,
+  // inputFastestTrainingDiff3f: number,
+  inputFastestTrainingAccel: number,
+  /*
+  inputPresentTrainingDiff2f: number,
+  inputPresentTrainingDiff1f: number,
+  */
 }

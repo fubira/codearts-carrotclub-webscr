@@ -144,8 +144,9 @@ async function parseTraining(info: Types.ScrapeRaceInfo, trainingHtml: string): 
       } else {
         // 先頭から数字が入っている、あるいは空のデータはウッドその他
         // [6F] [5F] [4F] [3F] [1F] [位置]
+        // 2Fは補完してデータとしては4F-1Fを使う
         countValue = 0;
-        lapValue = trainingTimeList.slice(0, -1).map((el) => Number(el.textContent));
+        lapValue = trainingTimeList.slice(2, -1).map((el) => Number(el.textContent));
         const [last3, last1] = lapValue.slice(-2);
         const avg3 = last3 / 3;
         const lastPower = avg3 / last1;

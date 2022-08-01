@@ -66,6 +66,47 @@ export function generateTrainingLapBase(docs: Types.DBRace[]) {
   return result;
 }
 
+function getTrainingBaseTime(log: Types.DBTrainingLog) {
+  let result = [14.0, 13.0, 12.0, 12.0];
+  if (log?.course.includes('美南Ｗ')) {
+    result = [13.5,13,12.5,12];
+  }
+  else if (log?.course.includes('美坂')) {
+    result = [14.5,13.5,13.0,12.5];
+  }
+  else if (log?.course.includes('栗ＣＷ')) {
+    result = [13,12.5,12.0,11.5];
+  }
+  else if (log?.course.includes('栗坂')) {
+    result = [13.5,13.0,12.5,12.0];
+  }
+  else if (log?.course.includes('美Ｐ')) {
+    result = [12.5,12.0,11.5,11.0];
+  }
+  else if (log?.course.includes('芝')) {
+    result = [13,12.5,12.0,11.5];
+  }
+  else if (log?.course.includes('ダ')) {
+    result = [13.5,13.0,12.5,12.0];
+  }
+  else if (log?.course.includes('Ｗ')) {
+    result = [14.0,13.5,13.0,12.5];
+  }
+  
+  if (log?.comment.includes('馬なり')) {
+    result = result.map(v => v * 1.05);
+  }
+  
+  if (log?.condition.includes('重')) {
+    result = result.map(v => v * 1.1);
+  }
+  if (log?.condition.includes('稍')) {
+    result = result.map(v => v * 1.05);
+  }
+
+  return result;
+}
+
 export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
   return docs.flatMap((data) => {
     /**
@@ -113,12 +154,42 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
       const inputHorseWeightDiff = entry.horseWeightDiff || 0;
 
       /** ハンデはそのレースの最大からの相対値で取得する */
-      const inputHorseHandicap = entry.handicap - maxHandicap;
+      const inputHorseHandicap = (entry.handicap + (entry.horseSex === "牝" ? 2 : 0)) - maxHandicap;
       
       /** オッズから基準勝率を割り出す */
       const inputHorseWinPercent = Helper.Round2((Helper.CalcWinningRate(entry.odds) * 100) / totalWinningRate);
 
 
+      /** 直前追切 */
+      const presentTraining = entry.training?.logs.slice(-1)[0];
+      const presentTrainingId = presentTraining && makeTrainingKey(presentTraining);
+      const presentBaseTime = getTrainingBaseTime(presentTraining);
+      const presentBaseTime3f = presentBaseTime.slice(-3).reduce((p, c) => p + c);
+      const inputPresentTrainingAccel3f = (presentTraining && presentTraining.lap[1]) ? Helper.Round2(presentTraining.lap.slice(-4)[1].accel) : 0;
+      const inputPresentTrainingAccel2f = (presentTraining && presentTraining.lap[2]) ? Helper.Round2(presentTraining.lap.slice(-4)[2].accel) : 0;
+      const inputPresentTrainingAccel1f = (presentTraining && presentTraining.lap[3]) ? Helper.Round2(presentTraining.lap.slice(-4)[3].accel) : 0;
+      const inputPresentTrainingDiff3f = (presentTraining && presentTraining.lap[1]) ? Helper.Round2(presentBaseTime[1] - presentTraining.lap.slice(-4)[1].gap) : 0;
+      const inputPresentTrainingDiff2f = (presentTraining && presentTraining.lap[2]) ? Helper.Round2(presentBaseTime[2] - presentTraining.lap.slice(-4)[2].gap) : 0;
+      const inputPresentTrainingDiff1f = (presentTraining && presentTraining.lap[3]) ? Helper.Round2(presentBaseTime[3] - presentTraining.lap.slice(-4)[3].gap) : 0;
+      const presentStartTimeDiff = presentTraining && ((presentTraining.lap[1]?.lap || presentBaseTime3f) - presentBaseTime3f);
+      const inputPresentTrainingAccel = (presentTraining) ? Helper.Round2(presentTraining.lap.slice(-3).map((v) => v.accel).reduce((p, c) => p + c, 0) - presentStartTimeDiff) : 0;
+      // console.log(presentBaseTime3f, presentTraining.lap[1]?.lap);
+
+      const fastestTraining = entry.training?.logs.sort((a, b) => b.lap[3]?.lap - a.lap[3]?.lap )[0];
+      const fastestTrainingId = fastestTraining && makeTrainingKey(fastestTraining);
+      const fastestBaseTime = getTrainingBaseTime(fastestTraining);
+      const fastestBaseTime3f = fastestBaseTime.slice(-3).reduce((p, c) => p + c);
+      const inputFastestTrainingAccel3f = (fastestTraining && fastestTraining.lap[1]) ? Helper.Round2(fastestTraining.lap.slice(-4)[1].accel) : 0;
+      const inputFastestTrainingAccel2f = (fastestTraining && fastestTraining.lap[2]) ? Helper.Round2(fastestTraining.lap.slice(-4)[2].accel) : 0;
+      const inputFastestTrainingAccel1f = (fastestTraining && fastestTraining.lap[3]) ? Helper.Round2(fastestTraining.lap.slice(-4)[3].accel) : 0;
+      const inputFastestTrainingDiff3f = (fastestTraining && fastestTraining.lap[1]) ? Helper.Round2(fastestBaseTime[1] - fastestTraining.lap.slice(-4)[1].gap) : 0;
+      const inputFastestTrainingDiff2f = (fastestTraining && fastestTraining.lap[2]) ? Helper.Round2(fastestBaseTime[2] - fastestTraining.lap.slice(-4)[2].gap) : 0;
+      const inputFastestTrainingDiff1f = (fastestTraining && fastestTraining.lap[3]) ? Helper.Round2(fastestBaseTime[3] - fastestTraining.lap.slice(-4)[3].gap) : 0;
+      const fastestStartTimeDiff = fastestTraining && ((fastestTraining.lap[1]?.lap || fastestBaseTime3f) - fastestBaseTime3f);
+      const inputFastestTrainingAccel = (fastestTraining) ? Helper.Round2(fastestTraining.lap.slice(-3).map((v) => v.accel).reduce((p, c) => p + c, 0) - fastestStartTimeDiff) : 0;
+      // console.log(entry.horseName, JSON.stringify(presentTraining), presentTraining.lap[1]?.lap, fastestBaseTime3f);
+      // console.log(entry.horseName, JSON.stringify(fastestTraining), fastestTraining.lap[1]?.lap, fastestBaseTime3f, );
+      
   /*
       const presentTraining = entry.training?.logs.slice(-1)?.[0];
       const presentTrainingId = presentTraining && makeTrainingKey(presentTraining);
@@ -159,6 +230,19 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
         inputHorseWeightDiff,
         inputHorseHandicap,
         inputHorseWinPercent,
+        /*
+        inputPresentTrainingAccel3f,
+        inputPresentTrainingAccel2f,
+        inputPresentTrainingAccel1f,
+        */
+        // inputPresentTrainingDiff3f,
+        inputPresentTrainingAccel: 0,
+        /*
+        inputPresentTrainingDiff2f,
+        inputPresentTrainingDiff1f,
+        */
+        // inputFastestTrainingDiff3f,
+        inputFastestTrainingAccel,
         /*
         presentTrainingDiff4f: 0 && presentTrainingDiff4f,
         presentTrainingDiff3f,
