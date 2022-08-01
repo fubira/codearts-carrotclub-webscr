@@ -2,14 +2,14 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import * as brain from 'brain.js';
 import logger from 'logger';
 import papa from 'papaparse';
-import fs from 'fs';
+import { Types } from 'tateyama';
 
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
 
 function initializeNeuralNet(opts?: { init?: boolean }) {
   const net = new brain.NeuralNetwork({
-    hiddenLayers: [20, 20, 20],
+    hiddenLayers: [20],
   });
 
   if (!existsSync(LEARNING_DIR)) {
@@ -41,23 +41,31 @@ async function train(rawData: number[][], options: { init: boolean }) {
     init: options.init
   });
 
-  const data = rawData.map((d) => {
-    d.shift();
-    const timeDiff = d.shift();
-    d.shift();
+  const dataset = rawData.map((data) => {
+    const [ /* isScratch */, timeRate, timeDiff ] = data.splice(0, 3);
 
     return {
-      input: [ ...d ],
-      output: { timeDiff: timeDiff }
+      input: [
+        ...data
+      ],
+      output: {
+        timeRate,
+        timeDiff
+      },
     }
-  }).filter((v) => v.input.length !== 0).sort(() => Math.random() - 0.5); 
+  }).filter((v) => v.input.length !== 0); 
 
-  if (data) {
-    const total = data.length;
+  const randomDataset = dataset.sort(() => Math.random() - 0.5);
 
-    for (let count = 0; count < data.length; count += 100) {
-      const trainData = data.slice(count, count + 100);
+  if (randomDataset) {
+    const total = randomDataset.length;
+    let count = 0;
+
+    while(dataset.length > 0) {
+      const trainData = dataset.splice(0, 100);
       net.train([...trainData]);
+
+      count = count + trainData.length;
       console.log(`[${count} / ${total}] trained.`);
     }
   }
@@ -65,114 +73,108 @@ async function train(rawData: number[][], options: { init: boolean }) {
   finalizeNeuralNet(net);
 }
 
-async function run(rawData: number[][]) {
+async function run(rawData: number[][], header: string[][]) {
   const net = initializeNeuralNet();
 
-  const data = rawData.map((d, index) => {
-    d.shift();
-    d.shift();
-    d.shift();
+  const dataset = rawData.map((data) => {
+    data.splice(0, 3);
 
     return {
-      index: index + 1,
-      input: [ ...d ],
-      output: { timeDiff: 0 }
+      input: [
+        ...data
+      ],
     }
-  }) .filter((v) => v.input.length !== 0);
+  }).filter((v) => v.input.length !== 0); 
 
-  if (data) {
-    const result = data.map(({ input }) => net.run(input) as { timeDiff: number });
+
+  if (dataset) {
+    const result = dataset.map(({ input }) => net.run(input) as { timeRate: number });
     
-    const list = result.map((value, index) => { return { id: index + 1, output: value } });
+    const list = result.map((value, index) => {
+      return {
+        header: [
+          ...header[index],
+        ],
+        output: value,
+      };
+    });
 
-    list.sort((a, b) => a.output.timeDiff - b.output.timeDiff).forEach((value) => {
-      logger.info(`${value.id} - ${JSON.stringify(value.output)}`);
+    list.sort((a, b) => b.output.timeRate - a.output.timeRate).forEach((value) => {
+      logger.info(`${JSON.stringify(value.header)} - ${JSON.stringify(value.output)}`);
     })
   }
 
   finalizeNeuralNet(net);
 }
 
-function verifyRawData(data: number[][]) {
-  data.map((line, lineIndex) => {
-    line.map((cell, cellIndex) => {
-      if (cell === null) {
-        logger.warn(line);
-        throw Error(`空のセルが存在します。 (${lineIndex} / ${cellIndex}})`)
-      }
-      if (isNaN(cell) || cell === Infinity) {
-        logger.warn(line);
-        throw Error(`数値が異常です。 (line: ${lineIndex} / cell: ${cellIndex}})`)
-      }
-    });
-  })
-} 
+function makeNormalizeBase(dataset: number[][]) {
+  const base = Array.from(Array(dataset[0].length)).map(() => {
+    return {
+      max: Number.MIN_VALUE,
+      min: Number.MAX_VALUE,
+    };
+  });
 
-function normalizeRawData(data: number[][], baseData?: number[][]) {
-  const all = [...data, ...baseData];
-  const columns = all[0].length;
-  const min: number[] = Array(columns);
-  const max: number[] = Array(columns);
-  all.forEach((line) => {
+  dataset.forEach((line) => {
     line.forEach((cell, index) => {
-      min[index] = Math.min(min[index] || Number.MAX_VALUE, cell);
-      max[index] = Math.max(max[index] || Number.MIN_VALUE, cell);
+      base[index].min = Math.min(base[index].min, cell);
+      base[index].max = Math.max(base[index].max, cell);
     })
   });
-  
-  for (let ci = 0; ci < columns; ci ++) {
-    if (min[ci] === max[ci]) {
-      max[ci] = min[ci] + 1;
-    }
-  }
 
-  for (const line of data) {
-    for (let ii = 0; ii < line.length; ii ++) {
-      const cell = (line[ii] - min[ii]) / (max[ii] - min[ii]);
+  return base;
+}
+
+function normalizeDataset(dataset: number[][], base: { min: number, max: number}[]) {
+  return dataset.map((line) => {
+    return line.map((cell, index) => {
+      const { min, max } = base[index];
+      const normal = (cell - min) / (max - min);
       if (isNaN(cell) || cell === Infinity) {
-        logger.info(cell, line[ii], min[ii], max[ii]);
+        logger.info(cell, normal, min, max);
       }
-
-      line[ii] = cell;
-    }
-  }
-  return data;
+      return normal;
+    })
+  });
 }
 
 export default async (trainCsvPath: string, testCsvPath: string, options: { train: boolean, test: boolean, init: boolean }) => {
   try {
-    const trainCsv = papa.parse<string[]>(readFileSync(trainCsvPath).toString(), { header: true });
+    const trainCsv = papa.parse<Types.Dataset[]>(readFileSync(trainCsvPath).toString(), { header: true });
+    const testCsv = papa.parse<Types.Dataset[]>(readFileSync(testCsvPath).toString(), { header: true });
 
-    const trainRawData = trainCsv.data.map((line) => {
-      return {
-        output: line.slice(7, 9).map((v) => Number(v)),
-        input: line.slice(10).map((v) => Number(v))
-      };
-    });
+    const trainHeader = trainCsv.data.map((line) => {
+      return Object.values(line).slice(0, 7).map((v) => String(v));
+    }).filter((v) => v.length > 0);
+    const trainDataset = trainCsv.data.map((line) => {
+      return Object.values(line).slice(7).map((v) => Number(v));
+    }).filter((v) => v.length > 0);
 
-    const testCsv = papa.parse<string[]>(readFileSync(testCsvPath).toString(), { header: true });
-    const testRawData = testCsv.data.map((line) => {
-      return {
-        info: line.slice(0, 6),
-        input: line.slice(10).map((v) => Number(v))
-      };
-    });
+    const testHeader = testCsv.data.map((line) => {
+      return Object.values(line).slice(0, 7).map((v) => String(v));
+    }).filter((v) => v.length > 0);
+    const testDataset = testCsv.data.map((line) => {
+      return Object.values(line).slice(7).map((v) => Number(v));
+    }).filter((v) => v.length > 0);
 
-    const trainNormalizedData = trainRawData && normalizeRawData(trainRawData, testRawData);
-    const testNormalizedData = testRawData && normalizeRawData(testRawData, trainRawData);
+    trainHeader;
 
-    verifyRawData(trainRawData);
-    verifyRawData(testRawData);
+    // 基準値を作る
+    const dataNormalizeBase = makeNormalizeBase(trainDataset);
+
+    // 値を0～1基準に変換する
+    const normalizedTrainDataset = trainDataset && normalizeDataset(trainDataset, dataNormalizeBase);
+    const normalizedTestDataset = testDataset && normalizeDataset(testDataset, dataNormalizeBase);
 
     if (options.train) {
       logger.info("train start.");
-      train(trainNormalizedData, options);
+      await train(normalizedTrainDataset, options);
       logger.info("train complete.");
     }
 
     if (options.test) {
       logger.info("test start.");
-      run(testNormalizedData);
+      await run(normalizedTestDataset, testHeader);
       logger.info("test complete.");
     }
 

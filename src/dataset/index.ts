@@ -66,7 +66,7 @@ export function generateTrainingLapBase(docs: Types.DBRace[]) {
   return result;
 }
 
-export function generateDatasetAll(docs: Types.DBRace[], baseDataset: string[][] | undefined) {
+export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
   return docs.flatMap((data) => {
     const result = data.entries.map((entry) => {
       /**
@@ -100,7 +100,10 @@ export function generateDatasetAll(docs: Types.DBRace[], baseDataset: string[][]
        *
        * 学習に使用されるデータ
        */
-      const inputHorseWeightDiff = entry.horseWeightDiff;
+
+      /** @note 体重差は新馬・海外帰りなどで空になる場合がある  */
+      const inputHorseWeightDiff = entry.horseWeightDiff || 0;
+
       const inputHorseHandicap = entry.handicap;
   /*
       const presentTraining = entry.training?.logs.slice(-1)?.[0];
@@ -186,7 +189,7 @@ function writeDataset(outputPath: string, dataset: any[]) {
   /**
    * 確認用にヘッダを書き出しておく
    */
-   const header = Object.keys(dataset[0]).map((h) => `#${h}`).join(',');
+   const header = Object.keys(dataset[0]).map((h) => `${h}`).join(',');
    writeFileSync(outputPath, `${header}\n`, { flag: "w" });
  
    /**
@@ -218,11 +221,13 @@ function writeDataset(outputPath: string, dataset: any[]) {
       
       const cell = line[key];
 
-      if (cell === null) {
-        logger.warn(`[${index}] <${key}> 値が空です。`);
+      if (cell === null || cell === undefined) {
+        logger.warn(`[${index}] <${key}> 値が空です。 {${cell}}`);
+        return;
       }
       if (isNaN(cell) || cell === Infinity) {
-        logger.warn(`[${index}] <${key}> 数値が異常です。`);
+        logger.warn(`[${index}] <${key}> 数値が異常です。 {${cell}}`);
+        return;
       }
     })
 
@@ -255,7 +260,7 @@ export default async (idReg: string, options: { output: string, base: string }) 
   /**
    * 学習データセットを作成
    */
-  const dataset = generateDatasetAll(docs, baseDataset);
+  const dataset = generateDatasetAll(docs);
 
   /**
    * 異常値がないかを検証

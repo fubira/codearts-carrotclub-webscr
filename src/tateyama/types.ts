@@ -278,3 +278,24 @@ export interface DBResultRefund {
   }[],
 }
 
+/**
+ * 学習データセット定義
+ */
+
+export interface Dataset {
+  /** Race Info */
+  infoDate: string,
+  infoCourseId: number,
+  infoCourse: string,
+  infoRaceNo: number,
+  infoRaceTitle: string,
+  infoBracketId: number,
+  infoHorseId: number,
+
+  /** Data */
+  outputScratch: number,
+  outputTimeRate: number,
+  outputTimeDiffSec: number,
+  inputHorseWeightDiff: number,
+  inputHorseHandicap: number,
+}
