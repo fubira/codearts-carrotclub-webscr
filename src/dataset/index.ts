@@ -66,23 +66,43 @@ export function generateTrainingLapBase(docs: Types.DBRace[]) {
   return result;
 }
 
-export function generateDatasetAll(docs: Types.DBRace[], lapAvg: { [trainingId: string]: number[]}) {
+export function generateDatasetAll(docs: Types.DBRace[], baseDataset: string[][] | undefined) {
   return docs.flatMap((data) => {
     const result = data.entries.map((entry) => {
-      const horseId = entry.horseId;
-      const result = data.result.detail.find((d) => d.horseId === horseId);
+      /**
+       * 基本情報
+       *
+       * 学習には無関係
+       * 確認のための分類・情報表示用
+       */
+      const infoDate = data.date;
+      const infoCourseId = data.courseId;
+      const infoCourse = data.courseName;
+      const infoRaceNo = data.raceNo;
+      const infoRaceTitle = data.raceTitle;
+      const infoBracketId = entry.bracketId;
+      const infoHorseId = entry.horseId;
 
       /**
-       * 競争成績を含む情報
-       * 学習時には取り除いておかないとデータが狂う
+       * 結果情報
+       *
+       * 答えとなるデータ
+       *
+       * @note 学習時inputに含めないこと (答えを学習してしまう)
        */
-      const resultScratch = (!result || !result.timeSec) ? 1 : 0
-      const resultTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
-      const resultTimeDiffSec = Helper.RoundTime(result.timeDiffSec);
+      const result = data.result.detail.find((d) => d.horseId === infoHorseId);
+      const outputScratch = (!result || !result.timeSec) ? 1 : 0
+      const outputTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
+      const outputTimeDiffSec = Helper.RoundTime(result.timeDiffSec);
 
-      const horseWeightDiff = entry.horseWeightDiff;
-      const horseHandicap = entry.handicap;
-  
+      /**
+       * 入力情報
+       *
+       * 学習に使用されるデータ
+       */
+      const inputHorseWeightDiff = entry.horseWeightDiff;
+      const inputHorseHandicap = entry.handicap;
+  /*
       const presentTraining = entry.training?.logs.slice(-1)?.[0];
       const presentTrainingId = presentTraining && makeTrainingKey(presentTraining);
       const presentTrainingBase = presentTraining && lapAvg[presentTrainingId];
@@ -107,13 +127,21 @@ export function generateDatasetAll(docs: Types.DBRace[], lapAvg: { [trainingId: 
       const lastTrainingDiff3f = (lastTraining && lastTraining.lap[1]) ? Helper.RoundTime(lastTraining.lap.slice(-4)[1].lap - lastTrainingBase[1]) : 0;
       const lastTrainingDiff2f = (lastTraining && lastTraining.lap[2]) ? Helper.RoundTime(lastTraining.lap.slice(-4)[2].lap - lastTrainingBase[2]) : 0;
       const lastTrainingDiff1f = (lastTraining && lastTraining.lap[3]) ? Helper.RoundTime(lastTraining.lap.slice(-4)[3].lap - lastTrainingBase[3]) : 0;
-  
+  */
       return {
-        resultScratch,
-        resultTimeRate,
-        resultTimeDiffSec,
-        horseWeightDiff,
-        horseHandicap,
+        infoDate,
+        infoCourseId,
+        infoCourse,
+        infoRaceNo,
+        infoRaceTitle,
+        infoBracketId,
+        infoHorseId,
+        outputScratch,
+        outputTimeRate,
+        outputTimeDiffSec,
+        inputHorseWeightDiff,
+        inputHorseHandicap,
+        /*
         presentTrainingDiff4f: 0 && presentTrainingDiff4f,
         presentTrainingDiff3f,
         presentTrainingDiff2f,
@@ -126,6 +154,7 @@ export function generateDatasetAll(docs: Types.DBRace[], lapAvg: { [trainingId: 
         lastTrainingDiff3f,
         lastTrainingDiff2f,
         lastTrainingDiff1f,
+        */
       };
     });
     return result;
@@ -133,26 +162,29 @@ export function generateDatasetAll(docs: Types.DBRace[], lapAvg: { [trainingId: 
 }
 
 /**
- * 基準データセットを読み込む
+ * 基準データセットCSVを読み込む
  * @param baseDataPath 
  * @returns 
  */
 function readBaseDataset(baseDataPath: string) {
-  const baseFile = readFileSync(baseDataPath);
-  const { data } = papa.parse<string>(baseFile.toString());
+  if (!baseDataPath) {
+    return undefined;
+  }
 
+  const baseFile = readFileSync(baseDataPath);
+  const { data } = papa.parse<string[]>(baseFile.toString());
   return data;
 }
 
 /**
- * データセットファイルを出力する
+ * データセットCSVを出力する
  * 
  * @param outputPath 
  * @param dataset 
  */
 function writeDataset(outputPath: string, dataset: any[]) {
   /**
-   * ヘッダを書き出しておく
+   * 確認用にヘッダを書き出しておく
    */
    const header = Object.keys(dataset[0]).map((h) => `#${h}`).join(',');
    writeFileSync(outputPath, `${header}\n`, { flag: "w" });
@@ -171,6 +203,32 @@ function writeDataset(outputPath: string, dataset: any[]) {
      }
    }
  }
+
+ /**
+  * 異常値がないかを調べる
+  * @param dataset 
+  */
+ function verifyDataset(dataset: any[]) {
+  dataset.forEach((line, index) => {
+    Object.keys(line).forEach((key) => {
+      if (key.startsWith('info')) {
+        // infoで始まる項目は学習用データじゃないのでskip
+        return;
+      }
+      
+      const cell = line[key];
+
+      if (cell === null) {
+        logger.warn(`[${index}] <${key}> 値が空です。`);
+      }
+      if (isNaN(cell) || cell === Infinity) {
+        logger.warn(`[${index}] <${key}> 数値が異常です。`);
+      }
+    })
+
+  })
+} 
+
 
 export default async (idReg: string, options: { output: string, base: string }) => {
   /**
@@ -198,6 +256,11 @@ export default async (idReg: string, options: { output: string, base: string }) 
    * 学習データセットを作成
    */
   const dataset = generateDatasetAll(docs, baseDataset);
+
+  /**
+   * 異常値がないかを検証
+   */
+  verifyDataset(dataset);
 
   /**
    * データセットファイルの出力

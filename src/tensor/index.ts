@@ -1,6 +1,8 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import * as brain from 'brain.js';
 import logger from 'logger';
+import papa from 'papaparse';
+import fs from 'fs';
 
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
@@ -106,49 +108,58 @@ function verifyRawData(data: number[][]) {
   })
 } 
 
+function normalizeRawData(data: number[][], baseData?: number[][]) {
+  const all = [...data, ...baseData];
+  const columns = all[0].length;
+  const min: number[] = Array(columns);
+  const max: number[] = Array(columns);
+  all.forEach((line) => {
+    line.forEach((cell, index) => {
+      min[index] = Math.min(min[index] || Number.MAX_VALUE, cell);
+      max[index] = Math.max(max[index] || Number.MIN_VALUE, cell);
+    })
+  });
+  
+  for (let ci = 0; ci < columns; ci ++) {
+    if (min[ci] === max[ci]) {
+      max[ci] = min[ci] + 1;
+    }
+  }
+
+  for (const line of data) {
+    for (let ii = 0; ii < line.length; ii ++) {
+      const cell = (line[ii] - min[ii]) / (max[ii] - min[ii]);
+      if (isNaN(cell) || cell === Infinity) {
+        logger.info(cell, line[ii], min[ii], max[ii]);
+      }
+
+      line[ii] = cell;
+    }
+  }
+  return data;
+}
+
 export default async (trainCsvPath: string, testCsvPath: string, options: { train: boolean, test: boolean, init: boolean }) => {
   try {
-    const trainCsv = readFileSync(trainCsvPath).toString();
-    const testCsv = readFileSync(testCsvPath).toString();
- 
-    const normalize = (data: number[][], dataOther?: number[][]) => {
-      const all = [...data, ...dataOther];
-      const columns = all[0].length;
-      const min: number[] = Array(columns);
-      const max: number[] = Array(columns);
-      all.forEach((line) => {
-        line.forEach((cell, index) => {
-          min[index] = Math.min(min[index] || Number.MAX_VALUE, cell);
-          max[index] = Math.max(max[index] || Number.MIN_VALUE, cell);
-        })
-      });
-      
-      for (let ci = 0; ci < columns; ci ++) {
-        if (min[ci] === max[ci]) {
-          max[ci] = min[ci] + 1;
-        }
-      }
+    const trainCsv = papa.parse<string[]>(readFileSync(trainCsvPath).toString(), { header: true });
 
-      for (const line of data) {
-        for (let ii = 0; ii < line.length; ii ++) {
-          const cell = (line[ii] - min[ii]) / (max[ii] - min[ii]);
-          if (isNaN(cell) || cell === Infinity) {
-            logger.info(cell, line[ii], min[ii], max[ii]);
-          }
+    const trainRawData = trainCsv.data.map((line) => {
+      return {
+        output: line.slice(7, 9).map((v) => Number(v)),
+        input: line.slice(10).map((v) => Number(v))
+      };
+    });
 
-          line[ii] = cell;
-        }
-      }
-      return data;
-    }
-    const trainCsvline = trainCsv?.split(/\r?\n/g).filter((line) => !line.startsWith('#'));
-    const trainRawData = trainCsvline?.map((l) => l.split(',').map((v) => Number(v)));
+    const testCsv = papa.parse<string[]>(readFileSync(testCsvPath).toString(), { header: true });
+    const testRawData = testCsv.data.map((line) => {
+      return {
+        info: line.slice(0, 6),
+        input: line.slice(10).map((v) => Number(v))
+      };
+    });
 
-    const testCsvline = testCsv?.split(/\r?\n/g).filter((line) => !line.startsWith('#'));
-    const testRawData = testCsvline?.map((l) => l.split(',').map((v) => Number(v)));
-
-    const trainNormalizedData = trainRawData && normalize(trainRawData, testRawData);
-    const testNormalizedData = testRawData && normalize(testRawData, trainRawData);
+    const trainNormalizedData = trainRawData && normalizeRawData(trainRawData, testRawData);
+    const testNormalizedData = testRawData && normalizeRawData(testRawData, trainRawData);
 
     verifyRawData(trainRawData);
     verifyRawData(testRawData);
@@ -158,6 +169,7 @@ export default async (trainCsvPath: string, testCsvPath: string, options: { trai
       train(trainNormalizedData, options);
       logger.info("train complete.");
     }
+
     if (options.test) {
       logger.info("test start.");
       run(testNormalizedData);
