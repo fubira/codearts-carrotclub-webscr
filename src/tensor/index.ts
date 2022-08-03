@@ -9,7 +9,9 @@ const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
 
 function initializeNeuralNet(opts?: { init?: boolean }) {
   const net = new brain.NeuralNetwork({
-    hiddenLayers: [8],
+    inputSize: 4,
+    hiddenLayers: [10],
+    outputSize: 1,
   });
 
   if (!existsSync(LEARNING_DIR)) {
@@ -17,7 +19,6 @@ function initializeNeuralNet(opts?: { init?: boolean }) {
   }
 
   if (existsSync(TRAIN_JSON) && !opts?.init) {
-    console.log('loading json');
     const trainJSON = readFileSync(TRAIN_JSON).toString();
 
     try {
@@ -26,7 +27,6 @@ function initializeNeuralNet(opts?: { init?: boolean }) {
       logger.error(err);
     }
   }
-  console.log(net.trainOpts, net.options);
 
   return net; 
 }
@@ -44,14 +44,14 @@ async function train(rawData: number[][], options: { init: boolean }) {
   });
 
   const dataset = rawData.map((data) => {
-    const [ /* isScratch */, /* timeRate */, timeDiff ] = data.splice(0, 3);
+    const [ /* isScratch */, timeRate, timeDiff ] = data.splice(0, 3);
 
     return {
       input: [
         ...data
       ],
       output: {
-        /// timeRate,
+        // timeRate,
         timeDiff
       },
     }
@@ -64,8 +64,7 @@ async function train(rawData: number[][], options: { init: boolean }) {
     let count = 0;
 
     while(dataset.length > 0) {
-      const trainData = dataset.splice(0, 100);
-      // console.log(trainData);
+      const trainData = dataset.splice(0, 1000);
       net.train([...trainData]);
 
       count = count + trainData.length;
@@ -105,7 +104,7 @@ async function run(rawData: number[][], header: string[][]) {
     });
 
     list
-      .sort((a, b) => a.output.timeDiff - b.output.timeDiff)
+      .sort((a, b) => b.output.timeDiff - a.output.timeDiff)
       .sort((a, b) => a.header.raceId.localeCompare(b.header.raceId))
       .forEach((value) => {
         logger.info(`${value.header.raceId} ${value.header.horseId} - ${JSON.stringify(value.output)}`);
@@ -169,6 +168,7 @@ export default async (trainCsvPath: string, testCsvPath: string, options: { trai
 
     // 基準値を作る
     const dataNormalizeBase = makeNormalizeBase(trainDataset);
+    console.log(dataNormalizeBase);
 
     // 値を0～1基準に変換する
     const normalizedTrainDataset = trainDataset && normalizeDataset(trainDataset, dataNormalizeBase);

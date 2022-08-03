@@ -75,13 +75,13 @@ function getTrainingBaseTime(log: Types.DBTrainingLog) {
     result = [14.5,13.5,13.0,12.5];
   }
   else if (log?.course.includes('栗ＣＷ')) {
-    result = [13,12.5,12.0,11.5];
+    result = [13.5,13.0,12.5,11.5];
   }
   else if (log?.course.includes('栗坂')) {
     result = [13.5,13.0,12.5,12.0];
   }
   else if (log?.course.includes('美Ｐ')) {
-    result = [12.5,12.0,11.5,11.0];
+    result = [13.0,12.5,11.5,11.0];
   }
   else if (log?.course.includes('芝')) {
     result = [13,12.5,12.0,11.5];
@@ -142,7 +142,7 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
       const result = data.result.detail.find((d) => d.horseId === infoHorseId);
       const outputScratch = (!result || !result.timeSec) ? 1 : 0
       const outputTimeRate = Helper.CalcTimeRate(result.timeSec, data.course.distance);
-      const outputTimeDiffSec = Helper.Round2(result.timeDiffSec);
+      const outputTimeDiffSec = Helper.Round2(Math.min(result.timeDiffSec, 10));
 
       /**
        * 入力情報
@@ -159,6 +159,7 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
       /** オッズから基準勝率を割り出す */
       const inputHorseWinPercent = Helper.Round2((Helper.CalcWinningRate(entry.odds) * 100) / totalWinningRate);
 
+      const inputHorseWinRank = entry.oddsRank; 
 
       /** 直前追切 */
       const presentTraining = entry.training?.logs.slice(-1)[0];
@@ -173,9 +174,8 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
       const inputPresentTrainingDiff1f = (presentTraining && presentTraining.lap[3]) ? Helper.Round2(presentBaseTime[3] - presentTraining.lap.slice(-4)[3].gap) : 0;
       const presentStartTimeDiff = presentTraining && ((presentTraining.lap[1]?.lap || presentBaseTime3f) - presentBaseTime3f);
       const inputPresentTrainingAccel = (presentTraining) ? Helper.Round2(presentTraining.lap.slice(-3).map((v) => v.accel).reduce((p, c) => p + c, 0) - presentStartTimeDiff) : 0;
-      // console.log(presentBaseTime3f, presentTraining.lap[1]?.lap);
 
-      const fastestTraining = entry.training?.logs.sort((a, b) => b.lap[3]?.lap - a.lap[3]?.lap )[0];
+      const fastestTraining = entry.training?.logs.slice(1).sort((a, b) => a.lap[3]?.lap - b.lap[3]?.lap )[0];
       const fastestTrainingId = fastestTraining && makeTrainingKey(fastestTraining);
       const fastestBaseTime = getTrainingBaseTime(fastestTraining);
       const fastestBaseTime3f = fastestBaseTime.slice(-3).reduce((p, c) => p + c);
@@ -187,9 +187,9 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
       const inputFastestTrainingDiff1f = (fastestTraining && fastestTraining.lap[3]) ? Helper.Round2(fastestBaseTime[3] - fastestTraining.lap.slice(-4)[3].gap) : 0;
       const fastestStartTimeDiff = fastestTraining && ((fastestTraining.lap[1]?.lap || fastestBaseTime3f) - fastestBaseTime3f);
       const inputFastestTrainingAccel = (fastestTraining) ? Helper.Round2(fastestTraining.lap.slice(-3).map((v) => v.accel).reduce((p, c) => p + c, 0) - fastestStartTimeDiff) : 0;
-      // console.log(entry.horseName, JSON.stringify(presentTraining), presentTraining.lap[1]?.lap, fastestBaseTime3f);
-      // console.log(entry.horseName, JSON.stringify(fastestTraining), fastestTraining.lap[1]?.lap, fastestBaseTime3f, );
-      
+      // console.log(entry.horseName, JSON.stringify(presentTraining), inputPresentTrainingAccel);
+      // console.log(entry.horseName, JSON.stringify(entry.training?.logs.sort((a, b) => b.lap[3]?.lap - a.lap[3]?.lap )));
+      const inputTrainingAccel = Math.max(inputFastestTrainingAccel, inputPresentTrainingAccel);
   /*
       const presentTraining = entry.training?.logs.slice(-1)?.[0];
       const presentTrainingId = presentTraining && makeTrainingKey(presentTraining);
@@ -229,14 +229,16 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
         outputTimeDiffSec,
         inputHorseWeightDiff,
         inputHorseHandicap,
-        inputHorseWinPercent,
-        /*
+        inputHorseWinRank,
+        // inputHorseWinPercent,
+        // inputTrainingAccel,
+                /*
         inputPresentTrainingAccel3f,
         inputPresentTrainingAccel2f,
         inputPresentTrainingAccel1f,
         */
         // inputPresentTrainingDiff3f,
-        inputPresentTrainingAccel: 0,
+        inputPresentTrainingAccel,
         /*
         inputPresentTrainingDiff2f,
         inputPresentTrainingDiff1f,
@@ -258,7 +260,7 @@ export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
         lastTrainingDiff1f,
         */
       };
-    });
+    }).filter((v) => v.outputScratch !== 1);
     return result;
   });
 }
