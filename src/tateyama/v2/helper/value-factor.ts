@@ -2,21 +2,28 @@ import logger from 'logger';
 import * as Tateyama from 'tateyama/v2';
 import * as TateyamaV1 from 'tateyama/v1/types/database';
 
-const compare = (value: number, comparable: number, cond: Tateyama.ConditionType) => {
+/**
+ * condで指定された条件に応じた値の比較を行う
+ * @param targetValue 
+ * @param comparableValue 
+ * @param cond 
+ * @returns 
+ */
+const compare = (targetValue: number, comparableValue: number, cond: Tateyama.ConditionType) => {
   if (cond === Tateyama.ConditionType.$eq) {
-    return value === comparable;
+    return targetValue === comparableValue;
   }
   if (cond === Tateyama.ConditionType.$ne) {
-    return value != comparable;
+    return targetValue != comparableValue;
   }
   if (cond === Tateyama.ConditionType.$gte) {
-    return value <= comparable;
+    return targetValue <= comparableValue;
   }
   if (cond === Tateyama.ConditionType.$lte) {
-    return value >= comparable;
+    return targetValue >= comparableValue;
   }
   if (cond === Tateyama.ConditionType.$eqa) {
-    return value >= comparable;
+    return targetValue >= comparableValue;
   }
   return false;
 }
@@ -47,42 +54,48 @@ const getAggregateFunc = (type: Tateyama.ComparableType, value: (target: Tateyam
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev')) {
-    logger.warn(`getAggregateFunc - ${type} is unimplemented`);
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev2r')) {
-    logger.warn(`getAggregateFunc - ${type} is unimplemented`);
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev3r')) {
-    logger.warn(`getAggregateFunc - ${type} is unimplemented`);
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev')) {
-    logger.warn(`getAggregateFunc - ${type} is unimplemented`);
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev2r')) {
-    logger.warn(`getAggregateFunc - ${type} is unimplemented`);
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev3r')) {
-    logger.warn(`getAggregateFunc - ${type} is unimplemented`);
     return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
   }
 }
 
+/**
+ * 指定馬のパラメータがcompおよびcondの条件を満たすかどうかを返す
+ * @param race 
+ * @param horseId 
+ * @param id 
+ * @param cond 
+ * @param comp 
+ * @returns 
+ */
 export function matchValueFactor(
   race: TateyamaV1.DBRace,
   horseId: number,
-  id: Tateyama.ValueFactorID,
+  valueFactorId: Tateyama.ValueFactorID,
   cond: Tateyama.ConditionType,
   comp: Tateyama.ComparableType
 ): boolean {
-  const entry = race.entries[horseId];
+  const entry = race.entries.find((e) => e.horseId === horseId);
 
-  switch (id) {
+  switch (valueFactorId) {
     case Tateyama.ValueFactorID.EntryHandicap: {
+      if (!entry) {
+        console.log(race.entries, horseId);
+      }
       const value = entry.handicap;
       const aggrFunc = getAggregateFunc(comp, (target) => target.handicap);
       const compFunc = getComparsionFunc(comp);

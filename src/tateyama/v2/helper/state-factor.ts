@@ -53,6 +53,7 @@ export function getCourseConditionID(courseCondition: string): Tateyama.StateFac
       Tateyama.StateFactorID.CourseConditionWorthThanHeavy
     ];
   }
+  return [];
 }
 
 function getCourseDistanceID(courseDistance: number): Tateyama.StateFactorID[] {
@@ -96,20 +97,20 @@ function getCourseDirectionID(courseDirection: string): Tateyama.StateFactorID[]
     : [Tateyama.StateFactorID.CourseDirectionLeft];
 }
 
-export function getRaceCategoryID(raceCategory: string): Tateyama.StateFactorID[] {
-  if (raceCategory.startsWith('未勝利') || raceCategory.startsWith('新馬')) {
+function getRaceCategoryID(raceCategory: string): Tateyama.StateFactorID[] {
+  if (raceCategory?.startsWith('未勝利') || raceCategory?.startsWith('新馬')) {
     return [Tateyama.StateFactorID.RaceCategoryMaiden];
   }
-  if (raceCategory.startsWith('1勝')) {
+  if (raceCategory?.startsWith('1勝')) {
     return [Tateyama.StateFactorID.RaceCategoryWin1];
   }
-  if (raceCategory.startsWith('2勝')) {
+  if (raceCategory?.startsWith('2勝')) {
     return [Tateyama.StateFactorID.RaceCategoryWin2];
   }
-  if (raceCategory.startsWith('3勝')) {
+  if (raceCategory?.startsWith('3勝')) {
     return [Tateyama.StateFactorID.RaceCategoryWin3];
   }
-  if (raceCategory.startsWith('オープン')) {
+  if (raceCategory?.startsWith('オープン')) {
     return [Tateyama.StateFactorID.RaceCategoryOpen];
   }
 

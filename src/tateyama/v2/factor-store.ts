@@ -65,11 +65,16 @@ export class ValueFactorStore {
     });
   }
 
-  get(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType): number {
-    return this.store[valueId].condition[compType][condType];
+  get(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType, stateFactorIds: Tateyama.StateFactorID[]): number {
+    // 状態要素による加減点
+    const stateFactor = stateFactorIds.map((id) => {
+      return this.store[valueId].stateFactor.get(id) + 1.0;
+    }).reduce((prev, curr) => prev * curr);
+
+    return this.store[valueId].condition[condType][compType] * stateFactor;
   } 
 
   set(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType, value: number) {
-    this.store[valueId].condition[compType][condType] = value;
+    this.store[valueId].condition[condType][compType] = value;
   } 
 }

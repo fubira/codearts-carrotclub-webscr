@@ -1,7 +1,7 @@
 import logger from 'logger';
 import TateyamaDB from 'db';
 
-import { Tipster } from 'tateyama/v2/ai-tipster';
+import * as Tateyama from 'tateyama/v2';
 
 export default async (idReg: string, options: { workDir: string, cycle: string, init: boolean }) => {
   logger.info(idReg, options);
@@ -16,10 +16,11 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
       logger.warn(warning);
     }
 
-    const tipster = new Tipster();
-    const forecast = tipster.forecast(docs[0]);
+    const forecast = new Tateyama.Forecast();
+    const forecastResult = forecast.forecast(docs[0]);
+    const choiced = Tateyama.getForecastResultChoiced(forecastResult);
 
-    console.log({ name: `${tipster.name}`, forecast });
+    console.log({ name: `${forecast.name}`, choiced });
 
   } catch (err) {
     logger.error(err);
