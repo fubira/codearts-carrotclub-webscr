@@ -4,6 +4,7 @@ import * as Tateyama from 'tateyama/v2';
 
 export interface ForecastResult {
   horseId: number,
+  horseName: string,
   odds: number,
   forecastValue: number,
   forecastWinRate: number,
@@ -43,47 +44,55 @@ export class Forecast {
      */
     const entryValueFactors = race.entries.map((entry) => {
       const horseStateFactorIds = Tateyama.getHorseStateFactor(entry);
-      const stateFactorIds = [ ...raceStateFactorIds, ...horseStateFactorIds ];
-      const valueFactor = Object.values(Tateyama.ValueFactorID).flatMap((valueId) => 
-        Object.values(Tateyama.ConditionType).flatMap((condType) => 
-          Object.values(Tateyama.ComparableType).flatMap((compType) => 
-            Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType)
-              ? this.params.store.get(valueId, compType, condType, stateFactorIds) : 0
-          )
-        )
-      );
+
+      const stateFactorIds = [
+        ...raceStateFactorIds,
+        ...horseStateFactorIds
+      ];
+
+      const valueFactor = Object.values(Tateyama.ValueFactorID).flatMap((valueId) => {
+        return Object.values(Tateyama.ConditionType).flatMap((condType) => {
+          return Object.values(Tateyama.ComparableType).flatMap((compType) => {
+            return Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType)
+              ? this.params.store.get(valueId, compType, condType, stateFactorIds)
+              : 0;
+          })
+        })
+      });
+
       const forecastValue = valueFactor.reduce((prev, curr) => prev + curr);
 
       return {
         horseId: entry.horseId,
+        horseName: entry.horseName,
         odds: entry.odds,
         forecastValue,
       };
     });
 
     /**
-     * 出走全馬のValueFactor合計を取得
+     * 出走全馬の予想レートの合計を取得
      */
     const totalValueFactor = entryValueFactors.map((v) => v.forecastValue).reduce((prev, curr) => prev + curr) || 1;
 
     /**
-     * オッズ勝率を算出
+     *  出走全馬のオッズ勝率合計を算出
+     *  (テラ銭分があるので1にならない)
      */
     const totalWinRate = race.entries.map((e) => Tateyama.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
 
     /**
-     * 出力用に成形
+     * 成形
      */
     const result = entryValueFactors.map((valueFactor) => {
       const forecastWinRate = (valueFactor.forecastValue * 100 / totalValueFactor);
       const oddsWinRate = (Tateyama.OddsToWinRate(valueFactor.odds) * 100) / totalWinRate;
       const benefitRate = (forecastWinRate / oddsWinRate);
 
-
       return { ...valueFactor, forecastWinRate, oddsWinRate, benefitRate };
-    });
+    }).sort((a, b) => b.forecastValue - a.forecastValue);
 
-    return result.sort((a, b) => b.forecastValue - a.forecastValue);
+    return result;
   }
 
   /**
