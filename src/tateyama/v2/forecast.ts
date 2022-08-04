@@ -25,7 +25,7 @@ export class Forecast {
 
   constructor () {
     this.params = {
-      name: phonetic.generate({ syllables: 3 }),
+      name: phonetic.generate({ syllables: 3, compoundSimplicity: 6, phoneticSimplicity: 6 }),
       store: new Tateyama.ValueFactorStore()
     };
   }

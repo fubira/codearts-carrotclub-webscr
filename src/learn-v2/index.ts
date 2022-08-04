@@ -7,8 +7,8 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
   logger.info(idReg, options);
 
   const betLogger = new Tateyama.BetLogger();
-  const forecasts = Array.from(new Array(20)).map(() => new Tateyama.Forecast());
-  const MAX_RACE = 1000;
+  const forecasts = Array.from(new Array(10)).map(() => new Tateyama.Forecast());
+  const MAX_RACE = 600;
 
   try {
     const { docs, warning } = await TateyamaDB.query(idReg);
@@ -21,8 +21,9 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
     }
 
     const races = docs.length > MAX_RACE ? MAX_RACE : docs.length;
+    const randomDocs = docs.sort(() => Math.random() - 0.5);
 
-    docs.slice(0, races).forEach((race, index) => {
+    randomDocs.slice(0, races).forEach((race, index) => {
       forecasts.forEach((forecast) => {
         const forecastResult = forecast.forecast(race);
         const choice = Tateyama.getForecastResultChoiced(forecastResult);
@@ -32,14 +33,9 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
       index % 100 === 0 && logger.info(`${index}/${races}`);
     });
 
-    forecasts.forEach((forecast) => {
-      console.log(betLogger.stats(forecast.name));
-    });
+    betLogger.displayStats(forecasts.map((f) => f.name));
 
-    Tateyama.dumpTimeCountLog();
-
-
-    // console.log({ name: `${forecast.name}`, choice });
+    // Tateyama.dumpTimeCountLog();
 
   } catch (err) {
     logger.error(err);

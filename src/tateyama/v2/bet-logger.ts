@@ -1,5 +1,6 @@
 import * as Tateyama from 'tateyama/v2';
 import * as TateyamaV1 from 'tateyama/v1/types';
+import logger from 'logger';
 
 function logBetWinShow(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
@@ -389,5 +390,44 @@ export class BetLogger {
     })
 
     return stats;
+  }
+
+  public displayStats(names: string[]) {
+    const scores = names.map((name) => {
+      const logStats = this.stats(name);
+      const top5Keys = Object.keys(logStats)
+        .sort((a, b) => logStats[b].resultRate - logStats[a].resultRate)
+        .slice(0, 5);
+
+      const totalResultRate = top5Keys.map((key) => logStats[key].resultRate).reduce((p, c) => p + c) / 5;
+      const totalHitRate = top5Keys.map((key) => logStats[key].hitRate).reduce((p, c) => p + c) / 5;
+      return { name, score: totalResultRate + totalHitRate };
+    });
+
+    scores.sort((a, b) => b.score - a.score).forEach(({ name, score }, index) => {
+      const logStats = this.stats(name);
+
+      const top5Keys = Object.keys(logStats)
+        .sort((a, b) => logStats[b].resultRate - logStats[a].resultRate)
+        .slice(0, 5);
+
+      logger.info(`== Forcast-${index} [${name}] rating ${(score * 100).toFixed(2)}`);
+
+      top5Keys.forEach((key) => {
+        const log = logStats[key];
+        const betType = String(key).padEnd(30, ' ');
+        const resultValue = String(log.result).padStart(8, ' ');
+        const amountValue = String(log.amount).padStart(8, ' ');
+        const resultRate = String((log.resultRate * 100).toFixed(2).padStart(7, ' '))
+
+        const hitRace = String(log.hitRace).padStart(4, ' ');
+        const betRace = String(log.betRace).padStart(4, ' ');
+        const hitRate = String((log.hitRate * 100).toFixed(2).padStart(7, ' '))
+
+        logger.info(`${betType}: 回収額/購入額 ${resultValue} / ${amountValue} 回収率 (${resultRate}) 的中R/購入R ${hitRace} / ${betRace} 的中率 (${hitRate})`)
+      });
+
+      logger.info(`==========`);
+    })
   }
 }
