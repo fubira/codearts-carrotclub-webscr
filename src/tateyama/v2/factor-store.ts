@@ -1,7 +1,4 @@
-import StateFactorID from './types/state';
-import ValueFactorID from './types/value';
-import ConditionType from 'tateyama/v2/types/condition';
-import ComparableType from 'tateyama/v2/types/comparable';
+import * as Tateyama from 'tateyama/v2';
 
 function randomFactorValue() {
   return Math.random() > 0.5 ? 0.1 : 0;
@@ -12,20 +9,20 @@ function randomFactorValue() {
  */
 
 export class StateFactorStore {
-  private store: { [key: StateFactorID]: number };
+  private store: { [key: Tateyama.StateFactorID]: number };
 
   constructor() {
     this.store = {};
-    Object.values(StateFactorID).forEach(factor => {
+    Object.values(Tateyama.StateFactorID).forEach(factor => {
       this.store[factor] = randomFactorValue();
     });
   }
 
-  get(stateId: StateFactorID): number {
+  get(stateId: Tateyama.StateFactorID): number {
     return this.store[stateId];
   } 
 
-  set(stateId: StateFactorID, value: number) {
+  set(stateId: Tateyama.StateFactorID, value: number) {
     this.store[stateId] = value;
   } 
 }
@@ -36,10 +33,10 @@ export class StateFactorStore {
 
 export class ValueFactorStore {
   private store: {
-    [factor: ValueFactorID]: { 
+    [factor: Tateyama.ValueFactorID]: { 
       condition: {
-        [cond: ConditionType]: { 
-          [comp: ComparableType]: number;
+        [cond: Tateyama.ConditionType]: { 
+          [comp: Tateyama.ComparableType]: number;
         }
       };
       stateFactor: StateFactorStore;
@@ -48,7 +45,7 @@ export class ValueFactorStore {
 
   constructor () {
     this.store = {};
-    Object.values(ValueFactorID).forEach(factor => {
+    Object.values(Tateyama.ValueFactorID).forEach(factor => {
       if (!this.store[factor]) {
         this.store[factor] = {
           condition: {},
@@ -56,23 +53,23 @@ export class ValueFactorStore {
         };
       }
 
-      Object.values(ConditionType).forEach(cond => {
+      Object.values(Tateyama.ConditionType).forEach(cond => {
         if (!this.store[factor].condition[cond]) {
           this.store[factor].condition[cond] = {};
         }
 
-        Object.values(ComparableType).forEach(comp => {
+        Object.values(Tateyama.ComparableType).forEach(comp => {
           this.store[factor].condition[cond][comp] = randomFactorValue();
         });
       });
     });
   }
 
-  get(valueId: ValueFactorID, compType: ComparableType, condType: ConditionType): number {
+  get(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType): number {
     return this.store[valueId].condition[compType][condType];
   } 
 
-  set(valueId: ValueFactorID, compType: ComparableType, condType: ConditionType, value: number) {
+  set(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType, value: number) {
     this.store[valueId].condition[compType][condType] = value;
   } 
 }

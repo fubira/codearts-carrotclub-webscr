@@ -1,7 +1,7 @@
 /**
  * 比較条件
  */
-const ConditionType = {
+export const ConditionType = {
   // 以上
   $gte: "$gte",
 
@@ -21,6 +21,4 @@ const ConditionType = {
   $nea: "$nea",
 }
 
-type ConditionType = typeof ConditionType[keyof typeof ConditionType];
-
-export default ConditionType;
+export type ConditionType = typeof ConditionType[keyof typeof ConditionType];

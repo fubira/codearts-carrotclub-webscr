@@ -1,6 +1,7 @@
 /**
  * レースに対する状態要素
  */
+
 const RaceStateFactorID = {
   // 競馬場
   CourePlaceTokyo: "courseplace/tokyo",
@@ -36,6 +37,15 @@ const RaceStateFactorID = {
   CourseConditionWorthThanYielding: "coursecondition/worthyielding",     // 重、不良
   CourseConditionWorthThanHeavy: "coursecondition/worthheavy",           // 不良
 
+  // コース天候タイプ
+  CourseWeatherFine: "courseweather/fine", 
+  CourseWeatherRain: "courseweather/rain", 
+  CourseWeatherSnow: "courseweather/snow", 
+
+  // コース方向
+  CourseDirectionRight: "coursedirection/right",
+  CourseDirectionLeft: "coursedirection/left",
+
   // レース カテゴリ
   RaceCategoryMaiden: "racecategory/maiden",
   RaceCategoryWin1: "racecategory/win1",
@@ -44,8 +54,8 @@ const RaceStateFactorID = {
   RaceCategoryOpen: "racecategory/open",
 
   // レース 小頭数/多頭数
-  RaceNumberSmall: "racenumber/small",
-  RaceNumberLarge: "racenumber/large",
+  RaceEntryNumberSmall: "raceentrynumber/small",
+  RaceEntryNumberLarge: "raceentrynumber/large",
 }
 
 /**
@@ -78,7 +88,7 @@ const RaceStateFactorID = {
   HorseBracket6: "horse/bracket6",
   HorseBracket7: "horse/bracket7",
   HorseBracket8: "horse/bracket8",
-  HorseBracketInnter: "horse/bracketinner",
+  HorseBracketInner: "horse/bracketinner",
   HorseBracketOuter: "horse/bracketouter",
   HorseGateOdd: "horse/gateodd",
   HorseGateEven: "horse/gateeven",
@@ -89,11 +99,8 @@ const RaceStateFactorID = {
   HorseAgeOver5: "horse/ageover5",
 }
 
-const StateFactorID = {
+export const StateFactorID = {
   ...RaceStateFactorID,
   ...HorseStateFactorID,
 };
-
-type StateFactorID = typeof StateFactorID[keyof typeof StateFactorID];
-
-export default StateFactorID;
+export type StateFactorID = typeof StateFactorID[keyof typeof StateFactorID];

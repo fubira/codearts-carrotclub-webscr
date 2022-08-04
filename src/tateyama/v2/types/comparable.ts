@@ -1,29 +1,30 @@
 /**
  * 比較対象
  */
-const ComparableType = {
-  // 前走の同項目
+
+export const ComparableType = {
+  // 該当項目を前走の値と比較
   SelfPrev1R: "selfprev1r",
 
-  // 過去2Rの平均
+  // 該当項目を過去2Rの平均と比較
   SelfPrev2RAvg: "selfprev2r/avg",
-  // 過去2Rの最大
+  // 該当項目を過去2Rの最大と比較
   SelfPrev2RMax: "selfprev2r/max",
-  // 過去2Rの最小
+  // 該当項目を過去2Rの最小と比較
   SelfPrev2RMin: "selfprev2r/min",
 
-  // 過去3Rの平均
+  // 該当項目を過去3Rの平均と比較
   SelfPrev3RAvg: "selfprev3r/avg",
-  // 過去3Rの最大
+  // 該当項目を過去3Rの最大と比較
   SelfPrev3RMax: "selfprev3r/max",
-  // 過去3Rの最小
+  // 該当項目を過去3Rの最小と比較
   SelfPrev3RMin: "selfprev3r/min",
 
-  // 当該レースの出走馬平均
+  // 当該レースの出走馬の平均
   AllCurrentAvg: "allcurrent/avg",
-  // 当該レースの出走馬最大
+  // 当該レースの出走馬の最大
   AllCurrentMax: "allcurrent/max",
-  // 当該レースの出走馬最小
+  // 当該レースの出走馬の最小
   AllCurrentMin: "allcurrent/min",
 
   // 全出走馬の過去1Rの平均
@@ -48,7 +49,4 @@ const ComparableType = {
   AllPrev3RMin: "allprev2r/min",
 }
 
-type ComparableType = typeof ComparableType[keyof typeof ComparableType];
-
-
-export default ComparableType;
+export type ComparableType = typeof ComparableType[keyof typeof ComparableType];

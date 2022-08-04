@@ -1,7 +1,7 @@
 /**
  * 出走馬の数的要素の定義
  */
-const EntryValueFactorID = {
+ export const ValueFactorID = {
   EntryHandicap: "entry/handicap",
   EntryOdds: "entry/odds",
   EntryOddsWinRate: "entry/oddswinrate",
@@ -14,6 +14,4 @@ const EntryValueFactorID = {
   EntryResultTopThree: "entry/topthree",
 }
 
-type EntryValueFactorID = typeof EntryValueFactorID[keyof typeof EntryValueFactorID];
-
-export default EntryValueFactorID;
+export type ValueFactorID = typeof ValueFactorID[keyof typeof ValueFactorID];

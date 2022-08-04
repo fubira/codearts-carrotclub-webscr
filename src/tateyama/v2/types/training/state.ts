@@ -1,7 +1,8 @@
 /**
  * レース固定要素の定義
  */
-const TrainingStateFactorID = {
+
+export const TrainingStateFactorID = {
   // 競馬場
   TrainingCourseMihoWood: "trainingcourse/mihowood",
   TrainingCourseMihoSlope: "trainingcourse/mihoslope",
@@ -15,6 +16,4 @@ const TrainingStateFactorID = {
   TrainingCourseConditionWorthThanHeavy: "trainingcoursecondition/worthheavy",
 }
 
-type TrainingStateFactorID = typeof TrainingStateFactorID[keyof typeof TrainingStateFactorID];
-
-export default TrainingStateFactorID;
+export type TrainingStateFactorID = typeof TrainingStateFactorID[keyof typeof TrainingStateFactorID];

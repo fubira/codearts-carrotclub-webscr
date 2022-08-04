@@ -1,10 +1,10 @@
 import phonetic from 'phonetic';
-import { ValueFactorStore } from 'tateyama/v2/factor-store';
 import { DBRace } from 'tateyama/v1/types/database';
+import * as Tateyama from 'tateyama/v2';
 
 export interface TipsterParams {
   name: string;
-  store: ValueFactorStore;
+  store: Tateyama.ValueFactorStore;
 }
 
 export class Tipster {
@@ -12,7 +12,7 @@ export class Tipster {
 
   constructor () {
     this.params.name = phonetic.generate({ syllables: 3 });
-    this.params.store = new ValueFactorStore();
+    this.params.store = new Tateyama.ValueFactorStore();
   }
 
   public get name(): string {
@@ -25,7 +25,7 @@ export class Tipster {
    * @param race 
    */
   public forecast(race: DBRace) {
-
+    const setStateFactorIds = new Set();
   }
 
   /**

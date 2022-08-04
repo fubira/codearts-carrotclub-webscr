@@ -1,7 +1,8 @@
 /**
  * 出走馬の数的要素の定義
  */
-const TrainingValueFactorID = {
+
+export const TrainingValueFactorID = {
   TrainingFastestLap1f: "training/fastestlap1f",
   TrainingFastestLap3f: "training/fastestlap3f",
   TrainingFastestLap4f: "training/fastestlap4f",
@@ -33,6 +34,4 @@ const TrainingValueFactorID = {
   TrainingLastAccel4f1f: "training/lastaccel4f1f",
 }
 
-type TrainingValueFactorID = typeof TrainingValueFactorID[keyof typeof TrainingValueFactorID];
-
-export default TrainingValueFactorID;
+export type TrainingValueFactorID = typeof TrainingValueFactorID[keyof typeof TrainingValueFactorID];
