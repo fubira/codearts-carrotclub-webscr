@@ -397,10 +397,10 @@ export class BetLogger {
       const logStats = this.stats(name);
       const top5Keys = Object.keys(logStats)
         .sort((a, b) => logStats[b].resultRate - logStats[a].resultRate)
-        .slice(0, 5);
+        .slice(0, 8);
 
-      const totalResultRate = top5Keys.map((key) => logStats[key].resultRate).reduce((p, c) => p + c) / 5;
-      const totalHitRate = top5Keys.map((key) => logStats[key].hitRate).reduce((p, c) => p + c) / 5;
+      const totalResultRate = top5Keys.map((key) => logStats[key].resultRate).reduce((p, c) => p + c) / 8;
+      const totalHitRate = top5Keys.map((key) => logStats[key].hitRate).reduce((p, c) => p + c) / 8;
       return { name, score: totalResultRate + totalHitRate };
     });
 
@@ -409,22 +409,22 @@ export class BetLogger {
 
       const top5Keys = Object.keys(logStats)
         .sort((a, b) => logStats[b].resultRate - logStats[a].resultRate)
-        .slice(0, 5);
+        .slice(0, 8);
 
-      logger.info(`== Forcast-${index} [${name}] rating ${(score * 100).toFixed(2)}`);
+      logger.info(`== Rank ${index + 1}. [${name}] - (rating ${(score * 100).toFixed(2)})`);
 
       top5Keys.forEach((key) => {
         const log = logStats[key];
-        const betType = String(key).padEnd(30, ' ');
-        const resultValue = String(log.result).padStart(8, ' ');
-        const amountValue = String(log.amount).padStart(8, ' ');
+        const betType = String(key).padEnd(50, ' ');
+        const resultValue = log.result.toLocaleString().padStart(10, ' ');
+        const amountValue = log.amount.toLocaleString().padStart(10, ' ');
         const resultRate = String((log.resultRate * 100).toFixed(2).padStart(7, ' '))
 
         const hitRace = String(log.hitRace).padStart(4, ' ');
         const betRace = String(log.betRace).padStart(4, ' ');
         const hitRate = String((log.hitRate * 100).toFixed(2).padStart(7, ' '))
 
-        logger.info(`${betType}: 回収額/購入額 ${resultValue} / ${amountValue} 回収率 (${resultRate}) 的中R/購入R ${hitRace} / ${betRace} 的中率 (${hitRate})`)
+        logger.info(`${betType}: Result/Purchase ${resultValue} / ${amountValue} (${resultRate} %) Hit/Bet ${hitRace} / ${betRace} R (${hitRate} %)`)
       });
 
       logger.info(`==========`);
