@@ -6,6 +6,10 @@ import * as Tateyama from 'tateyama/v2';
 export default async (idReg: string, options: { workDir: string, cycle: string, init: boolean }) => {
   logger.info(idReg, options);
 
+  const betLogger = new Tateyama.BetLogger();
+  const forecasts = Array.from(new Array(10)).map(() => new Tateyama.Forecast());
+  const MAX_RACE = 1000;
+
   try {
     const { docs, warning } = await TateyamaDB.query(idReg);
 
@@ -16,11 +20,23 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
       logger.warn(warning);
     }
 
-    const forecast = new Tateyama.Forecast();
-    const forecastResult = forecast.forecast(docs[0]);
-    const choiced = Tateyama.getForecastResultChoiced(forecastResult);
+    const races = docs.length > MAX_RACE ? MAX_RACE : docs.length;
 
-    console.log({ name: `${forecast.name}`, choiced });
+    docs.slice(0, races).forEach((race, index) => {
+      forecasts.forEach((forecast) => {
+        const forecastResult = forecast.forecast(race);
+        const choice = Tateyama.getForecastResultChoiced(forecastResult);
+        betLogger.bet(forecast.name, race._id, choice, race.result);
+      });
+
+      index % 100 === 0 && logger.info(`${index}/${races}`);
+    });
+
+    forecasts.forEach((forecast) => {
+      console.log(betLogger.stats(forecast.name));
+    });
+
+    // console.log({ name: `${forecast.name}`, choice });
 
   } catch (err) {
     logger.error(err);
