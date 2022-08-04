@@ -9,3 +9,4 @@ export * from './types/bet';
 export * from './helper/value-factor';
 export * from './helper/state-factor';
 export * from './helper/forecast';
+export * from './debug/time-counter';

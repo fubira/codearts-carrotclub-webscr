@@ -7,7 +7,7 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
   logger.info(idReg, options);
 
   const betLogger = new Tateyama.BetLogger();
-  const forecasts = Array.from(new Array(10)).map(() => new Tateyama.Forecast());
+  const forecasts = Array.from(new Array(20)).map(() => new Tateyama.Forecast());
   const MAX_RACE = 1000;
 
   try {
@@ -35,6 +35,9 @@ export default async (idReg: string, options: { workDir: string, cycle: string, 
     forecasts.forEach((forecast) => {
       console.log(betLogger.stats(forecast.name));
     });
+
+    Tateyama.dumpTimeCountLog();
+
 
     // console.log({ name: `${forecast.name}`, choice });
 

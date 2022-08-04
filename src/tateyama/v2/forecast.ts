@@ -18,6 +18,9 @@ export interface ForecastParams {
 }
 
 export class Forecast {
+  private valueFactorIds = Object.values(Tateyama.ValueFactorID);
+  private conditionTypes = Object.values(Tateyama.ConditionType);
+  private comparableTypes = Object.values(Tateyama.ComparableType);
   private params: ForecastParams;
 
   constructor () {
@@ -43,24 +46,27 @@ export class Forecast {
      * すべてのパラメータからValueFactorを算出する
      */
     const entryValueFactors = race.entries.map((entry) => {
+      Tateyama.startTimeCount("getHorseStateFactor");
       const horseStateFactorIds = Tateyama.getHorseStateFactor(entry);
+      Tateyama.finishTimeCount();
 
       const stateFactorIds = [
         ...raceStateFactorIds,
         ...horseStateFactorIds
       ];
 
-      const valueFactor = Object.values(Tateyama.ValueFactorID).flatMap((valueId) => {
-        return Object.values(Tateyama.ConditionType).flatMap((condType) => {
-          return Object.values(Tateyama.ComparableType).flatMap((compType) => {
-            return Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType)
-              ? this.params.store.get(valueId, compType, condType, stateFactorIds)
-              : 0;
-          })
-        })
-      });
+      let forecastValue = 0;
 
-      const forecastValue = valueFactor.reduce((prev, curr) => prev + curr);
+      this.valueFactorIds.forEach((valueId) => 
+        this.conditionTypes.forEach((condType) =>
+          this.comparableTypes.forEach((compType) => {
+            forecastValue = forecastValue + (
+              Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType)
+                ? this.params.store.get(valueId, compType, condType, stateFactorIds) : 0
+              );
+          })
+        )
+      );
 
       return {
         horseId: entry.horseId,
@@ -81,6 +87,7 @@ export class Forecast {
      */
     const totalWinRate = race.entries.map((e) => Tateyama.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
 
+    Tateyama.startTimeCount("entryValueFactors");
     /**
      * 成形
      */
@@ -92,6 +99,7 @@ export class Forecast {
       return { ...valueFactor, forecastWinRate, oddsWinRate, benefitRate };
     }).sort((a, b) => b.forecastValue - a.forecastValue);
 
+    Tateyama.finishTimeCount();
     return result;
   }
 

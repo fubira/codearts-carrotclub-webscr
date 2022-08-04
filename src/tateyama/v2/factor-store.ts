@@ -66,12 +66,22 @@ export class ValueFactorStore {
   }
 
   get(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType, stateFactorIds: Tateyama.StateFactorID[]): number {
+    const {
+      condition,
+      stateFactor
+    } = this.store[valueId];
+
+    const valueFactorValue = condition[condType][compType];
+    if (valueFactorValue === 0) {
+      return 0;
+    }
+
     // 状態要素による加減点
-    const stateFactor = stateFactorIds.map((id) => {
-      return this.store[valueId].stateFactor.get(id) + 1.0;
+    const stateFactorValue = stateFactorIds.map((id) => {
+      return stateFactor.get(id) + 1.0;
     }).reduce((prev, curr) => prev * curr);
 
-    return this.store[valueId].condition[condType][compType] * stateFactor;
+    return valueFactorValue * stateFactorValue;
   } 
 
   set(valueId: Tateyama.ValueFactorID, compType: Tateyama.ComparableType, condType: Tateyama.ConditionType, value: number) {
