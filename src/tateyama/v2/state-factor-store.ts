@@ -1,6 +1,6 @@
 import * as Tateyama from 'tateyama/v2';
 
-const MAX_FACTOR_VALUE = 2.5;
+const MAX_FACTOR_VALUE = 1.5;
 const MIN_FACTOR_VALUE = -0.5
 
 function factorValueMinMax(value: number) {
@@ -8,7 +8,7 @@ function factorValueMinMax(value: number) {
 }
 
 function randomFactorValue() {
-  return factorValueMinMax(Math.sqrt(Math.random() * Math.random()));
+  return factorValueMinMax(Math.sqrt(Math.random() > 0.5 ? 0.1 : 0));
 }
 
 function addRandomFactorValue(value: number): number {

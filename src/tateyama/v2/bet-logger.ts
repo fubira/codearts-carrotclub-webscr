@@ -412,7 +412,7 @@ export class BetLogger {
 
       const totalResultRate = top5Keys.map((key) => logStats[key].resultRate).reduce((p, c) => p + c) / 8;
       const totalHitRate = top5Keys.map((key) => logStats[key].hitRate).reduce((p, c) => p + c) / 8;
-      return { name, score: totalHitRate * 2 + totalResultRate };
+      return { name, score: totalHitRate + totalResultRate };
     }).sort((a, b) => b.score - a.score);
 
     const selections = [ ...scores.slice(0, good), ...scores.slice(-worst) ];

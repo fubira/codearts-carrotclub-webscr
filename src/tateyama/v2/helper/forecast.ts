@@ -1,4 +1,5 @@
 import * as Tateyama from 'tateyama/v2';
+import * as TateyamaV1 from 'tateyama/v1/types';
 
 /**
  * オッズから勝率レートを算出する
@@ -35,4 +36,23 @@ export function getForecastResultChoiced(results: Tateyama.ForecastResult[]) {
     betNext,
     betRemark,
   ]
+}
+
+export function dumpForecastResult(race: TateyamaV1.DBRace, results: Tateyama.ForecastResult[]) {
+  const mark = ['A', 'B', 'C', 'D', 'X', 'R', 'R', 'R'];
+
+  console.log('==========');
+  console.log(`${race.date} ${race.courseName} ${race.raceNo} ${race.raceTitle}`);
+
+  results.forEach((res, index) => {
+    const horseId = res.horseId.toFixed(0).padStart(2, ' ');
+    const horseName = res.horseName.padEnd(12, ' ');
+    const forecastValue = res.forecastValue.toFixed(2).padStart(10, ' ');
+    const forecastWinRate = (res.forecastWinRate).toFixed(2).padStart(6, ' ');
+    const benefitRate = res.benefitRate.toFixed(2).padStart(6, ' ');
+
+    console.log(`${mark[index]} ${horseId}-${horseName}: レーティング[${forecastValue}] 勝率[${forecastWinRate}] 採算[${benefitRate}]`);
+  })
+
+
 }

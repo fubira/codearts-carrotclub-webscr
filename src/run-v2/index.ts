@@ -156,26 +156,26 @@ async function cycle(docs: TateyamaV1.DBRace[], workDir: string, init: boolean) 
 }
 
 
-export default async (options: { workDir: string, cycle: string, init: boolean }) => {
+export default async (idReg: string, forecastName: string, options: { workDir: string }) => {
   logger.info(options);
-  const cycles = Number(options.cycle) || 1;
-  let init = options.init;
 
   try {
-    const { docs, warning } = await TateyamaDB.query('.*');
+    const { docs } = await TateyamaDB.query(idReg);
 
-    if (docs) {
-      logger.info(`${docs.length}件のデータがマッチしました`);
+    const forecastDir = `${options.workDir}/forecast/`;
+    const files = await FastGlob(`${forecastDir}/${forecastName}.json`, { onlyFiles: true });
+    if (files.length === 0) {
+      logger.warn("AIが見つかりませんでした");
+      return;
     }
-    if (warning) {
-      logger.warn(warning);
-    }
+    const forecast = Tateyama.Forecast.fromJSON(readFileSync(files[0]).toString());
 
-    for(let ii = 0; ii < cycles; ii = ii + 1) {
-      logger.info(`=== Cycle [${ii}] ==========`)
-      await cycle(docs, options.workDir, init);
-      init = false;
-    }
+    docs.forEach((race) => {
+      const choice = Tateyama.getForecastResultChoiced(forecast.forecast(race));
+      Tateyama.dumpForecastResult(race, choice);
+    })
+
+    
   } catch (err) {
     logger.error(err);
   }
