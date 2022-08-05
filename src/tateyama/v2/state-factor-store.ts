@@ -19,11 +19,15 @@ function subRandomFactorValue(value: number): number {
   return factorValueMinMax(value - Math.random() * 0.1);
 }
 
+function modFactorValue(value: number): number {
+  return factorValueMinMax(value / 1.1);
+}
+
 /**
  * StateFactorStoreのデータ形式
  */
 export interface StateFactorDataType {
-  [key: Tateyama.StateFactorID]: number
+  [key: Tateyama.StateFactorID]: { value: number; exp: number }
 }
 
 /**
@@ -39,16 +43,20 @@ export class StateFactorStore {
   constructor(data?: StateFactorDataType) {
     this.data = data || {};
     Object.values(Tateyama.StateFactorID).forEach(factor => {
-      this.data[factor] = randomFactorValue();
+      this.data[factor] = { value: randomFactorValue(), exp: 0 };
     });
   }
 
   public static get(store: StateFactorStore, stateId: Tateyama.StateFactorID): number {
-    return store.data[stateId];
+    return store.data[stateId].value;
   } 
 
   public static set(store: StateFactorStore, stateId: Tateyama.StateFactorID, value: number) {
-    store.data[stateId] = value;
+    store.data[stateId].value = value;
+  }
+
+  public static addExp(store: StateFactorStore, stateId: Tateyama.StateFactorID) {
+    store.data[stateId].exp = store.data[stateId].exp + 1;
   }
 
   public static merge(base: StateFactorStore, ref: StateFactorStore): StateFactorStore {
@@ -60,17 +68,27 @@ export class StateFactorStore {
       if (Math.random() < 0.5) {
         newStateFactor.data[factor] = refStateFactor.data[factor];
       }
+
+      // 的中経験のある値は加算する 的中なしの項目は減らす
+      if (newStateFactor.data[factor].exp > 0) {
+        newStateFactor.data[factor].value = addRandomFactorValue(newStateFactor.data[factor].value);
+      } else {
+        newStateFactor.data[factor].value = modFactorValue(newStateFactor.data[factor].value);
+      }
+      newStateFactor.data[factor].exp = 0;
+
+
       // 5%の確率で値を加算する
       if (Math.random() < 0.05) {
-        newStateFactor.data[factor] = addRandomFactorValue(newStateFactor.data[factor]);
+        newStateFactor.data[factor].value = addRandomFactorValue(newStateFactor.data[factor].value);
       }
       // 5%の確率で値を減産する
       if (Math.random() < 0.05) {
-        newStateFactor.data[factor] = subRandomFactorValue(newStateFactor.data[factor]);
+        newStateFactor.data[factor].value = subRandomFactorValue(newStateFactor.data[factor].value);
       }
       // 5%の確率で突然変異する
       if (Math.random() < 0.05) {
-        newStateFactor.data[factor] = randomFactorValue();
+        newStateFactor.data[factor].value = randomFactorValue();
       }
     });
 

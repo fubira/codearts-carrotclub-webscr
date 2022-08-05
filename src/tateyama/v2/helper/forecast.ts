@@ -19,22 +19,24 @@ export function getForecastResultChoiced(results: Tateyama.ForecastResult[]) {
   const bet1st = worker.shift();
   const bet2nd = worker.shift();
   const bet3rd = worker.shift();
+  const bet4th = worker.shift();
+  const bet5th = worker.shift();
 
   // 5番手(☆)はオッズと予想順位の格差の大きいものを選ぶ
-  const betRemark = worker.sort((a, b) => b.benefitRate - a.benefitRate).shift();
+  // const betRemark = worker.sort((a, b) => b.benefitRate - a.benefitRate).shift();
 
   // 4番手(△)は基本レート順4番手
   // ただし4番手候補の割安度が低い場合、残りの候補から割安度の最も高いものを選ぶ
-  const betNext1 = worker.shift();
-  const betNext2 = worker.filter((f) => f.benefitRate > 0)?.sort((a, b) => b.benefitRate - a.benefitRate).shift();
-  const betNext = (betNext2 && (betNext1.benefitRate < 1) && (betNext1.forecastWinRate < betNext1.oddsWinRate)) ? betNext2 : betNext1;
+  // const betNext1 = worker.shift();
+  // const betNext2 = worker.filter((f) => f.benefitRate > 0)?.sort((a, b) => b.benefitRate - a.benefitRate).shift();
+  // const betNext = (betNext2 && (betNext1.benefitRate < 1) && (betNext1.forecastWinRate < betNext1.oddsWinRate)) ? betNext2 : betNext1;
 
   return [
     bet1st,
     bet2nd,
     bet3rd,
-    betNext,
-    betRemark,
+    bet4th,
+    bet5th,
   ]
 }
 
@@ -50,8 +52,12 @@ export function dumpForecastResult(race: TateyamaV1.DBRace, results: Tateyama.Fo
     const forecastValue = res.forecastValue.toFixed(2).padStart(10, ' ');
     const forecastWinRate = (res.forecastWinRate).toFixed(2).padStart(6, ' ');
     const benefitRate = res.benefitRate.toFixed(2).padStart(6, ' ');
+    const horseResult = race.result.detail.find((d) => d.horseId === res.horseId);
+    const horseEntry = race.entries.find((e) => e.horseId === res.horseId);
+    const horseResultOrderText = !horseResult.order ? `競争中止` : `${horseResult.order}着`;
+    const horseResultDetailText = !horseEntry.oddsRank ? "競争除外" : `${horseEntry.oddsRank}人気 ${horseResultOrderText}`
 
-    console.log(`${mark[index]} ${horseId}-${horseName}: レーティング[${forecastValue}] 勝率[${forecastWinRate}] 採算[${benefitRate}]`);
+    console.log(`${mark[index]} ${horseId}-${horseName}: レーティング[${forecastValue}] 勝率[${forecastWinRate}] 割安度[${benefitRate}] (-> ${horseResultDetailText})`);
   })
 
 

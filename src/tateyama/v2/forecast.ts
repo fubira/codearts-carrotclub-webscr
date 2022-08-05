@@ -50,9 +50,7 @@ export class Forecast {
      * すべてのパラメータからValueFactorを算出する
      */
     const entryValueFactors = race.entries.map((entry) => {
-      Tateyama.startTimeCount("getHorseStateFactor");
       const horseStateFactorIds = Tateyama.getHorseStateFactor(entry);
-      Tateyama.finishTimeCount();
 
       const stateFactorIds = [
         ...raceStateFactorIds,
@@ -91,7 +89,6 @@ export class Forecast {
      */
     const totalWinRate = race.entries.map((e) => Tateyama.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
 
-    Tateyama.startTimeCount("entryValueFactors");
     /**
      * 成形
      */
@@ -103,8 +100,34 @@ export class Forecast {
       return { ...valueFactor, forecastWinRate, oddsWinRate, benefitRate };
     }).sort((a, b) => b.forecastValue - a.forecastValue);
 
-    Tateyama.finishTimeCount();
     return result;
+  }
+
+  /**
+   * 的中に関連した要素に経験値を加算する
+   * 
+   * @param race 
+   */
+   public addExp(race: DBRace) {
+    const raceStateFactorIds = Tateyama.getRaceStateFactor(race);
+
+    const top3detail = race.result.detail.slice(0, 3);
+    const top3horseId = top3detail.map((v) => v.horseId);
+    const top3entry = race.entries.filter((e) => top3horseId.includes(e.horseId));
+
+    top3entry.forEach((entry) => {
+      const horseStateFactorIds = Tateyama.getHorseStateFactor(entry);
+      const stateFactorIds = [ ...raceStateFactorIds, ...horseStateFactorIds];
+
+      this.valueFactorIds.forEach((valueId) => 
+        this.conditionTypes.forEach((condType) =>
+          this.comparableTypes.forEach((compType) => {
+              Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType) &&
+                Tateyama.ValueFactorStore.addExp(this.params.store, valueId, compType, condType, stateFactorIds);
+          })
+        )
+      );
+    });
   }
 
   public static merge(parentBase: Forecast, parentRef: Forecast): Forecast {

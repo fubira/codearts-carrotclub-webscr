@@ -19,13 +19,20 @@ function subRandomFactorValue(value: number): number {
   return factorValueMinMax(value - Math.random() * 0.1);
 }
 
+function modFactorValue(value: number): number {
+  return factorValueMinMax(value / 1.1);
+}
+
 /**
  * 比較条件と評価値を格納するValue型
  */
 
 interface ConditionCompareValue {
   [cond: Tateyama.ConditionType]: { 
-    [comp: Tateyama.ComparableType]: number;
+    [comp: Tateyama.ComparableType]: {
+      value: number;
+      exp: number;
+    }
   }
 }
 
@@ -82,7 +89,7 @@ interface ValueFactorDataType {
     const { condition, stateFactor } = store.data[valueId];
 
     const valueFactorValue = condition?.[condType]?.[compType];
-    if (valueFactorValue === 0) {
+    if (valueFactorValue.value === 0) {
       return 0;
     }
 
@@ -91,7 +98,7 @@ interface ValueFactorDataType {
       return Tateyama.StateFactorStore.get(stateFactor, id) + 1.0;
     }).reduce((prev, curr) => prev * curr);
 
-    return valueFactorValue * stateFactorValue;
+    return valueFactorValue.value * stateFactorValue;
   } 
 
   public static set(
@@ -107,8 +114,27 @@ interface ValueFactorDataType {
     if (!store.data[valueId].condition[condType]) {
       store.data[valueId].condition[condType] = {};
     }
+    if (!store.data[valueId].condition[condType][compType]) {
+      store.data[valueId].condition[condType][compType] = { value: value, exp: 0 };
+    }
 
-    store.data[valueId].condition[condType][compType] = value;
+    store.data[valueId].condition[condType][compType].value = value;
+  } 
+
+  public static addExp(
+    store: ValueFactorStore,
+    valueId: Tateyama.ValueFactorID,
+    compType: Tateyama.ComparableType,
+    condType: Tateyama.ConditionType,
+    stateFactorIds: Tateyama.StateFactorID[]
+  ) {
+    const { condition, stateFactor } = store.data[valueId];
+
+    // パラメータ経験値の加算
+    condition[condType][compType].exp = condition[condType][compType].exp + 1;
+
+    // 状態要素経験値の加算
+    stateFactorIds.forEach((id) => { Tateyama.StateFactorStore.addExp(stateFactor, id); });
   } 
 
   public static merge(base: ValueFactorStore, ref: ValueFactorStore): ValueFactorStore {
@@ -124,21 +150,34 @@ interface ValueFactorDataType {
             newValueFactor.data[factor].condition[cond][comp] = 
               refValueFactor.data[factor].condition[cond][comp] 
           }
+
+          // 的中経験のある値は加算する
+          if (newValueFactor.data[factor].condition[cond][comp].exp > 0) {
+            newValueFactor.data[factor].condition[cond][comp].value = addRandomFactorValue(
+              newValueFactor.data[factor].condition[cond][comp].value
+            );
+          } else {
+            newValueFactor.data[factor].condition[cond][comp].value = modFactorValue(
+              newValueFactor.data[factor].condition[cond][comp].value
+            );
+          }
+          newValueFactor.data[factor].condition[cond][comp].exp = 0;
+
           // 5%の確率で値を加算する
           if (Math.random() < 0.05) {
-            newValueFactor.data[factor].condition[cond][comp] = addRandomFactorValue(
-              newValueFactor.data[factor].condition[cond][comp]
+            newValueFactor.data[factor].condition[cond][comp].value = addRandomFactorValue(
+              newValueFactor.data[factor].condition[cond][comp].value
             );
           }
           // 5%の確率で値を減産する
           if (Math.random() < 0.05) {
-            newValueFactor.data[factor].condition[cond][comp] = subRandomFactorValue(
-              newValueFactor.data[factor].condition[cond][comp]
+            newValueFactor.data[factor].condition[cond][comp].value = subRandomFactorValue(
+              newValueFactor.data[factor].condition[cond][comp].value
             );
           }
           // 5%の確率で突然変異する
           if (Math.random() < 0.05) {
-            newValueFactor.data[factor].condition[cond][comp] = randomFactorValue();
+            newValueFactor.data[factor].condition[cond][comp].value = randomFactorValue();
           }
 
           newValueFactor.data[factor].stateFactor = Tateyama.StateFactorStore.merge(

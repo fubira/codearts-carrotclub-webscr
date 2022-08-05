@@ -85,7 +85,9 @@ async function cycle(docs: TateyamaV1.DBRace[], workDir: string, init: boolean) 
 
     randomDocs.slice(0, races).forEach((race, index) => {
       forecasts.forEach((forecast) => {
-        const choice = Tateyama.getForecastResultChoiced(forecast.forecast(race));
+        const forecastResult = forecast.forecast(race);
+        forecast.addExp(race);
+        const choice = Tateyama.getForecastResultChoiced(forecastResult);
         betLogger.bet(forecast.name, race._id, choice, race.result);
       });
 
