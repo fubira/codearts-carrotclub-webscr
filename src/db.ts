@@ -37,7 +37,6 @@ async function query(idRegex: string) : Promise<{ docs: Types.DBRace[], warning:
     selector: { _id: { $regex: idRegex } }
   });
 
-  db.close();
   return { docs, warning };
 }
 

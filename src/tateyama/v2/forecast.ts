@@ -28,14 +28,14 @@ export class Forecast {
   constructor () {
     this.params = {
       name: phonetic.generate({ syllables: 3, compoundSimplicity: 6, phoneticSimplicity: 6 }),
-      parent: "none",
+      parent: "first",
       generation: 0,
       store: new Tateyama.ValueFactorStore()
     };
   }
 
   public get name(): string {
-    return `${this.params.name}-${this.params.parent}[${this.params.generation}]`;
+    return `${this.params.name}-${this.params.parent}_${this.params.generation}`;
   }
 
   /**

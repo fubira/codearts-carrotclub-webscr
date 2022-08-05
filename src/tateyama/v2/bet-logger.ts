@@ -23,6 +23,7 @@ function logBetWinShow(forecast: Tateyama.ForecastResult[], raceResult: Tateyama
   return { betType, betText, amount, result };
 }
 
+/*
 function logBetShow(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
@@ -45,7 +46,9 @@ function logBetShow(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.
 
   return { betType, betText, amount, result };
 }
+*/
 
+/*
 function logBetShowBenefit(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
@@ -68,6 +71,7 @@ function logBetShowBenefit(forecast: Tateyama.ForecastResult[], raceResult: Tate
 
   return { betType, betText, amount, result };
 }
+*/
 
 function logQuinellaPlace(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
@@ -138,6 +142,7 @@ function logQuinellaExacta(forecast: Tateyama.ForecastResult[], raceResult: Tate
   return { betType, betText, amount, result };
 }
 
+/*
 function logExacta(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
@@ -162,6 +167,7 @@ function logExacta(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.D
 
   return { betType, betText, amount, result };
 }
+*/
 
 function logTrio1(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
@@ -226,15 +232,15 @@ function logTrio2(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DB
 
   return { betType, betText, amount, result };
 }
-
-function logTrifecta1(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+/*
+function logTrifecta3(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
   const bet4th = forecast[3].horseId;
   const bet5th = forecast[4].horseId;
 
-  const betType = Tateyama.BetType.Trifecta1;
+  const betType = Tateyama.BetType.Trifecta3;
   const betText = [
     `三連単 ${bet1st},${bet2nd}-${bet1st},${bet2nd}-${bet3rd},${bet4th},${bet5th} x 200円`,
     `三連単 ${bet1st}-${bet2nd},${bet3rd},${bet4th},${bet5th}-${bet2nd},${bet3rd},${bet4th},${bet5th} x 200円`,
@@ -257,15 +263,16 @@ function logTrifecta1(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV
 
   return { betType, betText, amount, result };
 }
+*/
 
-function logTrifecta2(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logTrifecta1(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
   const bet4th = forecast[3].horseId;
   const bet5th = forecast[4].horseId;
 
-  const betType = Tateyama.BetType.Trifecta2;
+  const betType = Tateyama.BetType.Trifecta1;
   const betText = [
     `三連単 ${bet1st},${bet2nd}-${bet1st},${bet2nd},${bet3rd},${bet5th}-${bet1st},${bet2nd},${bet3rd},${bet4th},${bet5th} x 200円`,
   ];
@@ -283,14 +290,14 @@ function logTrifecta2(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV
   return { betType, betText, amount, result };
 }
 
-function logTrifecta3(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logTrifecta2(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
   const bet4th = forecast[3].horseId;
   const bet5th = forecast[4].horseId;
 
-  const betType = Tateyama.BetType.Trifecta3;
+  const betType = Tateyama.BetType.Trifecta2;
   const betText = [
     `三連単 ${bet1st},${bet2nd},${bet5th}-${bet1st},${bet2nd},${bet5th}-${bet1st},${bet2nd},${bet3rd},${bet4th},${bet5th} x 200円`,
   ];
@@ -348,17 +355,17 @@ export class BetLogger {
       raceId,
       bet: [
         logBetWinShow(forecast, raceResult),
-        logBetShow(forecast, raceResult),
-        logBetShowBenefit(forecast, raceResult),
+        // logBetShow(forecast, raceResult),
+        // logBetShowBenefit(forecast, raceResult),
         logQuinellaPlace(forecast, raceResult),
         logQuinellaPlaceBenefit(forecast, raceResult),
         logQuinellaExacta(forecast, raceResult),
-        logExacta(forecast, raceResult),
+        // logExacta(forecast, raceResult),
         logTrio1(forecast, raceResult),
         logTrio2(forecast, raceResult),
         logTrifecta1(forecast, raceResult),
         logTrifecta2(forecast, raceResult),
-        logTrifecta3(forecast, raceResult),
+        // logTrifecta3(forecast, raceResult),
       ],
     });
   }
@@ -400,12 +407,12 @@ export class BetLogger {
     const scores = names.map((name) => {
       const logStats = this.stats(name);
       const top5Keys = Object.keys(logStats)
-        .sort((a, b) => logStats[b].resultRate - logStats[a].resultRate)
+        .sort((a, b) => logStats[b].hitRate - logStats[a].hitRate)
         .slice(0, 8);
 
       const totalResultRate = top5Keys.map((key) => logStats[key].resultRate).reduce((p, c) => p + c) / 8;
       const totalHitRate = top5Keys.map((key) => logStats[key].hitRate).reduce((p, c) => p + c) / 8;
-      return { name, score: totalResultRate + totalHitRate };
+      return { name, score: totalHitRate * 2 + totalResultRate };
     }).sort((a, b) => b.score - a.score);
 
     const selections = [ ...scores.slice(0, good), ...scores.slice(-worst) ];
@@ -417,13 +424,13 @@ export class BetLogger {
     selections.forEach(({ name, score }, index) => {
       const logStats = this.stats(name);
 
-      const top5Keys = Object.keys(logStats)
-        .sort((a, b) => logStats[b].resultRate - logStats[a].resultRate)
+      const topKeys = Object.keys(logStats)
+        .sort((a, b) => logStats[b].hitRate - logStats[a].hitRate)
         .slice(0, 8);
 
       logger.info(`== Rank ${index + 1}. [${name}] - (rating ${(score * 100).toFixed(2)})`);
 
-      top5Keys.forEach((key) => {
+      topKeys.forEach((key) => {
         const log = logStats[key];
         const betType = String(key).padEnd(50, ' ');
         const resultValue = log.result.toLocaleString().padStart(10, ' ');
