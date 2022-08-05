@@ -1,5 +1,6 @@
 import logger from 'logger';
 import FastGlob from 'fast-glob';
+import cliProgress from 'cli-progress';
 import { writeFileSync, mkdirSync, existsSync, readFileSync, rmSync, renameSync } from 'fs';
 
 import TateyamaDB from 'db';
@@ -58,7 +59,7 @@ async function loadForecasts(workDir: string) {
   return forecasts;
 }
 
-async function cycle(docs: TateyamaV1.DBRace[], workDir: string, init: boolean) {
+async function cycle(cycleIndex: number, docs: TateyamaV1.DBRace[], workDir: string, init: boolean) {
   const betLogger = new Tateyama.BetLogger();
   const MAX_RACE = 288;
   const MAX_FORECASTS = 32;
@@ -83,17 +84,19 @@ async function cycle(docs: TateyamaV1.DBRace[], workDir: string, init: boolean) 
     const races = docs.length > MAX_RACE ? MAX_RACE : docs.length;
     const randomDocs = docs.sort(() => Math.random() - 0.5);
 
+    const progress = new cliProgress.SingleBar({ format: `# Cycle-${cycleIndex + 1} [{bar}] {percentage}% | {value}/{total}` });
+    progress.start(races, 0);
+
     randomDocs.slice(0, races).forEach((race, index) => {
       forecasts.forEach((forecast) => {
         const forecastResult = forecast.forecast(race);
         forecast.addExp(race);
         const choice = Tateyama.getForecastResultChoiced(forecastResult);
         betLogger.bet(forecast.name, race._id, choice, race.result);
+        progress.update(index);
       });
-
-      index % 100 === 0 && logger.info(`${index}/${races}`);
     });
-
+    progress.stop();
   } catch (err) {
     logger.error(err);
   }
@@ -174,8 +177,7 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
     }
 
     for(let ii = 0; ii < cycles; ii = ii + 1) {
-      logger.info(`=== Cycle [${ii}] ==========`)
-      await cycle(docs, options.workDir, init);
+      await cycle(ii, docs, options.workDir, init);
       init = false;
     }
   } catch (err) {

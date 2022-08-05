@@ -13,9 +13,9 @@ export interface ForecastResult {
 }
 
 export interface ForecastParams {
+  family: string;
   name: string;
   generation: number;
-  parent: string;
   store: Tateyama.ValueFactorStore;
 }
 
@@ -27,15 +27,15 @@ export class Forecast {
 
   constructor () {
     this.params = {
-      name: phonetic.generate({ syllables: 3, compoundSimplicity: 6, phoneticSimplicity: 6 }),
-      parent: "first",
+      name: phonetic.generate({ syllables: 2, compoundSimplicity: 6, phoneticSimplicity: 6 }),
+      family: phonetic.generate({ syllables: 2, compoundSimplicity: 6, phoneticSimplicity: 6 }),
       generation: 0,
       store: new Tateyama.ValueFactorStore()
     };
   }
 
   public get name(): string {
-    return `${this.params.name}-${this.params.parent}_${this.params.generation}`;
+    return `${this.params.family}${this.params.name}_${this.params.generation}`;
   }
 
   /**
@@ -132,7 +132,7 @@ export class Forecast {
 
   public static merge(parentBase: Forecast, parentRef: Forecast): Forecast {
     const newForecast = new Forecast();
-    newForecast.params.parent = parentBase.params.name;
+    newForecast.params.family = parentBase.params.family;
     newForecast.params.generation = (parentBase.params.generation || 0) + 1;
     newForecast.params.store = Tateyama.ValueFactorStore.merge(parentBase.params.store, parentRef.params.store);
     return newForecast;
