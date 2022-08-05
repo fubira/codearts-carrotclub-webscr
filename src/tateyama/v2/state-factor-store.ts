@@ -4,54 +4,44 @@ function randomFactorValue() {
   return Math.random() > 0.5 ? 0.1 : 0;
 }
 
-
-interface StateFactorStoreType {
+/**
+ * StateFactorStoreのデータ形式
+ */
+export interface StateFactorDataType {
   [key: Tateyama.StateFactorID]: number
 }
 
-type StateFactorStoreSerializable = StateFactorStoreType;
-
 /**
  * 全ての状態項目(StateFactor)に紐づく評価値を格納するストアクラス
+ * 
+ * @note シリアライズを楽にするためにメソッドなしのデータクラスとする
+ *       メソッドが必要な場合はstaticにすること
  */
 
 export class StateFactorStore {
-  private store: StateFactorStoreType;
+  private data: StateFactorDataType;
 
-  constructor(store?: StateFactorStoreType) {
-    this.store = store || {};
+  constructor(data?: StateFactorDataType) {
+    this.data = data || {};
     Object.values(Tateyama.StateFactorID).forEach(factor => {
-      this.store[factor] = randomFactorValue();
+      this.data[factor] = randomFactorValue();
     });
   }
 
-  public get(stateId: Tateyama.StateFactorID): number {
-    return this.store[stateId];
+  public static get(store: StateFactorStore, stateId: Tateyama.StateFactorID): number {
+    return store.data[stateId];
   } 
 
-  public set(stateId: Tateyama.StateFactorID, value: number) {
-    this.store[stateId] = value;
+  public static set(store: StateFactorStore, stateId: Tateyama.StateFactorID, value: number) {
+    store.data[stateId] = value;
   }
 
-  public static fromJSON(json: string) {
-    const serialized = JSON.parse(json) as StateFactorStoreSerializable;
-    const store: StateFactorStoreType = {};
-
-    Object.keys(serialized).forEach((key) => {
-      store[key] = serialized[key];
-    });
-
-    return new StateFactorStore(store);
+  public static toJSON(store: StateFactorStore): string {
+    return JSON.stringify(store)
   }
 
-  public toJSON(): string {
-    const serializable: StateFactorStoreSerializable = {};
-
-    Object.keys(this.store).forEach((key) => {
-      serializable[key] = this.store[key]
-    });
-
-    return JSON.stringify(serializable);
+  public static fromJSON(json: string): StateFactorStore {
+    return new StateFactorStore(JSON.parse(json));
   }
 }
 

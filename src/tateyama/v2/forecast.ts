@@ -62,7 +62,7 @@ export class Forecast {
           this.comparableTypes.forEach((compType) => {
             forecastValue = forecastValue + (
               Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType)
-                ? this.params.store.get(valueId, compType, condType, stateFactorIds) : 0
+                ? Tateyama.ValueFactorStore.get(this.params.store, valueId, compType, condType, stateFactorIds) : 0
               );
           })
         )
@@ -110,9 +110,7 @@ export class Forecast {
    */
   public static fromJSON(json: string): Forecast {
     const obj = new Forecast();
-    const data = JSON.parse(json) as { name: string, storeSerialized: string };
-    obj.params.name = data.name;
-    obj.params.store = Tateyama.ValueFactorStore.fromJSON(data.storeSerialized);
+    obj.params = JSON.parse(json) as ForecastParams;
     return obj;
   }
 
@@ -121,9 +119,6 @@ export class Forecast {
    * @returns 
    */
   public toJSON(): string {
-    return JSON.stringify({ 
-      name: this.params.name,
-      storeSerialized: this.params.store.toJSON()
-    });
+    return JSON.stringify(this.params);
   }
 }
