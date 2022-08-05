@@ -152,7 +152,7 @@ async function pageKeibabookSmartReadHtml (page: puppeteer.Page, link: string, c
   }
 
   if (!html) {
-    throw Error('HTMLの取得に失敗しました');
+    // throw Error('HTMLの取得に失敗しました');
   }
 
   return html;

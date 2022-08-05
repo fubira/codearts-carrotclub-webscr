@@ -27,6 +27,7 @@ program
   .option('--proxy <proxy_url>', 'プロキシ指定', process.env.HTTP_PROXY || "")
   .option('--user-agent <user_agent>', 'ユーザーエージェント指定', USER_AGENT || "")
   .option('--no-sandbox', 'スクレイピング時にChromeのサンドボックスを使用しない')
+  .option('--update', '既に取得済みでもページを再取得する')
   .action((str, options) => {
     const range = `${str}` || `${new Date().getFullYear()}`
     const year = range.slice(0, 4);
@@ -43,6 +44,7 @@ program
   program
   .command('makedb')
   .description('スクレイピングデータのDB化')
+  .option('-d, --date <date>', 'DB化を行う日付の指定', "**")
   .option('-s, --source-dir <dir>', 'スクレイピングデータディレクトリの指定', ".site")
   .action((options) => {
     try {

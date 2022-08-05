@@ -50,11 +50,11 @@ async function parseEntries(_info: Types.ScrapeRaceInfo, entriesHtml: string): P
     const horseSubInfo = record.querySelectorAll("td.left p")[1].textContent.trim();
     const weightInfo = record.querySelectorAll("td.lh1 p")[0].textContent.trim();
     const odds = record.querySelectorAll("td.lh1 p")[1].textContent.trim();
-    const oddsRankInfo = record.querySelectorAll("td.lh1 p")[2].textContent.trim();
+    const oddsRankInfo = record.querySelectorAll("td.lh1 p")[2]?.textContent.trim();
 
     const [, horseSex, horseAge, jockyName, handicap] = horseSubInfo.match(/(\S+?)(\d+)\s+(\S+?)\s+(\S+)/);
     const [horseWeight, horseWeightDiff] = weightInfo.replace(/[()]/g, ' ').split(' ');
-    const oddsRank = oddsRankInfo.replace('人気', '');
+    const oddsRank = oddsRankInfo?.replace('人気', '');
 
     return {
       bracketId: Number(bracketId),
@@ -66,10 +66,13 @@ async function parseEntries(_info: Types.ScrapeRaceInfo, entriesHtml: string): P
       handicap: Number(handicap),
       horseWeight: Number(horseWeight),
       horseWeightDiff: horseWeightDiff && Number(horseWeightDiff),
-      odds: Number(odds),
-      oddsRank: Number(oddsRank),
+      odds: (odds === "☆" && 50.0) || Number(odds),
+      oddsRank: (oddsRank && Number(oddsRank)) || 0,
     }
   });
+
+  // OddsRankがない場合自分で測る 
+  result.sort((a, b) => a.odds - b.odds).forEach((a, index) => a.oddsRank === 0 && (a.oddsRank = index + 1));
 
   return result;
 }
@@ -347,7 +350,7 @@ async function parseScrapeFile(file: string): Promise<Types.DBRace> {
   const trainings = await parseTraining(data, rawHTML.training);
   const result = await parseResult(data, rawHTML.result);
 
-  if (!result || !trainings) {
+  if (!trainings) {
     return undefined;
   }
   
@@ -373,9 +376,11 @@ async function parseScrapeFile(file: string): Promise<Types.DBRace> {
 
 export default async (options: any) => {
   const sourceDir = options.sourceDir;
+  const dateDir = options.date || '**'
+  console.log(dateDir, options);
 
   const db = await TateyamaDB.instance();
-  const files = await glob(`${sourceDir}/**/*.json`, { onlyFiles: true });
+  const files = await glob(`${sourceDir}/${dateDir}/*.json`, { onlyFiles: true });
   
   for (const file of files) {
     const data = await parseScrapeFile(file);

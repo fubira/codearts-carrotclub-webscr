@@ -52,12 +52,18 @@ export function dumpForecastResult(race: TateyamaV1.DBRace, results: Tateyama.Fo
     const forecastValue = res.forecastValue.toFixed(2).padStart(10, ' ');
     const forecastWinRate = (res.forecastWinRate).toFixed(2).padStart(6, ' ');
     const benefitRate = res.benefitRate.toFixed(2).padStart(6, ' ');
-    const horseResult = race.result.detail.find((d) => d.horseId === res.horseId);
     const horseEntry = race.entries.find((e) => e.horseId === res.horseId);
-    const horseResultOrderText = !horseResult.order ? `競争中止` : `${horseResult.order}着`;
-    const horseResultDetailText = !horseEntry.oddsRank ? "競争除外" : `${horseEntry.oddsRank}人気 ${horseResultOrderText}`
+    
+    const horseResult = race.result?.detail.find((d) => d.horseId === res.horseId);
+    let resultDetailText = "";
+    if (horseResult) {
+      const horseResultOrderText = !horseResult.order ? `競争中止` : `${horseResult.order}着`;
+      const horseResultDetailText = !horseEntry.oddsRank ? "競争除外" : `${horseEntry.oddsRank}人気 ${horseResultOrderText}`
+      resultDetailText = `(-> ${horseResultDetailText})`;
+    }
 
-    console.log(`${mark[index]} ${horseId}-${horseName}: レーティング[${forecastValue}] 勝率[${forecastWinRate}] 割安度[${benefitRate}] (-> ${horseResultDetailText})`);
+    // 勝率[${forecastWinRate}] 
+    console.log(`${mark[index]} ${horseId}-${horseName}: スコア[${forecastValue}] 割安度[${benefitRate}] ${resultDetailText}`);
   })
 
 

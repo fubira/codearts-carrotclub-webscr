@@ -31,6 +31,9 @@ export default (year: string | undefined, month: string | undefined, day: string
   const onLoadCache = (info: Types.ScrapeRaceInfo): Types.ScrapeRaceRaw => {
     const path = getRaceCachePath(info);
     let raw: Types.ScrapeRaceRaw;
+    if (options.update) {
+      return undefined;
+    }
 
     if (fs.existsSync(path)) {
       try {
