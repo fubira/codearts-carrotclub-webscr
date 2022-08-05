@@ -110,7 +110,9 @@ export class Forecast {
    */
   public static fromJSON(json: string): Forecast {
     const obj = new Forecast();
-    obj.params = JSON.parse(json);
+    const data = JSON.parse(json) as { name: string, storeSerialized: string };
+    obj.params.name = data.name;
+    obj.params.store = Tateyama.ValueFactorStore.fromJSON(data.storeSerialized);
     return obj;
   }
 
@@ -119,6 +121,9 @@ export class Forecast {
    * @returns 
    */
   public toJSON(): string {
-    return JSON.stringify(this.params);
+    return JSON.stringify({ 
+      name: this.params.name,
+      storeSerialized: this.params.store.toJSON()
+    });
   }
 }

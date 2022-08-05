@@ -1,4 +1,5 @@
-export * from './factor-store';
+export * from './state-factor-store';
+export * from './value-factor-store';
 export * from './forecast';
 export * from './bet-logger';
 export * from './types/condition';

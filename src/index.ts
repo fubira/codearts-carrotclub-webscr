@@ -99,13 +99,12 @@ program
   program
   .command('v2')
   .description('Tateyama v2の実行')
-  .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
   .option('-d, --work-dir <work_dir>', 'ワークディレクトリの指定', '.v2work')
   .option('-c, --cycle <cycle>', '学習サイクルの指定', "100")
   .option('-i, --init', '学習を最初からやり直す', false)
-  .action((idRegex, options) => {
+  .action((options) => {
     try {
-      learningV2(idRegex, { ...options });
+      learningV2({ ...options });
     } catch (err) {
       logger.error(err);
     }

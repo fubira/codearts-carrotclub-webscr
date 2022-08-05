@@ -55,4 +55,5 @@ build/
 /*.db
 /.site
 /.train
+/.v2work
 learning.json
