@@ -20,7 +20,7 @@ async function parseCourse(_info: Types.ScrapeRaceInfo, entriesHtml: string): Pr
   const [courseDist, courseState, courseWeather] = courseInfo.split(/\s/);
   const [distance] = courseDist.match(/(\d+)/);
   const [type, direction] = courseState.match(/\((.*)・(.*)\)/);
-  const [weather, condition] = courseWeather.match(/(.*)・(.*)/);
+  const [weather, condition] = courseWeather && (courseWeather.match(/(.*)・(.*)/)) || [];
 
   return {
     distance: Number(distance),
@@ -44,16 +44,16 @@ async function parseEntries(_info: Types.ScrapeRaceInfo, entriesHtml: string): P
   const tr = tbody.querySelectorAll('tr');
 
   const result = tr.map((record): Types.DBEntry => {
-    const bracketId = record.querySelector("td.waku > p").textContent.trim();
-    const horseId = record.querySelector("td.umaban").textContent.trim();
-    const horseName = record.querySelectorAll("td.left p")[0].textContent.trim();
-    const horseSubInfo = record.querySelectorAll("td.left p")[1].textContent.trim();
-    const weightInfo = record.querySelectorAll("td.lh1 p")[0].textContent.trim();
-    const odds = record.querySelectorAll("td.lh1 p")[1].textContent.trim();
+    const bracketId = record.querySelector("td.waku > p")?.textContent.trim();
+    const horseId = record.querySelector("td.umaban")?.textContent.trim();
+    const horseName = record.querySelectorAll("td.left p")[0]?.textContent.trim();
+    const horseSubInfo = record.querySelectorAll("td.left p")[1]?.textContent.trim();
+    const weightInfo = record.querySelectorAll("td.lh1 p")[0]?.textContent.trim();
+    const odds = record.querySelectorAll("td.lh1 p")[1]?.textContent.trim();
     const oddsRankInfo = record.querySelectorAll("td.lh1 p")[2]?.textContent.trim();
 
     const [, horseSex, horseAge, jockyName, handicap] = horseSubInfo.match(/(\S+?)(\d+)\s+(\S+?)\s+(\S+)/);
-    const [horseWeight, horseWeightDiff] = weightInfo.replace(/[()]/g, ' ').split(' ');
+    const [horseWeight, horseWeightDiff] = weightInfo && (weightInfo.replace(/[()]/g, ' ').split(' ')) || [];
     const oddsRank = oddsRankInfo?.replace('人気', '');
 
     return {

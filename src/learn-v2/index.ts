@@ -168,16 +168,17 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
 
   try {
     const { docs, warning } = await TateyamaDB.query('.*');
+    const filteredDocs = docs.filter((doc) => !!doc.result); // resultのないdocsは学習には使えない
 
-    if (docs) {
-      logger.info(`${docs.length}件のデータがマッチしました`);
+    if (filteredDocs) {
+      logger.info(`${filteredDocs.length}件のデータがマッチしました`);
     }
     if (warning) {
       logger.warn(warning);
     }
 
     for(let ii = 0; ii < cycles; ii = ii + 1) {
-      await cycle(ii, docs, options.workDir, init);
+      await cycle(ii, filteredDocs, options.workDir, init);
       init = false;
     }
   } catch (err) {
