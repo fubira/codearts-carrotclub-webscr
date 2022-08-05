@@ -57,19 +57,16 @@ async function loadForecasts(workDir: string) {
   return forecasts;
 }
 
-
-export default async (options: { workDir: string, cycle: string, init: boolean }) => {
-  logger.info(options);
-
+async function cycle(workDir: string, init: boolean) {
   const betLogger = new Tateyama.BetLogger();
-  const MAX_RACE = 500;
+  const MAX_RACE = 1000;
   const MAX_FORECASTS = 24;
   let forecasts: Tateyama.Forecast[] = [];
 
   try {
     // 保存された予想AIの読み込み
-    if (!options.init) {
-      forecasts = await loadForecasts(options.workDir);
+    if (!init) {
+      forecasts = await loadForecasts(workDir);
     }
 
     // 空き枠はランダムで埋める
@@ -150,8 +147,19 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
       new Tateyama.Forecast(),
     ];
 
-    saveForecasts(options.workDir, newForecasts);
+    saveForecasts(workDir, newForecasts);
   } catch (err) {
     logger.error(err);
+  }
+}
+
+
+export default async (options: { workDir: string, cycle: string, init: boolean }) => {
+  logger.info(options);
+
+  const cycles = Number(options.cycle) || 1;
+
+  for(let ii = 0; ii < cycles; ii = ii + 1) {
+    await cycle(options.workDir, options.init);
   }
 }
