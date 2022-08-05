@@ -1,7 +1,22 @@
 import * as Tateyama from 'tateyama/v2';
 
+const MAX_FACTOR_VALUE = 2.5;
+const MIN_FACTOR_VALUE = -0.5
+
+function factorValueMinMax(value: number) {
+  return Math.min(Math.max(value, MIN_FACTOR_VALUE), MAX_FACTOR_VALUE);
+}
+
 function randomFactorValue() {
-  return Math.random() > 0.5 ? 0.1 : 0;
+  return factorValueMinMax(Math.sqrt(Math.random() * Math.random()));
+}
+
+function addRandomFactorValue(value: number): number {
+  return factorValueMinMax(value + Math.random() * 0.1);
+}
+
+function subRandomFactorValue(value: number): number {
+  return factorValueMinMax(value - Math.random() * 0.1);
 }
 
 /**
@@ -95,6 +110,47 @@ interface ValueFactorDataType {
 
     store.data[valueId].condition[condType][compType] = value;
   } 
+
+  public static merge(base: ValueFactorStore, ref: ValueFactorStore): ValueFactorStore {
+    // deepcopyで新しいインスタンスを作る
+    const newValueFactor = JSON.parse(JSON.stringify(base)) as ValueFactorStore;
+    const refValueFactor = JSON.parse(JSON.stringify(ref)) as ValueFactorStore;
+
+    Object.values(Tateyama.ValueFactorID).forEach(factor => 
+      Object.values(Tateyama.ConditionType).forEach(cond => 
+        Object.values(Tateyama.ComparableType).forEach(comp => {
+          // 半分の確率で片方からパラメータをもらう
+          if (Math.random() < 0.5) {
+            newValueFactor.data[factor].condition[cond][comp] = 
+              refValueFactor.data[factor].condition[cond][comp] 
+          }
+          // 5%の確率で値を加算する
+          if (Math.random() < 0.05) {
+            newValueFactor.data[factor].condition[cond][comp] = addRandomFactorValue(
+              newValueFactor.data[factor].condition[cond][comp]
+            );
+          }
+          // 5%の確率で値を減産する
+          if (Math.random() < 0.05) {
+            newValueFactor.data[factor].condition[cond][comp] = subRandomFactorValue(
+              newValueFactor.data[factor].condition[cond][comp]
+            );
+          }
+          // 5%の確率で突然変異する
+          if (Math.random() < 0.05) {
+            newValueFactor.data[factor].condition[cond][comp] = randomFactorValue();
+          }
+
+          newValueFactor.data[factor].stateFactor = Tateyama.StateFactorStore.merge(
+            newValueFactor.data[factor].stateFactor,
+            refValueFactor.data[factor].stateFactor
+          );
+        })
+      )
+    );
+
+    return newValueFactor;
+  }
 
   public static toJSON(store: ValueFactorStore): string {
     return JSON.stringify(store);

@@ -392,7 +392,11 @@ export class BetLogger {
     return stats;
   }
 
-  public displayStats(names: string[]) {
+  /**
+   * 指定したForecastの中から成績ベスト5とワースト1を取り出す
+   * @param names 
+   */
+  public getSelections(names: string[], good: number, worst: number) {
     const scores = names.map((name) => {
       const logStats = this.stats(name);
       const top5Keys = Object.keys(logStats)
@@ -402,9 +406,15 @@ export class BetLogger {
       const totalResultRate = top5Keys.map((key) => logStats[key].resultRate).reduce((p, c) => p + c) / 8;
       const totalHitRate = top5Keys.map((key) => logStats[key].hitRate).reduce((p, c) => p + c) / 8;
       return { name, score: totalResultRate + totalHitRate };
-    });
+    }).sort((a, b) => b.score - a.score);
 
-    scores.sort((a, b) => b.score - a.score).forEach(({ name, score }, index) => {
+    const selections = [ ...scores.slice(0, good), ...scores.slice(-worst) ];
+
+    return selections;
+  }
+
+  public dump(selections: { name: string, score: number }[]) {
+    selections.forEach(({ name, score }, index) => {
       const logStats = this.stats(name);
 
       const top5Keys = Object.keys(logStats)

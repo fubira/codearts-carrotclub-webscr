@@ -14,6 +14,8 @@ export interface ForecastResult {
 
 export interface ForecastParams {
   name: string;
+  generation: number;
+  parent: string;
   store: Tateyama.ValueFactorStore;
 }
 
@@ -26,12 +28,14 @@ export class Forecast {
   constructor () {
     this.params = {
       name: phonetic.generate({ syllables: 3, compoundSimplicity: 6, phoneticSimplicity: 6 }),
+      parent: "none",
+      generation: 0,
       store: new Tateyama.ValueFactorStore()
     };
   }
 
   public get name(): string {
-    return this.params.name;
+    return `${this.params.name}-${this.params.parent}[${this.params.generation}]`;
   }
 
   /**
@@ -101,6 +105,14 @@ export class Forecast {
 
     Tateyama.finishTimeCount();
     return result;
+  }
+
+  public static merge(parentBase: Forecast, parentRef: Forecast): Forecast {
+    const newForecast = new Forecast();
+    newForecast.params.parent = parentBase.params.name;
+    newForecast.params.generation = (parentBase.params.generation || 0) + 1;
+    newForecast.params.store = Tateyama.ValueFactorStore.merge(parentBase.params.store, parentRef.params.store);
+    return newForecast;
   }
 
   /**

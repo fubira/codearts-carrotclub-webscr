@@ -36,8 +36,3 @@ export function getForecastResultChoiced(results: Tateyama.ForecastResult[]) {
     betRemark,
   ]
 }
-
-export function generateBetResult(bet: Tateyama.ForecastResult[]) {
-  bet[0].horseId
-
-}

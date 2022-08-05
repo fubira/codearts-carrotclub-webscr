@@ -62,8 +62,8 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
   logger.info(options);
 
   const betLogger = new Tateyama.BetLogger();
-  const MAX_RACE = 100;
-  const MAX_FORECASTS = 10;
+  const MAX_RACE = 500;
+  const MAX_FORECASTS = 24;
   let forecasts: Tateyama.Forecast[] = [];
 
   try {
@@ -92,7 +92,7 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
     }
 
     const races = docs.length > MAX_RACE ? MAX_RACE : docs.length;
-    const randomDocs = docs; //.sort(() => Math.random() - 0.5);
+    const randomDocs = docs.sort(() => Math.random() - 0.5);
 
     randomDocs.slice(0, races).forEach((race, index) => {
       forecasts.forEach((forecast) => {
@@ -103,15 +103,54 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
       index % 100 === 0 && logger.info(`${index}/${races}`);
     });
 
-    betLogger.displayStats(forecasts.map((f) => f.name));
-    // Tateyama.dumpTimeCountLog();
-
   } catch (err) {
     logger.error(err);
   }
 
   try {
-    saveForecasts(options.workDir, forecasts);
+    const selections = betLogger.getSelections(forecasts.map((f) => f.name), 5, 1);
+
+    betLogger.dump(selections);
+
+    const good1 = forecasts.find((f) => f.name === selections[0].name);
+    const good2 = forecasts.find((f) => f.name === selections[1].name);
+    const good3 = forecasts.find((f) => f.name === selections[2].name);
+    const good4 = forecasts.find((f) => f.name === selections[3].name);
+    const good5 = forecasts.find((f) => f.name === selections[4].name);
+    const worst = forecasts.find((f) => f.name === selections[5].name);
+
+    const newForecasts = [
+      // 親世代(上位5 + 最下位)をそのまま残す
+      good1,
+      good2,
+      good3,
+      good4,
+      good5,
+      worst,
+      // 親世代を組み合わせた子孫を作る
+      // 最下位を混ぜるのは遺伝子の固定化を防ぐため
+      Tateyama.Forecast.merge(good1, good2),
+      Tateyama.Forecast.merge(good1, good3),
+      Tateyama.Forecast.merge(good1, good4),
+      Tateyama.Forecast.merge(good1, good5),
+      Tateyama.Forecast.merge(good1, worst),
+      Tateyama.Forecast.merge(good2, good3),
+      Tateyama.Forecast.merge(good2, good4),
+      Tateyama.Forecast.merge(good2, good5),
+      Tateyama.Forecast.merge(good2, worst),
+      Tateyama.Forecast.merge(good3, good4),
+      Tateyama.Forecast.merge(good3, good5),
+      Tateyama.Forecast.merge(good3, worst),
+      Tateyama.Forecast.merge(good4, good5),
+      Tateyama.Forecast.merge(good4, worst),
+      // ランダムを追加
+      new Tateyama.Forecast(),
+      new Tateyama.Forecast(),
+      new Tateyama.Forecast(),
+      new Tateyama.Forecast(),
+    ];
+
+    saveForecasts(options.workDir, newForecasts);
   } catch (err) {
     logger.error(err);
   }
