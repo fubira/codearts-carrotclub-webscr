@@ -6,10 +6,11 @@ import logger from 'logger';
 import makedb from './makedb';
 import dbutil from './dbutil';
 import scrape from './scrape';
-import dataset from './dataset';
-import tensor from './tensor';
-import learningV2 from './learn-v2';
-import runV2 from './run-v2';
+import learn from './learn';
+import run from './run';
+
+import v1dataset from './v1/dataset';
+import v1tensor from './v1/tensor';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.3538.77 Safari/537.36';
 
@@ -55,36 +56,6 @@ program
   });
 
 program
-  .command('v1dataset')
-  .description('データセットの生成')
-  .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
-  .option('-o, --output <output_csv>', '出力ファイル名を指定する', 'output.csv')
-  .option('-b, --base <base_csv>', '検証データを作成する際、基準となる学習データセットCSVを指定する')
-  .action((idRegex, options) => {
-    try {
-      dataset(idRegex, { ...options });
-    } catch (err) {
-      logger.error(err);
-    }
-  })
-
-program
-  .command('v1run')
-  .description('機械学習の実行')
-  .argument('<train-csv>', '学習データセットCSV')
-  .argument('<test-csv>', '検証データセットCSV')
-  .option('--init', '起動時に学習状況を初期化する', false)
-  .option('-t, --no-train', '学習を行わない')
-  .option('-v, --no-test', '検証を行わない')
-  .action((trainCsv, testCsv, options) => {
-    try {
-      tensor(trainCsv, testCsv, { ...options });
-    } catch (err) {
-      logger.error(err);
-    }
-  });
-
-program
   .command('dbutil')
   .description('データベースの操作ツール')
   .argument('<sub-command>', 'string to sub command')
@@ -107,7 +78,7 @@ program
   .option('-i, --init', '学習を最初からやり直す', false)
   .action((options) => {
     try {
-      learningV2({ ...options });
+      learn({ ...options });
     } catch (err) {
       logger.error(err);
     }
@@ -121,11 +92,47 @@ program
   .option('-d, --work-dir <work_dir>', 'ワークディレクトリの指定', '.v2work')
   .action((idRegex, forecast, options) => {
     try {
-      runV2(idRegex, forecast, { ...options });
+      run(idRegex, forecast, { ...options });
     } catch (err) {
       logger.error(err);
     }
   })
+
+/**
+ * deprecated
+ */
+program
+  .command('v1-dataset')
+  .description('データセットの生成')
+  .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
+  .option('-o, --output <output_csv>', '出力ファイル名を指定する', 'output.csv')
+  .option('-b, --base <base_csv>', '検証データを作成する際、基準となる学習データセットCSVを指定する')
+  .action((idRegex, options) => {
+    try {
+      v1dataset(idRegex, { ...options });
+    } catch (err) {
+      logger.error(err);
+    }
+  })
+
+/**
+ * deprecated
+ */
+program
+  .command('v1-run')
+  .description('機械学習の実行')
+  .argument('<train-csv>', '学習データセットCSV')
+  .argument('<test-csv>', '検証データセットCSV')
+  .option('--init', '起動時に学習状況を初期化する', false)
+  .option('-t, --no-train', '学習を行わない')
+  .option('-v, --no-test', '検証を行わない')
+  .action((trainCsv, testCsv, options) => {
+    try {
+      v1tensor(trainCsv, testCsv, { ...options });
+    } catch (err) {
+      logger.error(err);
+    }
+  });
 
 
 program.parse();
