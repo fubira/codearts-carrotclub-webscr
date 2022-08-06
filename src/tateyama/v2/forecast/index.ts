@@ -4,7 +4,7 @@ export * from './state-factor';
 export * from './value-factor';
 
 import { generateSlug } from 'random-word-slugs';
-import { Forecast, DB } from 'tateyama';
+import { Forecast, Data } from 'tateyama';
 
 import * as Tateyama from 'tateyama';
 
@@ -33,7 +33,7 @@ export class ForecastAI {
    * 
    * @param race 
    */
-  public forecast(race: DB.DBRace) {
+  public forecast(race: Data.Race) {
     const raceStateFactorIds = Forecast.getRaceStateFactor(race);
 
     /**
@@ -98,7 +98,7 @@ export class ForecastAI {
    * 
    * @param race 
    */
-   public addExp(race: DB.DBRace) {
+   public addExp(race: Data.Race) {
     const raceStateFactorIds = Forecast.getRaceStateFactor(race);
 
     const top3detail = race.result.detail.slice(0, 3);

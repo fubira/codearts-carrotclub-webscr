@@ -1,4 +1,4 @@
-import { Forecast, DB } from 'tateyama/v2';
+import { Forecast, Data } from 'tateyama/v2';
 
 function getCoursePlaceID(courseName: string): Forecast.StateFactorID[] {
   switch (courseName) {
@@ -261,7 +261,7 @@ function getHorseAgeID(horseAge: number): Forecast.StateFactorID[] {
   return [];
 }
 
-export function getRaceStateFactor(race: DB.DBRace) {
+export function getRaceStateFactor(race: Data.Race) {
   return [
     ... getCoursePlaceID(race.courseName),
     ... getCourseConditionID(race.course.condition),
@@ -274,7 +274,7 @@ export function getRaceStateFactor(race: DB.DBRace) {
   ];
 }
 
-export function getHorseStateFactor(entry: DB.DBEntry) {
+export function getHorseStateFactor(entry: Data.Entry) {
   return [
     ... getHorseSexID(entry.horseSex),
     ... getHorseJockyChangeID(false), // TODO

@@ -1,9 +1,9 @@
 export * from './types';
 
 import logger from 'logger';
-import { DB, Forecast, BetLog } from 'tateyama';
+import { Data, Forecast, BetLog } from 'tateyama';
 
-function logBetWinShow(forecast: Forecast.ForecastResult[], raceResult: DB.DBResult) {
+function logBetWinShow(forecast: Forecast.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   // const bet2nd = forecast[1].horseId;
   // const bet3rd = forecast[2].horseId;
@@ -74,7 +74,7 @@ function logBetShowBenefit(forecast: Tateyama.ForecastResult[], raceResult: Tate
 }
 */
 
-function logQuinellaPlace(forecast: Forecast.ForecastResult[], raceResult: DB.DBResult) {
+function logQuinellaPlace(forecast: Forecast.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
@@ -98,7 +98,7 @@ function logQuinellaPlace(forecast: Forecast.ForecastResult[], raceResult: DB.DB
 }
 
 /*
-function logQuinellaPlaceBenefit(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logQuinellaPlaceBenefit(forecast: Tateyama.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   // const bet3rd = forecast[2].horseId;
@@ -123,7 +123,7 @@ function logQuinellaPlaceBenefit(forecast: Tateyama.ForecastResult[], raceResult
 */
 
 /*
-function logQuinellaExacta(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logQuinellaExacta(forecast: Tateyama.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
@@ -148,7 +148,7 @@ function logQuinellaExacta(forecast: Tateyama.ForecastResult[], raceResult: Tate
 */
 
 /*
-function logExacta(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logExacta(forecast: Tateyama.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
@@ -175,7 +175,7 @@ function logExacta(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.D
 */
 
 /*
-function logTrio1(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logTrio1(forecast: Tateyama.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
@@ -362,7 +362,7 @@ export class BetLogger {
     this.logs = [];
   }
 
-  public bet(forecastName: string, raceId: string, forecast: Forecast.ForecastResult[], raceResult: DB.DBResult) {
+  public bet(forecastName: string, raceId: string, forecast: Forecast.ForecastResult[], raceResult: Data.Result) {
     this.logs.push({
       forecastName,
       raceId,

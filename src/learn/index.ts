@@ -3,8 +3,7 @@ import FastGlob from 'fast-glob';
 import cliProgress from 'cli-progress';
 import { writeFileSync, mkdirSync, existsSync, readFileSync, rmSync, renameSync } from 'fs';
 
-import { BetLog, DB, Forecast } from 'tateyama';
-import {  } from 'tateyama/v2/bet-log/index';
+import { BetLog, DB, Data, Forecast } from 'tateyama';
 
 async function saveForecasts(workDir: string, forecasts: Forecast.ForecastAI[]) {
   const forecastDir = `${workDir}/forecast/`;
@@ -58,7 +57,7 @@ async function loadForecasts(workDir: string) {
   return forecasts;
 }
 
-async function cycle(cycleIndex: number, docs: DB.DBRace[], workDir: string, init: boolean) {
+async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, init: boolean) {
   const betLogger = new BetLog.BetLogger();
   const MAX_RACE = 288;
   const MAX_FORECASTS = 32;

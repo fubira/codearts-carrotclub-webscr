@@ -1,5 +1,5 @@
 export * from './types';
-import { Forecast, DB } from 'tateyama';
+import { Forecast, Data } from 'tateyama';
 
 /**
  * condで指定された条件に応じた値の比較を行う
@@ -48,27 +48,27 @@ const getComparsionFunc = (type: Forecast.ComparableType): ((values: number[]) =
   return avg;
 }
 
-const getAggregateFunc = (type: Forecast.ComparableType, value: (target: DB.DBEntry) => number): (entries: DB.DBEntry[]) => number[] => {
+const getAggregateFunc = (type: Forecast.ComparableType, value: (target: Data.Entry) => number): (entries: Data.Entry[]) => number[] => {
   if (type.startsWith('allcurrent')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev2r')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev3r')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev2r')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev3r')) {
-    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
 }
 
@@ -82,7 +82,7 @@ const getAggregateFunc = (type: Forecast.ComparableType, value: (target: DB.DBEn
  * @returns 
  */
 export function matchValueFactor(
-  race: DB.DBRace,
+  race: Data.Race,
   horseId: number,
   valueFactorId: Forecast.ValueFactorID,
   cond: Forecast.ConditionType,

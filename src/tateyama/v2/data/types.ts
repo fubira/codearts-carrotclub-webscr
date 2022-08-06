@@ -1,15 +1,31 @@
+/**
+ * Databaseインスタンス
+ */
+export type RaseDB = PouchDB.Database<Race>;
+
+/**
+ * Database Queryの返り値
+ */
+export interface RaseDBDocs {
+  docs: Race[],
+  warning?: string,
+}
+
 export type HorseSex = '牡' | '牝' | 'セン';
+
 export type CourseType = '芝' | 'ダート';
+
 export type CourseDirection = '左' | '右';
+
 export type CourseWeather = '晴' | '曇' | '雨' | '小雨' | '雪' | '小雪';
+
 export type CourseCondition = '良' | '稍重' | '重' | '不良';
 
 /**
  * DB保存データ形定義
  */
-export interface DBRace {
-  // データベースID
-  // [date]:[courseID]:[raceNo]
+export interface Race {
+  // データベースID [date]:[courseID]:[raceNo]
   _id: string;
 
   // レース日時
@@ -28,19 +44,19 @@ export interface DBRace {
   raceTitle: string;
   
   // コース情報
-  course: DBCourse;
+  course: Course;
 
   // 登録馬情報
-  entries: DBEntry[];
+  entries: Entry[];
 
   // レース結果
-  result: DBResult;
+  result: Result;
 }
 
 /**
  * コース情報
  */
-export interface DBCourse {
+export interface Course {
   // ダート/芝
   type: CourseType;
 
@@ -63,7 +79,7 @@ export interface DBCourse {
 /**
  * レース登録馬データ
  */
-export interface DBEntry {
+export interface Entry {
   // 枠番
   bracketId: number;
 
@@ -101,13 +117,13 @@ export interface DBEntry {
   pedigree?: string;
 
   // 調教
-  training?: DBTraining;
+  training?: Training;
 }
 
 /**
  * 調教データ
  */
- export interface DBTraining {
+ export interface Training {
   // 枠番
   bracketId: number;
 
@@ -124,13 +140,13 @@ export interface DBEntry {
   status: string;
 
   // 調教ログ
-  logs: DBTrainingLog[];
+  logs: TrainingLog[];
 }
 
 /**
  * 調教履歴データ
  */
-export interface DBTrainingLog {
+export interface TrainingLog {
   // 日時 YYYYMMDD
   date: string,
 
@@ -153,7 +169,7 @@ export interface DBTrainingLog {
   position: string,
 
   // ラップタイム
-  lap: DBLapGap[],
+  lap: TrainingLap[],
 
   // 併せ相手
   partner?: string,
@@ -162,7 +178,7 @@ export interface DBTrainingLog {
 /**
  * 調教タイム・区間タイム
  */
-export interface DBLapGap {
+export interface TrainingLap {
   lap?: number;
   gap?: number;
   accel?: number;
@@ -171,18 +187,18 @@ export interface DBLapGap {
 /**
  * レース結果
  */
-export interface DBResult {
+export interface Result {
   // 着順
-  detail: DBResultDetail[];
+  detail: ResultDetail[];
 
   // 払戻
-  refund: DBResultRefund;
+  refund: ResultRefund;
 }
 
 /**
  * レース結果詳細
  */
-export interface DBResultDetail {
+export interface ResultDetail {
   // 馬番号
   horseId: number;
 
@@ -190,7 +206,7 @@ export interface DBResultDetail {
   order: number;
 
   // 道中のポジション
-  period: DBResultPeriod[];
+  period: ResultPeriod[];
 
   // タイム (s)
   timeSec: number;
@@ -205,7 +221,7 @@ export interface DBResultDetail {
 /**
  * レース結果詳細 道中ポジション
  */
- export interface DBResultPeriod {
+ export interface ResultPeriod {
   position: number;
   
   disadvantage?: boolean;
@@ -214,7 +230,7 @@ export interface DBResultDetail {
 /**
  * レース払戻
  */
-export interface DBResultRefund {
+export interface ResultRefund {
   // 単勝
   win?: {
     horseId: number;

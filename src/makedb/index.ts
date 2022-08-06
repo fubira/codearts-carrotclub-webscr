@@ -4,10 +4,9 @@ import glob from 'fast-glob';
 import parse from 'node-html-parser';
 import { readFileSync } from 'fs';
 
-import { Scrape, DB, Helper } from 'tateyama';
+import { Scrape, DB, Data, Helper } from 'tateyama';
 import logger from 'logger';
-
-async function parseCourse(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<DB.DBCourse> {
+async function parseCourse(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<Data.Course> {
   const root = parse(entriesHtml);
 
   // レースコース情報取得
@@ -22,15 +21,15 @@ async function parseCourse(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): P
 
   return {
     distance: Number(distance),
-    type: type as DB.CourseType,
-    direction: direction as DB.CourseDirection,
-    weather: weather as DB.CourseWeather,
-    condition: condition as DB.CourseCondition,
+    type: type as Data.CourseType,
+    direction: direction as Data.CourseDirection,
+    weather: weather as Data.CourseWeather,
+    condition: condition as Data.CourseCondition,
     option: courseOpt,
   }
 }
 
-async function parseEntries(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<DB.DBEntry[]> {
+async function parseEntries(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<Data.Entry[]> {
   const root = parse(entriesHtml);
 
   /// 馬情報取得
@@ -41,7 +40,7 @@ async function parseEntries(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): 
 
   const tr = tbody.querySelectorAll('tr');
 
-  const result = tr.map((record): DB.DBEntry => {
+  const result = tr.map((record): Data.Entry => {
     const bracketId = record.querySelector("td.waku > p")?.textContent.trim();
     const horseId = record.querySelector("td.umaban")?.textContent.trim();
     const horseName = record.querySelectorAll("td.left p")[0]?.textContent.trim();
@@ -58,7 +57,7 @@ async function parseEntries(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): 
       bracketId: Number(bracketId),
       horseId: Number(horseId),
       horseName: horseName,
-      horseSex: horseSex as DB.HorseSex,
+      horseSex: horseSex as Data.HorseSex,
       horseAge: Number(horseAge),
       jockyName: jockyName,
       handicap: Number(handicap),
@@ -75,7 +74,7 @@ async function parseEntries(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): 
   return result;
 }
 
-async function parseTraining(info: Scrape.ScrapeRaceInfo, trainingHtml: string): Promise<DB.DBTraining[]> {
+async function parseTraining(info: Scrape.ScrapeRaceInfo, trainingHtml: string): Promise<Data.Training[]> {
   // 調教画面のHTMLはタグが正しく閉じられていないので調整しておく
   trainingHtml.replace(
     /<table class="default cyokyo" id=""><tbody>/g,
@@ -87,7 +86,7 @@ async function parseTraining(info: Scrape.ScrapeRaceInfo, trainingHtml: string):
   /// レース情報取得
   const trainingBodyList = root.querySelectorAll('table.cyokyo > tbody');
 
-  const result = trainingBodyList.map((tbody): DB.DBTraining => {
+  const result = trainingBodyList.map((tbody): Data.Training => {
     // 2桁の月日に年を足す
     function monthdayToDate(yeardate: string, monthday: string) {
       let year = yeardate && Number(yeardate.slice(0, 4));
@@ -161,7 +160,7 @@ async function parseTraining(info: Scrape.ScrapeRaceInfo, trainingHtml: string):
 
       const [positionElement] = trainingTimeList.slice(-1);
       const trainingCount = countValue;
-      const trainingLapGap: Array<DB.DBLapGap> = [];
+      const trainingLapGap: Array<Data.TrainingLap> = [];
 
       let prevGap = 0;
       lapValue.forEach((value, index, array) => {
@@ -206,7 +205,7 @@ async function parseTraining(info: Scrape.ScrapeRaceInfo, trainingHtml: string):
   return result;
 }
 
-async function parseResult(info: Scrape.ScrapeRaceInfo, resultHtml: string): Promise<DB.DBResult> {
+async function parseResult(info: Scrape.ScrapeRaceInfo, resultHtml: string): Promise<Data.Result> {
   if (!resultHtml) {
     logger.warn('結果がありません: ', info.date, info.courseName, info.raceNo, info.raceTitle);
     return;
@@ -220,7 +219,7 @@ async function parseResult(info: Scrape.ScrapeRaceInfo, resultHtml: string): Pro
   // 勝ち馬のタイム
   let winningTime = 0.0;
 
-  const detail: DB.DBResultDetail[] = orderList.map((tr, index) => {
+  const detail: Data.ResultDetail[] = orderList.map((tr, index) => {
     const TimeStringToSec = (timeStr: string) => {
       const time = timeStr.trim();
 
@@ -289,7 +288,7 @@ async function parseResult(info: Scrape.ScrapeRaceInfo, resultHtml: string): Pro
 
   const resultRefundBodyList = root.querySelectorAll('table.kako-haraimoshi > tbody');
 
-  const refund: DB.DBResultRefund = {};
+  const refund: Data.ResultRefund = {};
   resultRefundBodyList.forEach((tbody) => {
     const refs = tbody.querySelectorAll('tr');
 
@@ -333,7 +332,7 @@ async function parseResult(info: Scrape.ScrapeRaceInfo, resultHtml: string): Pro
 }
 
 
-async function parseScrapeFile(file: string): Promise<DB.DBRace> {
+async function parseScrapeFile(file: string): Promise<Data.Race> {
   const dataJson = readFileSync(file);
   const { rawHTML, ...data } = JSON.parse(dataJson.toString()) as Scrape.ScrapeRaceData;
 

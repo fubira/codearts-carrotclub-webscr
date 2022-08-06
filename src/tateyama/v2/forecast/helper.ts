@@ -39,7 +39,7 @@ export function getForecastResultChoiced(results: Tateyama.Forecast.ForecastResu
   ]
 }
 
-export function dumpForecastResult(race: Tateyama.DB.DBRace, results: Tateyama.Forecast.ForecastResult[]) {
+export function dumpForecastResult(race: Tateyama.Data.Race, results: Tateyama.Forecast.ForecastResult[]) {
   const mark = ['A', 'B', 'C', 'D', 'X', 'R', 'R', 'R'];
 
   console.log('==========');
