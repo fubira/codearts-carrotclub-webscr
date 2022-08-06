@@ -83,10 +83,35 @@ async function parseDetail(_info: Scrape.ScrapeRaceInfo, detailHtml: string): Pr
   const root = parse(detailHtml);
 
   /// 馬情報取得
-  const tbody = root.querySelector('table.syutuba_sp tbody');
-  if (!tbody) {
+  const table = root.querySelector('table.noryoku');
+  if (!table) {
     return;
   }
+/*
+  for (let id = 0; id < 18; id ++) {
+    const tr = table.querySelector(`tr.js-umaban${String(id + 1).padStart(2, '0')}`);
+
+    const horseId = tr.querySelector("td.umaban span")?.textContent.trim();
+    const horseName = tr.querySelector("span.kbamei").textContent.trim();
+    const horseSireName = tr.querySelector("span.tkbamei").textContent.trim();
+    const horseBMSName = tr.querySelector("span.htlbamei_small").textContent.trim();
+    const htotal = tr.querySelector("span.htotal").textContent.trim();
+    const orderRecord = htotal.split('-').map((v) => Number(v));
+
+    for (let resent = 0; resent < 3; resent = resent + 1) {
+      const tdResent = tr.querySelector(`td.js-zensou${resent + 1}`);
+
+      const urlDate = tdResent.querySelector('span.racemei a').getAttribute('href').split('/').slice(-1);
+      urlDate
+
+    }
+
+    const odds = record.querySelectorAll("td.lh1 p")[1]?.textContent.trim();
+    const oddsRankInfo = record.querySelectorAll("td.lh1 p")[2]?.textContent.trim();
+
+  }
+*/
+  
   return [];
 }
 
