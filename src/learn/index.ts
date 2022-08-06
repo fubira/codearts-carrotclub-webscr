@@ -3,11 +3,10 @@ import FastGlob from 'fast-glob';
 import cliProgress from 'cli-progress';
 import { writeFileSync, mkdirSync, existsSync, readFileSync, rmSync, renameSync } from 'fs';
 
-import TateyamaDB from 'db';
-import * as Tateyama from 'tateyama/v2';
-import * as TateyamaV1 from 'tateyama/v1/types';
+import { BetLog, DB, Forecast } from 'tateyama';
+import {  } from 'tateyama/v2/bet-log/index';
 
-async function saveForecasts(workDir: string, forecasts: Tateyama.Forecast[]) {
+async function saveForecasts(workDir: string, forecasts: Forecast.ForecastAI[]) {
   const forecastDir = `${workDir}/forecast/`;
 
   //
@@ -50,8 +49,8 @@ async function loadForecasts(workDir: string) {
   //
   const files = await FastGlob(`${forecastDir}/*.json`, { onlyFiles: true });
 
-  const forecasts: Tateyama.Forecast[] = files.map((file) => {
-    const forecast = Tateyama.Forecast.fromJSON(readFileSync(file).toString());
+  const forecasts: Forecast.ForecastAI[] = files.map((file) => {
+    const forecast = Forecast.ForecastAI.fromJSON(readFileSync(file).toString());
     // logger.info(`forecast [${forecast.name}] loaded.`);
     return forecast;
   });
@@ -59,11 +58,11 @@ async function loadForecasts(workDir: string) {
   return forecasts;
 }
 
-async function cycle(cycleIndex: number, docs: TateyamaV1.DBRace[], workDir: string, init: boolean) {
-  const betLogger = new Tateyama.BetLogger();
+async function cycle(cycleIndex: number, docs: DB.DBRace[], workDir: string, init: boolean) {
+  const betLogger = new BetLog.BetLogger();
   const MAX_RACE = 288;
   const MAX_FORECASTS = 32;
-  let forecasts: Tateyama.Forecast[] = [];
+  let forecasts: Forecast.ForecastAI[] = [];
 
   try {
     // 保存された予想AIの読み込み
@@ -73,7 +72,7 @@ async function cycle(cycleIndex: number, docs: TateyamaV1.DBRace[], workDir: str
 
     // 空き枠はランダムで埋める
     while (forecasts.length < MAX_FORECASTS) {
-      forecasts.push(new Tateyama.Forecast());
+      forecasts.push(new Forecast.ForecastAI());
     }
   } catch (err) {
     logger.error(err);
@@ -91,7 +90,7 @@ async function cycle(cycleIndex: number, docs: TateyamaV1.DBRace[], workDir: str
       forecasts.forEach((forecast) => {
         const forecastResult = forecast.forecast(race);
         forecast.addExp(race);
-        const choice = Tateyama.getForecastResultChoiced(forecastResult);
+        const choice = Forecast.getForecastResultChoiced(forecastResult);
         betLogger.bet(forecast.name, race._id, choice, race.result);
         progress.update(index);
       });
@@ -127,31 +126,31 @@ async function cycle(cycleIndex: number, docs: TateyamaV1.DBRace[], workDir: str
       worst,
       // 親世代を組み合わせた子孫を作る
       // 最下位を混ぜるのは遺伝子の固定化を防ぐため
-      Tateyama.Forecast.merge(good1, good2),
-      Tateyama.Forecast.merge(good1, good3),
-      Tateyama.Forecast.merge(good1, good4),
-      Tateyama.Forecast.merge(good1, good5),
-      Tateyama.Forecast.merge(good1, good6),
-      Tateyama.Forecast.merge(good1, good7),
-      Tateyama.Forecast.merge(good1, worst),
-      Tateyama.Forecast.merge(good2, good3),
-      Tateyama.Forecast.merge(good2, good4),
-      Tateyama.Forecast.merge(good2, good5),
-      Tateyama.Forecast.merge(good2, good6),
-      Tateyama.Forecast.merge(good2, good7),
-      Tateyama.Forecast.merge(good2, worst),
-      Tateyama.Forecast.merge(good3, good4),
-      Tateyama.Forecast.merge(good3, good5),
-      Tateyama.Forecast.merge(good3, good6),
-      Tateyama.Forecast.merge(good3, good7),
-      Tateyama.Forecast.merge(good3, worst),
-      Tateyama.Forecast.merge(good4, good5),
-      Tateyama.Forecast.merge(good4, good6),
-      Tateyama.Forecast.merge(good4, good7),
-      Tateyama.Forecast.merge(good4, worst),
+      Forecast.ForecastAI.merge(good1, good2),
+      Forecast.ForecastAI.merge(good1, good3),
+      Forecast.ForecastAI.merge(good1, good4),
+      Forecast.ForecastAI.merge(good1, good5),
+      Forecast.ForecastAI.merge(good1, good6),
+      Forecast.ForecastAI.merge(good1, good7),
+      Forecast.ForecastAI.merge(good1, worst),
+      Forecast.ForecastAI.merge(good2, good3),
+      Forecast.ForecastAI.merge(good2, good4),
+      Forecast.ForecastAI.merge(good2, good5),
+      Forecast.ForecastAI.merge(good2, good6),
+      Forecast.ForecastAI.merge(good2, good7),
+      Forecast.ForecastAI.merge(good2, worst),
+      Forecast.ForecastAI.merge(good3, good4),
+      Forecast.ForecastAI.merge(good3, good5),
+      Forecast.ForecastAI.merge(good3, good6),
+      Forecast.ForecastAI.merge(good3, good7),
+      Forecast.ForecastAI.merge(good3, worst),
+      Forecast.ForecastAI.merge(good4, good5),
+      Forecast.ForecastAI.merge(good4, good6),
+      Forecast.ForecastAI.merge(good4, good7),
+      Forecast.ForecastAI.merge(good4, worst),
       // ランダムを追加
-      new Tateyama.Forecast(),
-      new Tateyama.Forecast(),
+      new Forecast.ForecastAI(),
+      new Forecast.ForecastAI(),
     ];
 
     await saveForecasts(workDir, newForecasts);
@@ -167,7 +166,7 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
   let init = options.init;
 
   try {
-    const { docs, warning } = await TateyamaDB.query('.*');
+    const { docs, warning } = await DB.query('.*');
     const filteredDocs = docs
       // resultのないdocsは学習には使えない
       .filter((doc) => !!doc.result)

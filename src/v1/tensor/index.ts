@@ -2,7 +2,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import * as brain from 'brain.js';
 import logger from 'logger';
 import papa from 'papaparse';
-import { Types } from 'tateyama';
+import * as TateyamaV1 from 'v1/tateyama/types';
 
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;
@@ -147,8 +147,8 @@ function normalizeDataset(dataset: number[][], base: { min: number, max: number}
 
 export default async (trainCsvPath: string, testCsvPath: string, options: { train: boolean, test: boolean, init: boolean }) => {
   try {
-    const trainCsv = papa.parse<Types.Dataset[]>(readFileSync(trainCsvPath).toString(), { header: true });
-    const testCsv = papa.parse<Types.Dataset[]>(readFileSync(testCsvPath).toString(), { header: true });
+    const trainCsv = papa.parse<TateyamaV1.Dataset[]>(readFileSync(trainCsvPath).toString(), { header: true });
+    const testCsv = papa.parse<TateyamaV1.Dataset[]>(readFileSync(testCsvPath).toString(), { header: true });
 
     const trainHeader = trainCsv.data.map((line) => {
       return Object.values(line).slice(0, 7).map((v) => String(v));

@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import fs from 'fs';
 
-import { Types } from 'tateyama';
+import { Scrape } from 'tateyama';
 import logger from 'logger';
 
 import { scraping, KeibabookScrapingParams } from './keibabook';
@@ -12,7 +12,7 @@ export default (year: string | undefined, month: string | undefined, day: string
    * @param race 
    * @returns 
    */
-  const getRaceCachePath = (info: Types.ScrapeRaceInfo) => {
+  const getRaceCachePath = (info: Scrape.ScrapeRaceInfo) => {
     const dir = `${options.outputDir}/${info.date}`;
     const fileName = `${info.courseName}${String(info.raceNo).padStart(2, '0')}_${info.raceTitle}`;
 
@@ -28,9 +28,9 @@ export default (year: string | undefined, month: string | undefined, day: string
    * 
    * @param info
    */
-  const onLoadCache = (info: Types.ScrapeRaceInfo): Types.ScrapeRaceRaw => {
+  const onLoadCache = (info: Scrape.ScrapeRaceInfo): Scrape.ScrapeRaceRaw => {
     const path = getRaceCachePath(info);
-    let raw: Types.ScrapeRaceRaw;
+    let raw: Scrape.ScrapeRaceRaw;
     if (options.update) {
       return undefined;
     }
@@ -38,7 +38,7 @@ export default (year: string | undefined, month: string | undefined, day: string
     if (fs.existsSync(path)) {
       try {
         const json = fs.readFileSync(path);
-        const raceData = JSON.parse(json.toString()) as Types.ScrapeRaceData;
+        const raceData = JSON.parse(json.toString()) as Scrape.ScrapeRaceData;
 
         raw = raceData.rawHTML;
       } catch (err) {
@@ -53,7 +53,7 @@ export default (year: string | undefined, month: string | undefined, day: string
    * スクレイピング結果を保存するハンドラ
    * @param data 
    */
-  const onSaveCache = (data: Types.ScrapeRaceData) => {
+  const onSaveCache = (data: Scrape.ScrapeRaceData) => {
     try {
       fs.writeFileSync(getRaceCachePath(data), JSON.stringify(data, undefined, 2));
     } catch (err) {

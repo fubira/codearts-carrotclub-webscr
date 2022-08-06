@@ -1,8 +1,8 @@
-import TateyamaDB from 'db';
+import { DB } from 'tateyama';
 import logger from 'logger';
 
 async function dbUtilGet(idReg: string) {
-  const { docs, warning } = await TateyamaDB.query(idReg);
+  const { docs, warning } = await DB.query(idReg);
 
   if (docs) {
     logger.info(`${docs.length}件のデータがマッチしました`);

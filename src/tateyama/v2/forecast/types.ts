@@ -1,8 +1,52 @@
+import { Forecast} from 'tateyama';
+
+export interface ForecastResult {
+  horseId: number,
+  horseName: string,
+  odds: number,
+  forecastValue: number,
+  forecastWinRate: number,
+  oddsWinRate: number,
+  benefitRate: number,
+}
+
+export interface ForecastParams {
+  family: string;
+  name: string;
+  generation: number;
+  store: Forecast.ValueFactorStore;
+}
+
+/**
+ * 比較条件
+ */
+ export const ConditionType = {
+  // 以上
+  $gte: "$gte",
+
+  // 以下
+  $lte: "$lte",
+
+  // 同じ
+  $eq: "$eq",
+
+  // 違う
+  $ne: "$ne",
+
+  // おおむね同じ
+  $eqa: "$eqa",
+
+  // かなり差がある
+  $nea: "$nea",
+}
+
+export type ConditionType = typeof ConditionType[keyof typeof ConditionType];
+
 /**
  * 比較対象
  */
 
-export const ComparableType = {
+ export const ComparableType = {
   // 該当項目を前走の値と比較
   SelfPrev1R: "selfprev1r",
 

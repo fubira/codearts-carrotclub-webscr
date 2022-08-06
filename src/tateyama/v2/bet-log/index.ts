@@ -1,15 +1,16 @@
-import * as Tateyama from 'tateyama/v2';
-import * as TateyamaV1 from 'tateyama/v1/types';
-import logger from 'logger';
+export * from './types';
 
-function logBetWinShow(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+import logger from 'logger';
+import { DB, Forecast, BetLog } from 'tateyama';
+
+function logBetWinShow(forecast: Forecast.ForecastResult[], raceResult: DB.DBResult) {
   const bet1st = forecast[0].horseId;
   // const bet2nd = forecast[1].horseId;
   // const bet3rd = forecast[2].horseId;
   // const bet4th = forecast[3].horseId;
   // const bet5th = forecast[4].horseId;
 
-  const betType = Tateyama.BetType.BetWinShow;
+  const betType = BetLog.BetType.BetWinShow;
   const betText = [
     `単勝 ${bet1st} x 1200円`,
     `複勝 ${bet1st} x 2400円`,
@@ -73,14 +74,14 @@ function logBetShowBenefit(forecast: Tateyama.ForecastResult[], raceResult: Tate
 }
 */
 
-function logQuinellaPlace(forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+function logQuinellaPlace(forecast: Forecast.ForecastResult[], raceResult: DB.DBResult) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
   // const bet4th = forecast[3].horseId;
   // const bet5th = forecast[4].horseId;
 
-  const betType = Tateyama.BetType.QuinellaPlace;
+  const betType = BetLog.BetType.QuinellaPlace;
   const betText = [
     `馬連 ${bet1st}-${bet2nd} x 1200円`,
     `ワイド ${bet1st}-${bet2nd} x 1200円`,
@@ -361,7 +362,7 @@ export class BetLogger {
     this.logs = [];
   }
 
-  public bet(forecastName: string, raceId: string, forecast: Tateyama.ForecastResult[], raceResult: TateyamaV1.DBResult) {
+  public bet(forecastName: string, raceId: string, forecast: Forecast.ForecastResult[], raceResult: DB.DBResult) {
     this.logs.push({
       forecastName,
       raceId,
@@ -386,7 +387,7 @@ export class BetLogger {
     const filteredLogs = this.logs.filter((l) => l.forecastName === forecaastName);
     const stats: LogStats = {};
 
-    Object.values(Tateyama.BetType).forEach((betType: Tateyama.BetType) => {
+    Object.values(BetLog.BetType).forEach((betType: BetLog.BetType) => {
       const logMap = filteredLogs.map((log) => {
         const found = log.bet.find((bet) => bet.betType === betType);
         return { amount: found?.amount || 0, result: found?.result || 0 };

@@ -2,14 +2,13 @@ import logger from 'logger';
 import FastGlob from 'fast-glob';
 import { readFileSync } from 'fs';
 
-import TateyamaDB from 'db';
-import * as Tateyama from 'tateyama/v2';
+import { Forecast, DB } from 'tateyama';
 
 export default async (idReg: string, forecastName: string, options: { workDir: string }) => {
   logger.info(options);
 
   try {
-    const { docs } = await TateyamaDB.query(idReg);
+    const { docs } = await DB.query(idReg);
 
     const forecastDir = `${options.workDir}/forecast/`;
     const files = await FastGlob(`${forecastDir}/${forecastName}.json`, { onlyFiles: true });
@@ -17,11 +16,11 @@ export default async (idReg: string, forecastName: string, options: { workDir: s
       logger.warn("AIが見つかりませんでした");
       return;
     }
-    const forecast = Tateyama.Forecast.fromJSON(readFileSync(files[0]).toString());
+    const forecast = Forecast.ForecastAI.fromJSON(readFileSync(files[0]).toString());
 
     docs.forEach((race) => {
-      const choice = Tateyama.getForecastResultChoiced(forecast.forecast(race));
-      Tateyama.dumpForecastResult(race, choice);
+      const choice = Forecast.getForecastResultChoiced(forecast.forecast(race));
+      Forecast.dumpForecastResult(race, choice);
     })
 
     

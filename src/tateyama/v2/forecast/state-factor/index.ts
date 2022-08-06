@@ -1,4 +1,6 @@
-import * as Tateyama from 'tateyama/v2';
+export * from './types';
+export * from './helper';
+import { Forecast } from 'tateyama';
 
 const MAX_FACTOR_VALUE = 1.5;
 const MIN_FACTOR_VALUE = -0.5
@@ -27,7 +29,7 @@ function modFactorValue(value: number): number {
  * StateFactorStoreのデータ形式
  */
 export interface StateFactorDataType {
-  [key: Tateyama.StateFactorID]: { value: number; exp: number }
+  [key: Forecast.StateFactorID]: { value: number; exp: number }
 }
 
 /**
@@ -42,20 +44,20 @@ export class StateFactorStore {
 
   constructor(data?: StateFactorDataType) {
     this.data = data || {};
-    Object.values(Tateyama.StateFactorID).forEach(factor => {
+    Object.values(Forecast.StateFactorID).forEach(factor => {
       this.data[factor] = { value: 0, exp: 0 };
     });
   }
 
-  public static get(store: StateFactorStore, stateId: Tateyama.StateFactorID): number {
+  public static get(store: StateFactorStore, stateId: Forecast.StateFactorID): number {
     return store.data[stateId].value;
   } 
 
-  public static set(store: StateFactorStore, stateId: Tateyama.StateFactorID, value: number) {
+  public static set(store: StateFactorStore, stateId: Forecast.StateFactorID, value: number) {
     store.data[stateId].value = value;
   }
 
-  public static addExp(store: StateFactorStore, stateId: Tateyama.StateFactorID) {
+  public static addExp(store: StateFactorStore, stateId: Forecast.StateFactorID) {
     store.data[stateId].exp = store.data[stateId].exp + 1;
   }
 
@@ -63,7 +65,7 @@ export class StateFactorStore {
     const newStateFactor = JSON.parse(JSON.stringify(base)) as StateFactorStore;
     const refStateFactor = JSON.parse(JSON.stringify(ref)) as StateFactorStore;
 
-    Object.values(Tateyama.StateFactorID).forEach(factor => {
+    Object.values(Forecast.StateFactorID).forEach(factor => {
       // 半分の確率で片方からパラメータをもらう
       if (Math.random() < 0.5) {
         newStateFactor.data[factor] = refStateFactor.data[factor];

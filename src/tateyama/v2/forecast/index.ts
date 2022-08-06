@@ -1,36 +1,25 @@
+export * from './types';
+export * from './helper';
+export * from './state-factor';
+export * from './value-factor';
+
 import phonetic from 'phonetic';
-import { DBRace } from 'tateyama/v1/types/database';
-import * as Tateyama from 'tateyama/v2';
+import { Forecast, DB } from 'tateyama';
 
-export interface ForecastResult {
-  horseId: number,
-  horseName: string,
-  odds: number,
-  forecastValue: number,
-  forecastWinRate: number,
-  oddsWinRate: number,
-  benefitRate: number,
-}
+import * as Tateyama from 'tateyama';
 
-export interface ForecastParams {
-  family: string;
-  name: string;
-  generation: number;
-  store: Tateyama.ValueFactorStore;
-}
-
-export class Forecast {
-  private valueFactorIds = Object.values(Tateyama.ValueFactorID);
-  private conditionTypes = Object.values(Tateyama.ConditionType);
-  private comparableTypes = Object.values(Tateyama.ComparableType);
-  private params: ForecastParams;
+export class ForecastAI {
+  private valueFactorIds = Object.values(Forecast.ValueFactorID);
+  private conditionTypes = Object.values(Forecast.ConditionType);
+  private comparableTypes = Object.values(Forecast.ComparableType);
+  private params: Tateyama.Forecast.ForecastParams;
 
   constructor () {
     this.params = {
       name: phonetic.generate({ syllables: 2, compoundSimplicity: 6, phoneticSimplicity: 6 }),
       family: phonetic.generate({ syllables: 2, compoundSimplicity: 6, phoneticSimplicity: 6 }),
       generation: 0,
-      store: new Tateyama.ValueFactorStore()
+      store: new Forecast.ValueFactorStore()
     };
   }
 
@@ -43,14 +32,14 @@ export class Forecast {
    * 
    * @param race 
    */
-  public forecast(race: DBRace) {
-    const raceStateFactorIds = Tateyama.getRaceStateFactor(race);
+  public forecast(race: DB.DBRace) {
+    const raceStateFactorIds = Forecast.getRaceStateFactor(race);
 
     /**
      * すべてのパラメータからValueFactorを算出する
      */
     const entryValueFactors = race.entries.map((entry) => {
-      const horseStateFactorIds = Tateyama.getHorseStateFactor(entry);
+      const horseStateFactorIds = Forecast.getHorseStateFactor(entry);
 
       const stateFactorIds = [
         ...raceStateFactorIds,
@@ -63,8 +52,8 @@ export class Forecast {
         this.conditionTypes.forEach((condType) =>
           this.comparableTypes.forEach((compType) => {
             forecastValue = forecastValue + (
-              Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType)
-                ? Tateyama.ValueFactorStore.get(this.params.store, valueId, compType, condType, stateFactorIds) : 0
+              Forecast.matchValueFactor(race, entry.horseId, valueId, condType, compType)
+                ? Forecast.ValueFactorStore.get(this.params.store, valueId, compType, condType, stateFactorIds) : 0
               );
           })
         )
@@ -87,14 +76,14 @@ export class Forecast {
      *  出走全馬のオッズ勝率合計を算出
      *  (テラ銭分があるので1にならない)
      */
-    const totalWinRate = race.entries.map((e) => Tateyama.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
+    const totalWinRate = race.entries.map((e) => Forecast.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
 
     /**
      * 成形
      */
     const result = entryValueFactors.map((valueFactor) => {
       const forecastWinRate = (valueFactor.forecastValue * 100 / totalValueFactor);
-      const oddsWinRate = (Tateyama.OddsToWinRate(valueFactor.odds) * 100) / totalWinRate;
+      const oddsWinRate = (Forecast.OddsToWinRate(valueFactor.odds) * 100) / totalWinRate;
       const benefitRate = (forecastWinRate / oddsWinRate);
 
       return { ...valueFactor, forecastWinRate, oddsWinRate, benefitRate };
@@ -108,33 +97,33 @@ export class Forecast {
    * 
    * @param race 
    */
-   public addExp(race: DBRace) {
-    const raceStateFactorIds = Tateyama.getRaceStateFactor(race);
+   public addExp(race: DB.DBRace) {
+    const raceStateFactorIds = Forecast.getRaceStateFactor(race);
 
     const top3detail = race.result.detail.slice(0, 3);
     const top3horseId = top3detail.map((v) => v.horseId);
     const top3entry = race.entries.filter((e) => top3horseId.includes(e.horseId));
 
     top3entry.forEach((entry) => {
-      const horseStateFactorIds = Tateyama.getHorseStateFactor(entry);
+      const horseStateFactorIds = Forecast.getHorseStateFactor(entry);
       const stateFactorIds = [ ...raceStateFactorIds, ...horseStateFactorIds];
 
       this.valueFactorIds.forEach((valueId) => 
         this.conditionTypes.forEach((condType) =>
           this.comparableTypes.forEach((compType) => {
-              Tateyama.matchValueFactor(race, entry.horseId, valueId, condType, compType) &&
-                Tateyama.ValueFactorStore.addExp(this.params.store, valueId, compType, condType, stateFactorIds);
+            Forecast.matchValueFactor(race, entry.horseId, valueId, condType, compType) &&
+              Forecast.ValueFactorStore.addExp(this.params.store, valueId, compType, condType, stateFactorIds);
           })
         )
       );
     });
   }
 
-  public static merge(parentBase: Forecast, parentRef: Forecast): Forecast {
-    const newForecast = new Forecast();
+  public static merge(parentBase: ForecastAI, parentRef: ForecastAI): ForecastAI {
+    const newForecast = new ForecastAI();
     newForecast.params.family = parentBase.params.family;
     newForecast.params.generation = (parentBase.params.generation || 0) + 1;
-    newForecast.params.store = Tateyama.ValueFactorStore.merge(parentBase.params.store, parentRef.params.store);
+    newForecast.params.store = Forecast.ValueFactorStore.merge(parentBase.params.store, parentRef.params.store);
     return newForecast;
   }
 
@@ -143,9 +132,9 @@ export class Forecast {
    * @param json 
    * @returns 
    */
-  public static fromJSON(json: string): Forecast {
-    const obj = new Forecast();
-    obj.params = JSON.parse(json) as ForecastParams;
+  public static fromJSON(json: string): ForecastAI {
+    const obj = new ForecastAI();
+    obj.params = JSON.parse(json) as Tateyama.Forecast.ForecastParams;
     return obj;
   }
 

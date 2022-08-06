@@ -1,6 +1,5 @@
-import logger from 'logger';
-import * as Tateyama from 'tateyama/v2';
-import * as TateyamaV1 from 'tateyama/v1/types/database';
+export * from './types';
+import { Forecast, DB } from 'tateyama';
 
 /**
  * condで指定された条件に応じた値の比較を行う
@@ -9,20 +8,20 @@ import * as TateyamaV1 from 'tateyama/v1/types/database';
  * @param cond 
  * @returns 
  */
-const compare = (targetValue: number, comparableValue: number, cond: Tateyama.ConditionType) => {
-  if (cond === Tateyama.ConditionType.$eq) {
+const compare = (targetValue: number, comparableValue: number, cond: Forecast.ConditionType) => {
+  if (cond === Forecast.ConditionType.$eq) {
     return targetValue === comparableValue;
   }
-  if (cond === Tateyama.ConditionType.$ne) {
+  if (cond === Forecast.ConditionType.$ne) {
     return targetValue != comparableValue;
   }
-  if (cond === Tateyama.ConditionType.$gte) {
+  if (cond === Forecast.ConditionType.$gte) {
     return targetValue <= comparableValue;
   }
-  if (cond === Tateyama.ConditionType.$lte) {
+  if (cond === Forecast.ConditionType.$lte) {
     return targetValue >= comparableValue;
   }
-  if (cond === Tateyama.ConditionType.$eqa) {
+  if (cond === Forecast.ConditionType.$eqa) {
     return targetValue >= comparableValue;
   }
   return false;
@@ -34,7 +33,7 @@ const compare = (targetValue: number, comparableValue: number, cond: Tateyama.Co
  * @param type 
  * @returns 
  */
-const getComparsionFunc = (type: Tateyama.ComparableType): ((values: number[]) => number) => {
+const getComparsionFunc = (type: Forecast.ComparableType): ((values: number[]) => number) => {
   const max = (values: number[]): number => Math.max(...values);
   const min = (values: number[]): number => Math.min(...values);
   const avg = (values: number[]): number => values.reduce((a, b) => a + b) / values.length;
@@ -49,27 +48,27 @@ const getComparsionFunc = (type: Tateyama.ComparableType): ((values: number[]) =
   return avg;
 }
 
-const getAggregateFunc = (type: Tateyama.ComparableType, value: (target: TateyamaV1.DBEntry) => number): (entries: TateyamaV1.DBEntry[]) => number[] => {
+const getAggregateFunc = (type: Forecast.ComparableType, value: (target: DB.DBEntry) => number): (entries: DB.DBEntry[]) => number[] => {
   if (type.startsWith('allcurrent')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev2r')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('allprev3r')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev2r')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
   if (type.startsWith('selfprev3r')) {
-    return (entries: TateyamaV1.DBEntry[]) => entries.map((e) => value(e));
+    return (entries: DB.DBEntry[]) => entries.map((e) => value(e));
   }
 }
 
@@ -83,16 +82,16 @@ const getAggregateFunc = (type: Tateyama.ComparableType, value: (target: Tateyam
  * @returns 
  */
 export function matchValueFactor(
-  race: TateyamaV1.DBRace,
+  race: DB.DBRace,
   horseId: number,
-  valueFactorId: Tateyama.ValueFactorID,
-  cond: Tateyama.ConditionType,
-  comp: Tateyama.ComparableType
+  valueFactorId: Forecast.ValueFactorID,
+  cond: Forecast.ConditionType,
+  comp: Forecast.ComparableType
 ): boolean {
   const entry = race.entries.find((e) => e.horseId === horseId);
 
   switch (valueFactorId) {
-    case Tateyama.ValueFactorID.EntryHandicap: {
+    case Forecast.ValueFactorID.EntryHandicap: {
       if (!entry) {
         console.log(race.entries, horseId);
       }
@@ -102,63 +101,63 @@ export function matchValueFactor(
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryOdds: {
+    case Forecast.ValueFactorID.EntryOdds: {
       const value = entry.odds;
       const aggrFunc = getAggregateFunc(comp, (target) => target.odds);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryOddsWinRate: {
+    case Forecast.ValueFactorID.EntryOddsWinRate: {
       const value = entry.odds;
       const aggrFunc = getAggregateFunc(comp, (target) => target.odds);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryOddsRank: {
+    case Forecast.ValueFactorID.EntryOddsRank: {
       const value = entry.oddsRank;
       const aggrFunc = getAggregateFunc(comp, (target) => target.oddsRank);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryHeavy: {
+    case Forecast.ValueFactorID.EntryHeavy: {
       const value = entry.horseWeight;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeight);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryHeavyDiff: {
+    case Forecast.ValueFactorID.EntryHeavyDiff: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryResultRuns: {
+    case Forecast.ValueFactorID.EntryResultRuns: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryResultWins: {
+    case Forecast.ValueFactorID.EntryResultWins: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryResultTopTwo: {
+    case Forecast.ValueFactorID.EntryResultTopTwo: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Tateyama.ValueFactorID.EntryResultTopThree: {
+    case Forecast.ValueFactorID.EntryResultTopThree: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);

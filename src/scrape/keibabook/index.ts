@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 
-import { Types } from 'tateyama';
+import { DB, Scrape } from 'tateyama';
 import logger from 'logger';
 
 const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
@@ -18,8 +18,8 @@ export interface KeibabookScrapingParams {
   siteId: string;
   sitePass: string;
 
-  onSaveCache: (data: Types.ScrapeRaceData) => void;
-  onLoadCache: (info: Types.ScrapeRaceInfo) => Types.ScrapeRaceRaw;
+  onSaveCache: (data: Scrape.ScrapeRaceData) => void;
+  onLoadCache: (info: Scrape.ScrapeRaceInfo) => Scrape.ScrapeRaceRaw;
 }
 
 
@@ -258,7 +258,7 @@ export const scraping = async (params: KeibabookScrapingParams): Promise<void> =
         const pageLinks = await pageKeibabookSmartDetailLink(page, race.link);
 
         // レース情報
-        const raceInfo: Types.ScrapeRaceInfo = {
+        const raceInfo: Scrape.ScrapeRaceInfo = {
           date: raceProgram.date,
           courseId: raceProgram.courseId,
           courseName: raceProgram.courseName,
@@ -267,7 +267,7 @@ export const scraping = async (params: KeibabookScrapingParams): Promise<void> =
         };
 
         // 既に取得済みのデータを読み込む
-        let cachedRaw: Types.ScrapeRaceRaw;
+        let cachedRaw: Scrape.ScrapeRaceRaw;
         if (params.onLoadCache) {
           cachedRaw = params.onLoadCache(raceInfo);
         } 

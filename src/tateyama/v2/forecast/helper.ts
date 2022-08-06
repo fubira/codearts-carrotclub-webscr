@@ -1,5 +1,4 @@
-import * as Tateyama from 'tateyama/v2';
-import * as TateyamaV1 from 'tateyama/v1/types';
+import * as Tateyama from 'tateyama';
 
 /**
  * オッズから勝率レートを算出する
@@ -11,7 +10,7 @@ export const OddsToWinRate = (value: number) => {
   return 1 / (value || 1);
 }
 
-export function getForecastResultChoiced(results: Tateyama.ForecastResult[]) {
+export function getForecastResultChoiced(results: Tateyama.Forecast.ForecastResult[]) {
   // 予想レート順にソート
   const worker = [...results.sort((a, b) => b.forecastValue - a.forecastValue)];
 
@@ -40,7 +39,7 @@ export function getForecastResultChoiced(results: Tateyama.ForecastResult[]) {
   ]
 }
 
-export function dumpForecastResult(race: TateyamaV1.DBRace, results: Tateyama.ForecastResult[]) {
+export function dumpForecastResult(race: Tateyama.DB.DBRace, results: Tateyama.Forecast.ForecastResult[]) {
   const mark = ['A', 'B', 'C', 'D', 'X', 'R', 'R', 'R'];
 
   console.log('==========');

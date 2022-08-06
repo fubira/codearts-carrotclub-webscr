@@ -2,8 +2,9 @@ import { writeFileSync, readFileSync } from 'fs';
 import papa from 'papaparse';
 import logger from 'logger';
 
-import TateyamaDB from 'db';
-import { Types, Helper } from 'tateyama';
+import { DB } from 'tateyama';
+import * as TateyamaV1 from 'v1/tateyama/types';
+import * as Helper from 'v1/tateyama/helper';
 
 /**
  * 調教内容を区別するためのIDを作成
@@ -11,7 +12,7 @@ import { Types, Helper } from 'tateyama';
  * @param log 
  * @returns 
  */
-function makeTrainingKey(log: Types.DBTrainingLog) {
+function makeTrainingKey(log: DB.DBTrainingLog) {
   const comment = (
     log.comment.includes('一杯') && '一杯') ||
     ((log.comment.includes('強め') || log.comment.includes('仕掛')) && '強め') ||
@@ -26,7 +27,7 @@ function makeTrainingKey(log: Types.DBTrainingLog) {
  * 調教タイム基準値の作成
  * @param docs 
  */
-export function generateTrainingLapBase(docs: Types.DBRace[]) {
+export function generateTrainingLapBase(docs: DB.DBRace[]) {
   const lapTotal: { [key: string]: Array<number>[] } = {};
 
   docs.forEach((doc) => {
@@ -66,7 +67,7 @@ export function generateTrainingLapBase(docs: Types.DBRace[]) {
   return result;
 }
 
-function getTrainingBaseTime(log: Types.DBTrainingLog) {
+function getTrainingBaseTime(log: DB.DBTrainingLog) {
   let result = [14.0, 13.0, 12.0, 12.0];
   if (log?.course.includes('美南Ｗ')) {
     result = [13.5,13,12.5,12];
@@ -107,7 +108,7 @@ function getTrainingBaseTime(log: Types.DBTrainingLog) {
   return result;
 }
 
-export function generateDatasetAll(docs: Types.DBRace[]): Types.Dataset[] {
+export function generateDatasetAll(docs: DB.DBRace[]): TateyamaV1.Dataset[] {
   return docs.flatMap((data) => {
     /**
      * 基本情報
@@ -344,7 +345,7 @@ export default async (idReg: string, options: { output: string, base: string }) 
   /**
    * 指定範囲のデータをDBから取得
    */
-  const { docs, warning } = await TateyamaDB.query(idReg);
+  const { docs, warning } = await DB.query(idReg);
 
   if (options.output) {
     if (docs) {
