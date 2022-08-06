@@ -3,7 +3,7 @@ export * from './helper';
 export * from './state-factor';
 export * from './value-factor';
 
-import phonetic from 'phonetic';
+import { generateSlug } from 'random-word-slugs';
 import { Forecast, DB } from 'tateyama';
 
 import * as Tateyama from 'tateyama';
@@ -15,16 +15,17 @@ export class ForecastAI {
   private params: Tateyama.Forecast.ForecastParams;
 
   constructor () {
+    
     this.params = {
-      name: phonetic.generate({ syllables: 2, compoundSimplicity: 6, phoneticSimplicity: 6 }),
-      family: phonetic.generate({ syllables: 2, compoundSimplicity: 6, phoneticSimplicity: 6 }),
+      name: generateSlug(2, { partsOfSpeech: ["adjective", "noun"]}),
+      family: generateSlug(1, { partsOfSpeech: ["adjective"] }),
       generation: 0,
       store: new Forecast.ValueFactorStore()
     };
   }
 
   public get name(): string {
-    return `${this.params.family}${this.params.name}_${this.params.generation}`;
+    return `${this.params.family}-${this.params.name}_${this.params.generation}`;
   }
 
   /**

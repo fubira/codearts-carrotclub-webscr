@@ -50,6 +50,7 @@
     "phonetic": "^0.1.1",
     "pouchdb": "^7.3.0",
     "pouchdb-find": "^7.3.0",
-    "puppeteer": "^13.5.1"
+    "puppeteer": "^13.5.1",
+    "random-word-slugs": "^0.1.6"
   }
 }
