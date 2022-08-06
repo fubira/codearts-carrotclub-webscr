@@ -154,6 +154,6 @@ export class Forecast {
    * @returns 
    */
   public toJSON(): string {
-    return JSON.stringify(this.params);
+    return JSON.stringify(this.params, null, 2);
   }
 }

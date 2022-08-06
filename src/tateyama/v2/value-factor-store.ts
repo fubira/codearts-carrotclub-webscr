@@ -73,7 +73,7 @@ interface ValueFactorDataType {
 
       Object.values(Tateyama.ConditionType).forEach(cond => 
         Object.values(Tateyama.ComparableType).forEach(comp => 
-          ValueFactorStore.set(this, factor, comp, cond, randomFactorValue())
+          ValueFactorStore.set(this, factor, comp, cond, 0)
         )
       );
     });
@@ -177,7 +177,7 @@ interface ValueFactorDataType {
           }
           // 5%の確率で突然変異する
           if (Math.random() < 0.05) {
-            newValueFactor.data[factor].condition[cond][comp].value = randomFactorValue();
+            // newValueFactor.data[factor].condition[cond][comp].value = randomFactorValue();
           }
 
           newValueFactor.data[factor].stateFactor = Tateyama.StateFactorStore.merge(

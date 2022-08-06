@@ -43,7 +43,7 @@ export class StateFactorStore {
   constructor(data?: StateFactorDataType) {
     this.data = data || {};
     Object.values(Tateyama.StateFactorID).forEach(factor => {
-      this.data[factor] = { value: randomFactorValue(), exp: 0 };
+      this.data[factor] = { value: 0, exp: 0 };
     });
   }
 
@@ -88,7 +88,7 @@ export class StateFactorStore {
       }
       // 5%の確率で突然変異する
       if (Math.random() < 0.05) {
-        newStateFactor.data[factor].value = randomFactorValue();
+        // newStateFactor.data[factor].value = randomFactorValue();
       }
     });
 

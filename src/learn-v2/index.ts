@@ -168,7 +168,11 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
 
   try {
     const { docs, warning } = await TateyamaDB.query('.*');
-    const filteredDocs = docs.filter((doc) => !!doc.result); // resultのないdocsは学習には使えない
+    const filteredDocs = docs
+      // resultのないdocsは学習には使えない
+      .filter((doc) => !!doc.result)
+      // 1着がある程度人気のものだけ学習
+      .filter((doc) => doc.result.refund.win[0].amount < 1200);
 
     if (filteredDocs) {
       logger.info(`${filteredDocs.length}件のデータがマッチしました`);
