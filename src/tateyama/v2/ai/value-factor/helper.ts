@@ -1,5 +1,5 @@
 export * from './types';
-import { Forecast, Data } from 'tateyama';
+import { AI, Data } from 'tateyama';
 
 /**
  * condで指定された条件に応じた値の比較を行う
@@ -8,20 +8,20 @@ import { Forecast, Data } from 'tateyama';
  * @param cond 
  * @returns 
  */
-const compare = (targetValue: number, comparableValue: number, cond: Forecast.ConditionType) => {
-  if (cond === Forecast.ConditionType.$eq) {
+const compare = (targetValue: number, comparableValue: number, cond: AI.ConditionType) => {
+  if (cond === AI.ConditionType.$eq) {
     return targetValue === comparableValue;
   }
-  if (cond === Forecast.ConditionType.$ne) {
+  if (cond === AI.ConditionType.$ne) {
     return targetValue != comparableValue;
   }
-  if (cond === Forecast.ConditionType.$gte) {
+  if (cond === AI.ConditionType.$gte) {
     return targetValue <= comparableValue;
   }
-  if (cond === Forecast.ConditionType.$lte) {
+  if (cond === AI.ConditionType.$lte) {
     return targetValue >= comparableValue;
   }
-  if (cond === Forecast.ConditionType.$eqa) {
+  if (cond === AI.ConditionType.$eqa) {
     return targetValue >= comparableValue;
   }
   return false;
@@ -33,7 +33,7 @@ const compare = (targetValue: number, comparableValue: number, cond: Forecast.Co
  * @param type 
  * @returns 
  */
-const getComparsionFunc = (type: Forecast.ComparableType): ((values: number[]) => number) => {
+const getComparsionFunc = (type: AI.ComparableType): ((values: number[]) => number) => {
   const max = (values: number[]): number => Math.max(...values);
   const min = (values: number[]): number => Math.min(...values);
   const avg = (values: number[]): number => values.reduce((a, b) => a + b) / values.length;
@@ -48,7 +48,7 @@ const getComparsionFunc = (type: Forecast.ComparableType): ((values: number[]) =
   return avg;
 }
 
-const getAggregateFunc = (type: Forecast.ComparableType, value: (target: Data.Entry) => number): (entries: Data.Entry[]) => number[] => {
+const getAggregateFunc = (type: AI.ComparableType, value: (target: Data.Entry) => number): (entries: Data.Entry[]) => number[] => {
   if (type.startsWith('allcurrent')) {
     return (entries: Data.Entry[]) => entries.map((e) => value(e));
   }
@@ -84,14 +84,14 @@ const getAggregateFunc = (type: Forecast.ComparableType, value: (target: Data.En
 export function matchValueFactor(
   race: Data.Race,
   horseId: number,
-  valueFactorId: Forecast.ValueFactorID,
-  cond: Forecast.ConditionType,
-  comp: Forecast.ComparableType
+  valueFactorId: AI.ValueFactorID,
+  cond: AI.ConditionType,
+  comp: AI.ComparableType
 ): boolean {
   const entry = race.entries.find((e) => e.horseId === horseId);
 
   switch (valueFactorId) {
-    case Forecast.ValueFactorID.EntryHandicap: {
+    case AI.ValueFactorID.EntryHandicap: {
       if (!entry) {
         console.log(race.entries, horseId);
       }
@@ -101,63 +101,63 @@ export function matchValueFactor(
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryOdds: {
+    case AI.ValueFactorID.EntryOdds: {
       const value = entry.odds;
       const aggrFunc = getAggregateFunc(comp, (target) => target.odds);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryOddsWinRate: {
+    case AI.ValueFactorID.EntryOddsWinRate: {
       const value = entry.odds;
       const aggrFunc = getAggregateFunc(comp, (target) => target.odds);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryOddsRank: {
+    case AI.ValueFactorID.EntryOddsRank: {
       const value = entry.oddsRank;
       const aggrFunc = getAggregateFunc(comp, (target) => target.oddsRank);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryHeavy: {
+    case AI.ValueFactorID.EntryHeavy: {
       const value = entry.horseWeight;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeight);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryHeavyDiff: {
+    case AI.ValueFactorID.EntryHeavyDiff: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryResultRuns: {
+    case AI.ValueFactorID.EntryResultRuns: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryResultWins: {
+    case AI.ValueFactorID.EntryResultWins: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryResultTopTwo: {
+    case AI.ValueFactorID.EntryResultTopTwo: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);
       return compare(value, compFunc(aggrFunc(race.entries)), cond);
     }
 
-    case Forecast.ValueFactorID.EntryResultTopThree: {
+    case AI.ValueFactorID.EntryResultTopThree: {
       const value = entry.horseWeightDiff;
       const aggrFunc = getAggregateFunc(comp, (target) => target.horseWeightDiff);
       const compFunc = getComparsionFunc(comp);

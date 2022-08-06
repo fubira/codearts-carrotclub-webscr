@@ -1,9 +1,9 @@
 export * from './types';
 
 import logger from 'logger';
-import { Data, Forecast, BetLog } from 'tateyama';
+import { Data, AI, BetLog } from 'tateyama';
 
-function logBetWinShow(forecast: Forecast.ForecastResult[], raceResult: Data.Result) {
+function logBetWinShow(forecast: AI.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   // const bet2nd = forecast[1].horseId;
   // const bet3rd = forecast[2].horseId;
@@ -74,7 +74,7 @@ function logBetShowBenefit(forecast: Tateyama.ForecastResult[], raceResult: Tate
 }
 */
 
-function logQuinellaPlace(forecast: Forecast.ForecastResult[], raceResult: Data.Result) {
+function logQuinellaPlace(forecast: AI.ForecastResult[], raceResult: Data.Result) {
   const bet1st = forecast[0].horseId;
   const bet2nd = forecast[1].horseId;
   const bet3rd = forecast[2].horseId;
@@ -362,7 +362,7 @@ export class BetLogger {
     this.logs = [];
   }
 
-  public bet(forecastName: string, raceId: string, forecast: Forecast.ForecastResult[], raceResult: Data.Result) {
+  public bet(forecastName: string, raceId: string, forecast: AI.ForecastResult[], raceResult: Data.Result) {
     this.logs.push({
       forecastName,
       raceId,

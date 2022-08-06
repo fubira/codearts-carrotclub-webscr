@@ -1,6 +1,6 @@
 export * from './types';
 export * from './helper';
-import { Forecast } from 'tateyama';
+import { AI } from 'tateyama';
 
 const MAX_FACTOR_VALUE = 2.5;
 const MIN_FACTOR_VALUE = -0.5
@@ -30,8 +30,8 @@ function modFactorValue(value: number): number {
  */
 
 interface ConditionCompareValue {
-  [cond: Forecast.ConditionType]: { 
-    [comp: Forecast.ComparableType]: {
+  [cond: AI.ConditionType]: { 
+    [comp: AI.ComparableType]: {
       value: number;
       exp: number;
     }
@@ -45,9 +45,9 @@ interface ConditionCompareValue {
  */
 
 interface ValueFactorDataType {
-  [factor: Forecast.ValueFactorID]: { 
+  [factor: AI.ValueFactorID]: { 
     condition: ConditionCompareValue;
-    stateFactor: Forecast.StateFactorStore;
+    stateFactor: AI.StateFactorStore;
   };
 }
 
@@ -68,13 +68,13 @@ interface ValueFactorDataType {
     /**
      * 値がない要素については空データで初期設定を行う
      */
-    Object.values(Forecast.ValueFactorID).forEach(factor => {
+    Object.values(AI.ValueFactorID).forEach(factor => {
       if (!this.data[factor]) {
-        this.data[factor] = { condition: {}, stateFactor: new Forecast.StateFactorStore() };
+        this.data[factor] = { condition: {}, stateFactor: new AI.StateFactorStore() };
       }
 
-      Object.values(Forecast.ConditionType).forEach(cond => 
-        Object.values(Forecast.ComparableType).forEach(comp => 
+      Object.values(AI.ConditionType).forEach(cond => 
+        Object.values(AI.ComparableType).forEach(comp => 
           ValueFactorStore.set(this, factor, comp, cond, 0)
         )
       );
@@ -83,10 +83,10 @@ interface ValueFactorDataType {
 
   public static get(
     store: ValueFactorStore,
-    valueId: Forecast.ValueFactorID,
-    compType: Forecast.ComparableType,
-    condType: Forecast.ConditionType,
-    stateFactorIds: Forecast.StateFactorID[]
+    valueId: AI.ValueFactorID,
+    compType: AI.ComparableType,
+    condType: AI.ConditionType,
+    stateFactorIds: AI.StateFactorID[]
   ): number {
     const { condition, stateFactor } = store.data[valueId];
 
@@ -97,7 +97,7 @@ interface ValueFactorDataType {
 
     // 状態要素による加減点
     const stateFactorValue = stateFactorIds.map((id) => {
-      return Forecast.StateFactorStore.get(stateFactor, id) + 1.0;
+      return AI.StateFactorStore.get(stateFactor, id) + 1.0;
     }).reduce((prev, curr) => prev * curr);
 
     return valueFactorValue.value * stateFactorValue;
@@ -105,13 +105,13 @@ interface ValueFactorDataType {
 
   public static set(
     store: ValueFactorStore,
-    valueId: Forecast.ValueFactorID,
-    compType: Forecast.ComparableType,
-    condType: Forecast.ConditionType,
+    valueId: AI.ValueFactorID,
+    compType: AI.ComparableType,
+    condType: AI.ConditionType,
     value: number
   ) {
     if (!store.data[valueId]) {
-      store.data[valueId] = { condition: {}, stateFactor: new Forecast.StateFactorStore() };
+      store.data[valueId] = { condition: {}, stateFactor: new AI.StateFactorStore() };
     }
     if (!store.data[valueId].condition[condType]) {
       store.data[valueId].condition[condType] = {};
@@ -125,10 +125,10 @@ interface ValueFactorDataType {
 
   public static addExp(
     store: ValueFactorStore,
-    valueId: Forecast.ValueFactorID,
-    compType: Forecast.ComparableType,
-    condType: Forecast.ConditionType,
-    stateFactorIds: Forecast.StateFactorID[]
+    valueId: AI.ValueFactorID,
+    compType: AI.ComparableType,
+    condType: AI.ConditionType,
+    stateFactorIds: AI.StateFactorID[]
   ) {
     const { condition, stateFactor } = store.data[valueId];
 
@@ -136,7 +136,7 @@ interface ValueFactorDataType {
     condition[condType][compType].exp = condition[condType][compType].exp + 1;
 
     // 状態要素経験値の加算
-    stateFactorIds.forEach((id) => { Forecast.StateFactorStore.addExp(stateFactor, id); });
+    stateFactorIds.forEach((id) => { AI.StateFactorStore.addExp(stateFactor, id); });
   } 
 
   public static merge(base: ValueFactorStore, ref: ValueFactorStore): ValueFactorStore {
@@ -144,9 +144,9 @@ interface ValueFactorDataType {
     const newValueFactor = JSON.parse(JSON.stringify(base)) as ValueFactorStore;
     const refValueFactor = JSON.parse(JSON.stringify(ref)) as ValueFactorStore;
 
-    Object.values(Forecast.ValueFactorID).forEach(factor => 
-      Object.values(Forecast.ConditionType).forEach(cond => 
-        Object.values(Forecast.ComparableType).forEach(comp => {
+    Object.values(AI.ValueFactorID).forEach(factor => 
+      Object.values(AI.ConditionType).forEach(cond => 
+        Object.values(AI.ComparableType).forEach(comp => {
           // 半分の確率で片方からパラメータをもらう
           if (Math.random() < 0.5) {
             newValueFactor.data[factor].condition[cond][comp] = 
@@ -182,7 +182,7 @@ interface ValueFactorDataType {
             // newValueFactor.data[factor].condition[cond][comp].value = randomFactorValue();
           }
 
-          newValueFactor.data[factor].stateFactor = Forecast.StateFactorStore.merge(
+          newValueFactor.data[factor].stateFactor = AI.StateFactorStore.merge(
             newValueFactor.data[factor].stateFactor,
             refValueFactor.data[factor].stateFactor
           );

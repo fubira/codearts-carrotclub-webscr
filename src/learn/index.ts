@@ -3,9 +3,9 @@ import FastGlob from 'fast-glob';
 import cliProgress from 'cli-progress';
 import { writeFileSync, mkdirSync, existsSync, readFileSync, rmSync, renameSync } from 'fs';
 
-import { BetLog, DB, Data, Forecast } from 'tateyama';
+import { BetLog, DB, Data, AI } from 'tateyama';
 
-async function saveForecasts(workDir: string, forecasts: Forecast.ForecastAI[]) {
+async function saveForecasts(workDir: string, forecasts: AI.Forecast[]) {
   const forecastDir = `${workDir}/forecast/`;
 
   //
@@ -48,8 +48,8 @@ async function loadForecasts(workDir: string) {
   //
   const files = await FastGlob(`${forecastDir}/*.json`, { onlyFiles: true });
 
-  const forecasts: Forecast.ForecastAI[] = files.map((file) => {
-    const forecast = Forecast.ForecastAI.fromJSON(readFileSync(file).toString());
+  const forecasts: AI.Forecast[] = files.map((file) => {
+    const forecast = AI.Forecast.fromJSON(readFileSync(file).toString());
     // logger.info(`forecast [${forecast.name}] loaded.`);
     return forecast;
   });
@@ -61,7 +61,7 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
   const betLogger = new BetLog.BetLogger();
   const MAX_RACE = 288;
   const MAX_FORECASTS = 32;
-  let forecasts: Forecast.ForecastAI[] = [];
+  let forecasts: AI.Forecast[] = [];
 
   try {
     // 保存された予想AIの読み込み
@@ -71,7 +71,7 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
 
     // 空き枠はランダムで埋める
     while (forecasts.length < MAX_FORECASTS) {
-      forecasts.push(new Forecast.ForecastAI());
+      forecasts.push(new AI.Forecast());
     }
   } catch (err) {
     logger.error(err);
@@ -89,7 +89,7 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
       forecasts.forEach((forecast) => {
         const forecastResult = forecast.forecast(race);
         forecast.addExp(race);
-        const choice = Forecast.getForecastResultChoiced(forecastResult);
+        const choice = AI.getForecastResultChoiced(forecastResult);
         betLogger.bet(forecast.name, race._id, choice, race.result);
         progress.update(index);
       });
@@ -125,31 +125,31 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
       worst,
       // 親世代を組み合わせた子孫を作る
       // 最下位を混ぜるのは遺伝子の固定化を防ぐため
-      Forecast.ForecastAI.merge(good1, good2),
-      Forecast.ForecastAI.merge(good1, good3),
-      Forecast.ForecastAI.merge(good1, good4),
-      Forecast.ForecastAI.merge(good1, good5),
-      Forecast.ForecastAI.merge(good1, good6),
-      Forecast.ForecastAI.merge(good1, good7),
-      Forecast.ForecastAI.merge(good1, worst),
-      Forecast.ForecastAI.merge(good2, good3),
-      Forecast.ForecastAI.merge(good2, good4),
-      Forecast.ForecastAI.merge(good2, good5),
-      Forecast.ForecastAI.merge(good2, good6),
-      Forecast.ForecastAI.merge(good2, good7),
-      Forecast.ForecastAI.merge(good2, worst),
-      Forecast.ForecastAI.merge(good3, good4),
-      Forecast.ForecastAI.merge(good3, good5),
-      Forecast.ForecastAI.merge(good3, good6),
-      Forecast.ForecastAI.merge(good3, good7),
-      Forecast.ForecastAI.merge(good3, worst),
-      Forecast.ForecastAI.merge(good4, good5),
-      Forecast.ForecastAI.merge(good4, good6),
-      Forecast.ForecastAI.merge(good4, good7),
-      Forecast.ForecastAI.merge(good4, worst),
+      AI.Forecast.merge(good1, good2),
+      AI.Forecast.merge(good1, good3),
+      AI.Forecast.merge(good1, good4),
+      AI.Forecast.merge(good1, good5),
+      AI.Forecast.merge(good1, good6),
+      AI.Forecast.merge(good1, good7),
+      AI.Forecast.merge(good1, worst),
+      AI.Forecast.merge(good2, good3),
+      AI.Forecast.merge(good2, good4),
+      AI.Forecast.merge(good2, good5),
+      AI.Forecast.merge(good2, good6),
+      AI.Forecast.merge(good2, good7),
+      AI.Forecast.merge(good2, worst),
+      AI.Forecast.merge(good3, good4),
+      AI.Forecast.merge(good3, good5),
+      AI.Forecast.merge(good3, good6),
+      AI.Forecast.merge(good3, good7),
+      AI.Forecast.merge(good3, worst),
+      AI.Forecast.merge(good4, good5),
+      AI.Forecast.merge(good4, good6),
+      AI.Forecast.merge(good4, good7),
+      AI.Forecast.merge(good4, worst),
       // ランダムを追加
-      new Forecast.ForecastAI(),
-      new Forecast.ForecastAI(),
+      new AI.Forecast(),
+      new AI.Forecast(),
     ];
 
     await saveForecasts(workDir, newForecasts);
@@ -157,7 +157,6 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
     logger.error(err);
   }
 }
-
 
 export default async (options: { workDir: string, cycle: string, init: boolean }) => {
   logger.info(options);

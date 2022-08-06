@@ -1,16 +1,3 @@
-/**
- * Databaseインスタンス
- */
-export type RaseDB = PouchDB.Database<Race>;
-
-/**
- * Database Queryの返り値
- */
-export interface RaseDBDocs {
-  docs: Race[],
-  warning?: string,
-}
-
 export type HorseSex = '牡' | '牝' | 'セン';
 
 export type CourseType = '芝' | 'ダート';

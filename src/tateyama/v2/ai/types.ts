@@ -1,4 +1,4 @@
-import { Forecast} from 'tateyama';
+import { AI } from 'tateyama';
 
 export interface ForecastResult {
   horseId: number,
@@ -14,7 +14,7 @@ export interface ForecastParams {
   family: string;
   name: string;
   generation: number;
-  store: Forecast.ValueFactorStore;
+  store: AI.ValueFactorStore;
 }
 
 /**

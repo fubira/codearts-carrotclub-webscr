@@ -1,4 +1,4 @@
-import * as Data from './types';
+import { Data } from 'tateyama';
 
 export const CourseTypeToNumber = (value: Data.CourseType) => { 
   switch (value) {

@@ -4,15 +4,13 @@ export * from './state-factor';
 export * from './value-factor';
 
 import { generateSlug } from 'random-word-slugs';
-import { Forecast, Data } from 'tateyama';
+import { AI, Data } from 'tateyama';
 
-import * as Tateyama from 'tateyama';
-
-export class ForecastAI {
-  private valueFactorIds = Object.values(Forecast.ValueFactorID);
-  private conditionTypes = Object.values(Forecast.ConditionType);
-  private comparableTypes = Object.values(Forecast.ComparableType);
-  private params: Tateyama.Forecast.ForecastParams;
+export class Forecast {
+  private valueFactorIds = Object.values(AI.ValueFactorID);
+  private conditionTypes = Object.values(AI.ConditionType);
+  private comparableTypes = Object.values(AI.ComparableType);
+  private params: AI.ForecastParams;
 
   constructor () {
     
@@ -20,7 +18,7 @@ export class ForecastAI {
       name: generateSlug(2, { partsOfSpeech: ["adjective", "noun"]}),
       family: generateSlug(1, { partsOfSpeech: ["adjective"] }),
       generation: 0,
-      store: new Forecast.ValueFactorStore()
+      store: new AI.ValueFactorStore()
     };
   }
 
@@ -34,13 +32,13 @@ export class ForecastAI {
    * @param race 
    */
   public forecast(race: Data.Race) {
-    const raceStateFactorIds = Forecast.getRaceStateFactor(race);
+    const raceStateFactorIds = AI.getRaceStateFactor(race);
 
     /**
      * すべてのパラメータからValueFactorを算出する
      */
     const entryValueFactors = race.entries.map((entry) => {
-      const horseStateFactorIds = Forecast.getHorseStateFactor(entry);
+      const horseStateFactorIds = AI.getHorseStateFactor(entry);
 
       const stateFactorIds = [
         ...raceStateFactorIds,
@@ -53,8 +51,8 @@ export class ForecastAI {
         this.conditionTypes.forEach((condType) =>
           this.comparableTypes.forEach((compType) => {
             forecastValue = forecastValue + (
-              Forecast.matchValueFactor(race, entry.horseId, valueId, condType, compType)
-                ? Forecast.ValueFactorStore.get(this.params.store, valueId, compType, condType, stateFactorIds) : 0
+              AI.matchValueFactor(race, entry.horseId, valueId, condType, compType)
+                ? AI.ValueFactorStore.get(this.params.store, valueId, compType, condType, stateFactorIds) : 0
               );
           })
         )
@@ -77,14 +75,14 @@ export class ForecastAI {
      *  出走全馬のオッズ勝率合計を算出
      *  (テラ銭分があるので1にならない)
      */
-    const totalWinRate = race.entries.map((e) => Forecast.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
+    const totalWinRate = race.entries.map((e) => AI.OddsToWinRate(e.odds)).reduce((prev, curr) => prev + curr);
 
     /**
      * 成形
      */
     const result = entryValueFactors.map((valueFactor) => {
       const forecastWinRate = (valueFactor.forecastValue * 100 / totalValueFactor);
-      const oddsWinRate = (Forecast.OddsToWinRate(valueFactor.odds) * 100) / totalWinRate;
+      const oddsWinRate = (AI.OddsToWinRate(valueFactor.odds) * 100) / totalWinRate;
       const benefitRate = (forecastWinRate / oddsWinRate);
 
       return { ...valueFactor, forecastWinRate, oddsWinRate, benefitRate };
@@ -99,32 +97,32 @@ export class ForecastAI {
    * @param race 
    */
    public addExp(race: Data.Race) {
-    const raceStateFactorIds = Forecast.getRaceStateFactor(race);
+    const raceStateFactorIds = AI.getRaceStateFactor(race);
 
     const top3detail = race.result.detail.slice(0, 3);
     const top3horseId = top3detail.map((v) => v.horseId);
     const top3entry = race.entries.filter((e) => top3horseId.includes(e.horseId));
 
     top3entry.forEach((entry) => {
-      const horseStateFactorIds = Forecast.getHorseStateFactor(entry);
+      const horseStateFactorIds = AI.getHorseStateFactor(entry);
       const stateFactorIds = [ ...raceStateFactorIds, ...horseStateFactorIds];
 
       this.valueFactorIds.forEach((valueId) => 
         this.conditionTypes.forEach((condType) =>
           this.comparableTypes.forEach((compType) => {
-            Forecast.matchValueFactor(race, entry.horseId, valueId, condType, compType) &&
-              Forecast.ValueFactorStore.addExp(this.params.store, valueId, compType, condType, stateFactorIds);
+            AI.matchValueFactor(race, entry.horseId, valueId, condType, compType) &&
+              AI.ValueFactorStore.addExp(this.params.store, valueId, compType, condType, stateFactorIds);
           })
         )
       );
     });
   }
 
-  public static merge(parentBase: ForecastAI, parentRef: ForecastAI): ForecastAI {
-    const newForecast = new ForecastAI();
+  public static merge(parentBase: Forecast, parentRef: Forecast): Forecast {
+    const newForecast = new Forecast();
     newForecast.params.family = parentBase.params.family;
     newForecast.params.generation = (parentBase.params.generation || 0) + 1;
-    newForecast.params.store = Forecast.ValueFactorStore.merge(parentBase.params.store, parentRef.params.store);
+    newForecast.params.store = AI.ValueFactorStore.merge(parentBase.params.store, parentRef.params.store);
     return newForecast;
   }
 
@@ -133,9 +131,9 @@ export class ForecastAI {
    * @param json 
    * @returns 
    */
-  public static fromJSON(json: string): ForecastAI {
-    const obj = new ForecastAI();
-    obj.params = JSON.parse(json) as Tateyama.Forecast.ForecastParams;
+  public static fromJSON(json: string): Forecast {
+    const obj = new Forecast();
+    obj.params = JSON.parse(json) as AI.ForecastParams;
     return obj;
   }
 

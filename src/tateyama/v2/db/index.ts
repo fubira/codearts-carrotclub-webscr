@@ -1,14 +1,15 @@
-import { Data } from 'tateyama';
+export * from './types';
+import { DB } from 'tateyama';
 
 import pouchdb from 'pouchdb';
 import pouchdbFind from 'pouchdb-find';
 
 const DB_PATH="./.db/";
-let _instance: Data.RaseDB;
+let _instance: DB.RaceDB;
 
 pouchdb.plugin(pouchdbFind);
 
-export async function instance(): Promise<Data.RaseDB> {
+export async function instance(): Promise<DB.RaceDB> {
   if (!_instance) {
     _instance = new pouchdb(DB_PATH);
     _instance.createIndex({ index: { fields: ["_id"] } });
@@ -27,7 +28,7 @@ export async function close() {
   _instance = undefined;
 }
 
-export async function query(idRegex: string) : Promise<Data.RaseDBDocs> {
+export async function query(idRegex: string) : Promise<DB.RaceDocs> {
   const db = await instance();
 
   return db.find({
