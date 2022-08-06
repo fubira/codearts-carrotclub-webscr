@@ -1,4 +1,4 @@
-import { AI, Data } from 'tateyama/v2';
+import { AI, Data } from 'tateyama';
 
 function getCoursePlaceID(courseName: string): AI.StateFactorID[] {
   switch (courseName) {

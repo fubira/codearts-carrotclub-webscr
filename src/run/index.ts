@@ -13,7 +13,7 @@ export default async (idReg: string, forecastName: string, options: { workDir: s
     const forecastDir = `${options.workDir}/forecast/`;
     const files = await FastGlob(`${forecastDir}/${forecastName}.json`, { onlyFiles: true });
     if (files.length === 0) {
-      logger.warn("AIが見つかりませんでした");
+      logger.warn("予想AIが見つかりませんでした");
       return;
     }
     const forecast = AI.Forecast.fromJSON(readFileSync(files[0]).toString());
