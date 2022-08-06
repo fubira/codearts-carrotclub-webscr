@@ -117,10 +117,10 @@ export function generateDatasetAll(docs: Data.Race[]): TateyamaV1.Dataset[] {
      * 確認のための分類・情報表示用
      */
     const infoDate = data.date;
-    const infoCourseId = data.courseId;
-    const infoCourse = data.courseName;
     const infoRaceNo = data.raceNo;
     const infoRaceTitle = data.raceTitle;
+    const infoCourseId = data.course.id;
+    const infoCourse = data.course.name;
 
     /**
      * 相対値比較のために最大値, 合計値を取っておく

@@ -18,12 +18,6 @@ export interface Race {
   // レース日時
   date: string;
 
-  // 競馬場ID
-  courseId: number;
-
-  // 競馬場名
-  courseName: string;
-
   // レース番号
   raceNo: number;
 
@@ -47,6 +41,12 @@ export interface Course {
   // ダート/芝
   type: CourseType;
 
+  // 競馬場ID
+  id: number;
+
+  // 競馬場名
+  name: string;
+
   // 距離
   distance: number;
   
@@ -61,6 +61,32 @@ export interface Course {
 
   // 付随情報
   option: string;
+}
+
+/**
+ * 直近の成績
+ */
+export interface ResentRace {
+  // 日付
+  date: string
+
+  detail: ResultDetail;
+
+  course: Course;
+}
+
+export interface Detail {
+  // 枠番
+  bracketId: number;
+
+  // 馬番
+  horseId: number;
+
+  // トータル戦績 [1着, 2着, 3着, その他]
+  orderRecord?: number[];
+
+  // 直近3戦の成績
+  resent?: ResentRace[];
 }
 
 /**
@@ -99,6 +125,9 @@ export interface Entry {
 
   // 人気順
   oddsRank: number;
+  
+  // 過去の戦績
+  detail?: Detail;
 
   // 血統
   pedigree?: string;

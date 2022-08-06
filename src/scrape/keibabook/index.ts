@@ -118,6 +118,7 @@ async function pageKeibabookSmartRaceProgram (page: puppeteer.Page, yearMonth: s
   const detailLinkElement = await page.$('a[title="能力表(HTML)"]');
   const detailLinkProp = detailLinkElement && await detailLinkElement.getProperty('href');
   const detailLinkValue = removeTab(detailLinkProp && await detailLinkProp.jsonValue<any>());
+  const detailIframeLinkValue = detailLinkValue.replace(/_html/, '_html_detail').concat('.html');
   
   // 血統ページの取得
   // const bloodLinkElement = await page.$('a[title="血統表"]');
@@ -132,7 +133,7 @@ async function pageKeibabookSmartRaceProgram (page: puppeteer.Page, yearMonth: s
   return {
     entriesLink: entriesLinkValue,
     trainingLink: trainingLinkValue,
-    detailLink: detailLinkValue,
+    detailLink: detailIframeLinkValue,
     resultLink: resultLinkValue,
   }
 }
@@ -276,7 +277,7 @@ export const scraping = async (params: KeibabookScrapingParams): Promise<void> =
         try {
           const entriesHtml = await pageKeibabookSmartReadHtml(page, pageLinks.entriesLink, cachedRaw?.entries);
           const trainingHtml = await pageKeibabookSmartReadHtml(page, pageLinks.trainingLink, cachedRaw?.training);
-          const detailHtml = await pageKeibabookSmartReadHtml(page, pageLinks.detailLink, cachedRaw?.detail);
+          const detailHtml = await pageKeibabookSmartReadHtml(page, pageLinks.detailLink, null);
           const resultHtml = await pageKeibabookSmartReadHtml(page, pageLinks.resultLink, cachedRaw?.result);
           // const bloodHtml = await pageKeibabookSmartReadHtml(page, pageLinks.bloodLink, cachedRaw?.blood);
 

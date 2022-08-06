@@ -43,7 +43,7 @@ export function dumpForecastResult(race: Data.Race, results: AI.ForecastResult[]
   const mark = ['A', 'B', 'C', 'D', 'X', 'R', 'R', 'R'];
 
   console.log('==========');
-  console.log(`${race.date} ${race.courseName} ${race.raceNo} ${race.raceTitle}`);
+  console.log(`${race.date} ${race.course.name} ${race.raceNo} ${race.raceTitle}`);
 
   results.forEach((res, index) => {
     const horseId = res.horseId.toFixed(0).padStart(2, ' ');

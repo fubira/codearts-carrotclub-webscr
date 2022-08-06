@@ -9,7 +9,7 @@ import { DB, Data, Helper } from 'tateyama';
 
 import logger from 'logger';
 
-async function parseCourse(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<Data.Course> {
+async function parseCourse(info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<Data.Course> {
   const root = parse(entriesHtml);
 
   // レースコース情報取得
@@ -25,6 +25,8 @@ async function parseCourse(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): P
   return {
     distance: Number(distance),
     type: type as Data.CourseType,
+    id: Number(info.courseId),
+    name: info.courseName,
     direction: direction as Data.CourseDirection,
     weather: weather as Data.CourseWeather,
     condition: condition as Data.CourseCondition,
@@ -75,6 +77,17 @@ async function parseEntries(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): 
   result.sort((a, b) => a.odds - b.odds).forEach((a, index) => a.oddsRank === 0 && (a.oddsRank = index + 1));
 
   return result;
+}
+
+async function parseDetail(_info: Scrape.ScrapeRaceInfo, detailHtml: string): Promise<Data.Detail[]> {
+  const root = parse(detailHtml);
+
+  /// 馬情報取得
+  const tbody = root.querySelector('table.syutuba_sp tbody');
+  if (!tbody) {
+    return;
+  }
+  return [];
 }
 
 async function parseTraining(info: Scrape.ScrapeRaceInfo, trainingHtml: string): Promise<Data.Training[]> {
@@ -347,6 +360,7 @@ async function parseScrapeFile(file: string): Promise<Data.Race> {
 
   const course = await parseCourse(data, rawHTML.entries);
   const entries = await parseEntries(data, rawHTML.entries);
+  const details = await parseDetail(data, rawHTML.detail);
   const trainings = await parseTraining(data, rawHTML.training);
   const result = await parseResult(data, rawHTML.result);
 
@@ -357,14 +371,14 @@ async function parseScrapeFile(file: string): Promise<Data.Race> {
   entries.map((entry) => {
     const training = trainings.find((t) => t.horseId === entry.horseId)
     entry.training = training;
+    const detail = details.find((t) => t.horseId === entry.horseId)
+    entry.detail = detail;
   })
 
   const id = `${data.date}:${data.courseId}:${data.raceNo}`;
   return {
     _id: id,
     date: data.date,
-    courseId: Number(data.courseId),
-    courseName: data.courseName,
     raceNo: Number(data.raceNo),
     raceTitle: data.raceTitle,
     course,
@@ -372,7 +386,6 @@ async function parseScrapeFile(file: string): Promise<Data.Race> {
     result
   };
 }
-
 
 export default async (options: any) => {
   const sourceDir = options.sourceDir;

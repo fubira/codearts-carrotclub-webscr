@@ -14,8 +14,8 @@ export async function instance(): Promise<DB.RaceDB> {
     _instance = new pouchdb(DB_PATH);
     _instance.createIndex({ index: { fields: ["_id"] } });
     _instance.createIndex({ index: { fields: ["date"] } });
-    _instance.createIndex({ index: { fields: ["courseId"] } });
-    _instance.createIndex({ index: { fields: ["courseName"] } });
+    _instance.createIndex({ index: { fields: ["course.id"] } });
+    _instance.createIndex({ index: { fields: ["course.name"] } });
     _instance.createIndex({ index: { fields: ["course.distance"] } });
     _instance.createIndex({ index: { fields: ["training.horseName"] } });
   }

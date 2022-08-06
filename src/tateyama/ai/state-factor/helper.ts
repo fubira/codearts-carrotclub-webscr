@@ -263,7 +263,7 @@ function getHorseAgeID(horseAge: number): AI.StateFactorID[] {
 
 export function getRaceStateFactor(race: Data.Race) {
   return [
-    ... getCoursePlaceID(race.courseName),
+    ... getCoursePlaceID(race.course.name),
     ... getCourseConditionID(race.course.condition),
     ... getCourseDistanceID(race.course.distance),
     ... getCourseTypeID(race.course.type),
