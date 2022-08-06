@@ -4,8 +4,11 @@ import glob from 'fast-glob';
 import parse from 'node-html-parser';
 import { readFileSync } from 'fs';
 
-import { Scrape, DB, Data, Helper } from 'tateyama';
+import { Scrape } from 'scrape';
+import { DB, Data, Helper } from 'tateyama';
+
 import logger from 'logger';
+
 async function parseCourse(_info: Scrape.ScrapeRaceInfo, entriesHtml: string): Promise<Data.Course> {
   const root = parse(entriesHtml);
 

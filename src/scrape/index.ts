@@ -1,7 +1,9 @@
+export * as Scrape from './types';
+import * as Scrape from './types';
+
 import 'dotenv/config'
 import fs from 'fs';
 
-import { Scrape } from 'tateyama';
 import logger from 'logger';
 
 import { scraping, KeibabookScrapingParams } from './keibabook';
