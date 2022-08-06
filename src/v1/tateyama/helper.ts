@@ -1,6 +1,7 @@
 import * as Types from './types';
+import { Data } from 'tateyama';
 
-export const CourseTypeToNumber = (value: Types.CourseType) => { 
+export const CourseTypeToNumber = (value: Data.CourseType) => { 
   switch (value) {
     case '芝': return 0;
     case 'ダート': return 1;
@@ -8,7 +9,7 @@ export const CourseTypeToNumber = (value: Types.CourseType) => {
   }
 }
 
-export const CourseDirectionToNumber = (value: Types.CourseDirection) => { 
+export const CourseDirectionToNumber = (value: Data.CourseDirection) => { 
   switch (value) {
     default:
     case '左': return 0;
@@ -16,7 +17,7 @@ export const CourseDirectionToNumber = (value: Types.CourseDirection) => {
   }
 }
 
-export const CourseWeatherToNumber = (value: Types.CourseWeather) => { 
+export const CourseWeatherToNumber = (value: Data.CourseWeather) => { 
   switch (value) {
     default:
     case '晴': return 0;
@@ -28,7 +29,7 @@ export const CourseWeatherToNumber = (value: Types.CourseWeather) => {
   }
 }
 
-export const CourseConditionToNumber = (value: Types.CourseCondition) => { 
+export const CourseConditionToNumber = (value: Data.CourseCondition) => { 
   switch (value) {
     default:
     case '良': return 0;
@@ -38,7 +39,7 @@ export const CourseConditionToNumber = (value: Types.CourseCondition) => {
   }
 }
 
-export const HorseSexToNumber = (value: Types.HorseSex) => { 
+export const HorseSexToNumber = (value: Data.HorseSex) => { 
   switch (value) {
     default:
     case '牡': return 0;

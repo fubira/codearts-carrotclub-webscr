@@ -3,7 +3,7 @@ import FastGlob from 'fast-glob';
 import cliProgress from 'cli-progress';
 import { writeFileSync, mkdirSync, existsSync, readFileSync, rmSync, renameSync } from 'fs';
 
-import { BetLog, DB, Data, AI } from 'tateyama';
+import { Result, DB, Data, AI } from 'tateyama';
 
 async function saveForecasts(workDir: string, forecasts: AI.Forecast[]) {
   const forecastDir = `${workDir}/forecast/`;
@@ -58,7 +58,7 @@ async function loadForecasts(workDir: string) {
 }
 
 async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, init: boolean) {
-  const betLogger = new BetLog.BetLogger();
+  const resultLogger = new Result.Logger();
   const MAX_RACE = 288;
   const MAX_FORECASTS = 32;
   let forecasts: AI.Forecast[] = [];
@@ -90,7 +90,7 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
         const forecastResult = forecast.forecast(race);
         forecast.addExp(race);
         const choice = AI.getForecastResultChoiced(forecastResult);
-        betLogger.bet(forecast.name, race._id, choice, race.result);
+        resultLogger.bet(forecast.name, race._id, choice, race.result);
         progress.update(index);
       });
     });
@@ -100,9 +100,9 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
   }
 
   try {
-    const selections = betLogger.getSelections(forecasts.map((f) => f.name), 7, 1);
+    const selections = resultLogger.getSelections(forecasts.map((f) => f.name), 7, 1);
 
-    betLogger.dump(selections);
+    resultLogger.dump(selections);
 
     const good1 = forecasts.find((f) => f.name === selections[0].name);
     const good2 = forecasts.find((f) => f.name === selections[1].name);
