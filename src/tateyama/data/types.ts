@@ -82,6 +82,15 @@ export interface Detail {
   // 馬番
   horseId: number;
 
+  // 馬名
+  horseName: string;
+
+  // 父名
+  horseSireName: string;
+
+  // 母父名
+  horseBMSName: string
+
   // トータル戦績 [1着, 2着, 3着, その他]
   orderRecord?: number[];
 

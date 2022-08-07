@@ -3,9 +3,9 @@ import process from 'process';
 import { Command } from 'commander';
 import logger from 'logger';
 
-import makedb from './makedb';
+import makedb from './v1/makedb';
 import dbutil from './dbutil';
-import scrape from './scrape';
+import scrape from './v1/scrape';
 import learn from './learn';
 import run from './run';
 

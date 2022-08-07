@@ -4,7 +4,7 @@ import glob from 'fast-glob';
 import parse from 'node-html-parser';
 import { readFileSync } from 'fs';
 
-import { Scrape } from 'scrape';
+import { Scrape } from 'v1/scrape';
 import { DB, Data, Helper } from 'tateyama';
 
 import logger from 'logger';

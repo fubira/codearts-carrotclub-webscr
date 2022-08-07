@@ -1,3 +1,2 @@
-export * from 'tateyama/v2/data/types';
-export * from 'scrape/types';
+export * from 'v1/scrape/types';
 export * from './learning';

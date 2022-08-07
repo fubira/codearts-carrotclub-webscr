@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 
-import { Scrape } from 'scrape';
+import { Scrape } from 'v1/scrape';
 import logger from 'logger';
 
 const randomWaitTime = (time: number) => time / 2 + Math.floor(Math.random() * (time / 2));  
