@@ -2,7 +2,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import * as brain from 'brain.js';
 import logger from 'logger';
 import papa from 'papaparse';
-import * as TateyamaV1 from 'v1/tateyama/types';
+import * as TateyamaV1 from 'v1/tateyama-v1/types';
 
 const LEARNING_DIR = ".train";
 const TRAIN_JSON = `${LEARNING_DIR}/train.json`;

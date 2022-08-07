@@ -3,8 +3,8 @@ import papa from 'papaparse';
 import logger from 'logger';
 
 import { DB, Data } from 'tateyama';
-import * as TateyamaV1 from 'v1/tateyama/types';
-import * as Helper from 'v1/tateyama/helper';
+import * as TateyamaV1 from 'v1/tateyama-v1/types';
+import * as Helper from 'v1/tateyama-v1/helper';
 
 /**
  * 調教内容を区別するためのIDを作成
