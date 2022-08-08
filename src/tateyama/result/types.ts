@@ -2,7 +2,6 @@
  * 予想内容をもとに馬券を買った場合の成績ログ
  */
 export interface Log {
-  forecastName: string,
   raceId: string,
   bet: BetResult[],
 }

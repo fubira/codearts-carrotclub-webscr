@@ -1,44 +1,52 @@
-import { AI, Data, Result } from 'tateyama';
+import { AI, DB, Result } from 'tateyama';
 
-function getRefundWin(resultRefund: Data.ResultRefund, horseId: number, bet: number) {
-  return resultRefund.win.map((w) => w.horseId === horseId ? w.amount * bet : 0);
+function getRefundWin(result: DB.HR, horseId: number, bet: number) {
+  const payout = DB.HRtoPayoutWin(result);
+  return payout.map((p) => p.id === horseId ? p.pay * bet : 0);
 }
-function getRefundPlace(resultRefund: Data.ResultRefund, horseId: number, bet: number) {
-  return resultRefund.place.map((w) => w.horseId === horseId ? w.amount * bet : 0);
+function getRefundPlace(result: DB.HR, horseId: number, bet: number) {
+  const payout = DB.HRtoPayoutPlace(result);
+  return payout.map((p) => p.id === horseId ? p.pay * bet : 0);
 }
-function getRefundQuinella(resultRefund: Data.ResultRefund, horseId1: number, horseId2: number, bet: number) {
-  return resultRefund.quinella.map((w) => (w.horseId.includes(horseId1) &&  w.horseId.includes(horseId2)) ? w.amount * bet : 0);
+function getRefundQuinella(result: DB.HR, horseId1: number, horseId2: number, bet: number) {
+  const payout = DB.HRtoPayoutQuinella(result);
+  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2)) ? p.pay * bet : 0);
 }
-function getRefundQuinellaPlace(resultRefund: Data.ResultRefund, horseId1: number, horseId2: number, bet: number) {
-  return resultRefund.quinellaPlace.map((w) => (w.horseId.includes(horseId1) &&  w.horseId.includes(horseId2)) ? w.amount * bet : 0);
+function getRefundQuinellaPlace(result: DB.HR, horseId1: number, horseId2: number, bet: number) {
+  const payout = DB.HRtoPayoutQuinellaPlace(result);
+  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2)) ? p.pay * bet : 0);
 }
-function getRefundExacta(resultRefund: Data.ResultRefund, horseId1: number, horseId2: number, bet: number) {
-  return resultRefund.quinellaPlace.map((w) => (w.horseId[0] === horseId1 && w.horseId[1] === horseId2) ? w.amount * bet : 0);
+function getRefundExacta(result: DB.HR, horseId1: number, horseId2: number, bet: number) {
+  const payout = DB.HRtoPayoutExacta(result);
+  return payout.map((p) => (p.ids[0] === horseId1 && p.ids[1] === horseId2) ? p.pay * bet : 0);
 }
-function getRefundTrio(resultRefund: Data.ResultRefund, horseId1: number, horseId2: number, horseId3: number, bet: number) {
-  return resultRefund.quinellaPlace.map((w) => (w.horseId.includes(horseId1) && w.horseId.includes(horseId2) && w.horseId.includes(horseId3)) ? w.amount * bet : 0);
+function getRefundTrio(result: DB.HR, horseId1: number, horseId2: number, horseId3: number, bet: number) {
+  const payout = DB.HRtoPayoutTrio(result);
+  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2) && p.ids.includes(horseId3)) ? p.pay * bet : 0);
 }
-function getRefundTrioThru(resultRefund: Data.ResultRefund, horseId: number, horseId23: number[], bet: number) {
+function getRefundTrifecta(result: DB.HR, horseId1: number, horseId2: number, horseId3: number, bet: number) {
+  const payout = DB.HRtoPayoutTrifecta(result);
+  return payout.map((p) => (horseId1 === p.ids[0] && horseId2 === p.ids[1] && horseId3 === p.ids[2]) ? p.pay * bet : 0);
+}
+
+function getRefundTrioThru(result: DB.HR, horseId: number, horseId23: number[], bet: number) {
   return horseId23.flatMap((id2, index) => {
     return horseId23.slice(index).filter((id3) => id3 !== id2).flatMap((id3) => {
-      return getRefundTrio(resultRefund, horseId, id2, id3, bet);
+      return getRefundTrio(result, horseId, id2, id3, bet);
     });
   });
 }
-function getRefundTrifecta(resultRefund: Data.ResultRefund, horseId1: number, horseId2: number, horseId3: number, bet: number) {
-  return resultRefund.quinellaPlace.map((w) => (horseId1 === w.horseId[0] && horseId2 === w.horseId[1] && horseId3 === w.horseId[2]) ? w.amount * bet : 0);
-}
-function getRefundTrifectaFormation(resultRefund: Data.ResultRefund, horseIds1: number[], horseIds2: number[], horseIds3: number[], bet: number) {
+function getRefundTrifectaFormation(result: DB.HR, horseIds1: number[], horseIds2: number[], horseIds3: number[], bet: number) {
   return horseIds1.flatMap((id1) => {
     return horseIds2.flatMap((id2) => {
       return horseIds3.flatMap((id3) => {
-        return (id1 !== id2 && id1 !== id2 && id2 !== id3) ? getRefundTrifecta(resultRefund, id1, id2, id3, bet) : 0;
+        return (id1 !== id2 && id1 !== id2 && id2 !== id3) ? getRefundTrifecta(result, id1, id2, id3, bet) : 0;
       });
     });
   });
 }
 
-function calcWinShowA(raceResult: Data.Result, betA: number) {
+function calcWinShowA(result: DB.HR, betA: number) {
   return {
     amount: 1200 + 2400,
     descriptions: [
@@ -46,13 +54,13 @@ function calcWinShowA(raceResult: Data.Result, betA: number) {
       `複勝 ${betA} x 2400円`,
     ],
     refunds: [
-      ...getRefundWin(raceResult.refund, betA, 12),
-      ...getRefundPlace(raceResult.refund, betA, 24),
+      ...getRefundWin(result, betA, 12),
+      ...getRefundPlace(result, betA, 24),
     ],
   }
 }
 
-function calcShowABC(raceResult: Data.Result, betA: number, betB: number, betC: number) {
+function calcShowABC(result: DB.HR, betA: number, betB: number, betC: number) {
   return {
     amount: 1200 + 1200 + 1200,
     descriptions: [
@@ -61,14 +69,14 @@ function calcShowABC(raceResult: Data.Result, betA: number, betB: number, betC: 
       `複勝 ${betC} x 1200円`,
       ],
     refunds: [
-      ...getRefundPlace(raceResult.refund, betA, 12),
-      ...getRefundPlace(raceResult.refund, betB, 12),
-      ...getRefundPlace(raceResult.refund, betC, 12),
+      ...getRefundPlace(result, betA, 12),
+      ...getRefundPlace(result, betB, 12),
+      ...getRefundPlace(result, betC, 12),
     ],
   }
 }
 
-function calcQuinellaPlaceAtoBC(raceResult: Data.Result, betA: number, betB: number, betC: number) {
+function calcQuinellaPlaceAtoBC(result: DB.HR, betA: number, betB: number, betC: number) {
   return {
     amount: 1200 + 1200 + 1200,
     descriptions: [
@@ -77,14 +85,14 @@ function calcQuinellaPlaceAtoBC(raceResult: Data.Result, betA: number, betB: num
       `ワイド ${betA}-${betC} x 1200円`,
     ],
     refunds: [
-      ...getRefundQuinella(raceResult.refund, betA, betB, 12),
-      ...getRefundQuinellaPlace(raceResult.refund, betA, betB, 12),
-      ...getRefundQuinellaPlace(raceResult.refund, betA, betC, 12),
+      ...getRefundQuinella(result, betA, betB, 12),
+      ...getRefundQuinellaPlace(result, betA, betB, 12),
+      ...getRefundQuinellaPlace(result, betA, betC, 12),
     ],
   }
 }
 
-function calcQuinellaExactaAtoBC(raceResult: Data.Result, betA: number, betB: number, betC: number) {
+function calcQuinellaExactaAtoBC(result: DB.HR, betA: number, betB: number, betC: number) {
   return {
     amount: 2000 + 800 + 800,
     descriptions: [
@@ -93,14 +101,14 @@ function calcQuinellaExactaAtoBC(raceResult: Data.Result, betA: number, betB: nu
       `馬単 ${betA}-${betC} x 800円`,
     ],
     refunds: [
-      ...getRefundQuinella(raceResult.refund, betA, betB, 20),
-      ...getRefundExacta(raceResult.refund, betA, betB, 8),
-      ...getRefundExacta(raceResult.refund, betA, betC, 8),
+      ...getRefundQuinella(result, betA, betB, 20),
+      ...getRefundExacta(result, betA, betB, 8),
+      ...getRefundExacta(result, betA, betC, 8),
     ],
   }
 }
 
-function calcExactaAtoAll(raceResult: Data.Result, betA: number, betB: number, betC: number, betD: number, betX: number) {
+function calcExactaAtoAll(result: DB.HR, betA: number, betB: number, betC: number, betD: number, betX: number) {
   return {
     amount: 1200 + 1200 + 600 + 600,
     descriptions: [
@@ -110,27 +118,27 @@ function calcExactaAtoAll(raceResult: Data.Result, betA: number, betB: number, b
       `馬単 ${betA}-${betX} x 800円`,
     ],
     refunds: [
-      ...getRefundExacta(raceResult.refund, betA, betB, 8),
-      ...getRefundExacta(raceResult.refund, betA, betC, 8),
-      ...getRefundExacta(raceResult.refund, betA, betD, 8),
-      ...getRefundExacta(raceResult.refund, betA, betX, 8),
+      ...getRefundExacta(result, betA, betB, 8),
+      ...getRefundExacta(result, betA, betC, 8),
+      ...getRefundExacta(result, betA, betD, 8),
+      ...getRefundExacta(result, betA, betX, 8),
     ],
   }
 }
 
-function calcTrioAtoAll(raceResult: Data.Result, betA: number, betB: number, betC: number, betD: number, betX: number) {
+function calcTrioAtoAll(result: DB.HR, betA: number, betB: number, betC: number, betD: number, betX: number) {
   return {
     amount: 600 + 600 + 600 + 600 + 600 + 600,
     descriptions: [
       `三連複 流し ${betA}-${betB},${betC},${betD},${betX} x 600円`,
     ],
     refunds: [
-      ...getRefundTrioThru(raceResult.refund, betA, [betB, betC, betD, betX], 6),
+      ...getRefundTrioThru(result, betA, [betB, betC, betD, betX], 6),
     ],
   }
 }
 
-function calcTrioABtoAll(raceResult: Data.Result, betA: number, betB: number, betC: number, betD: number, betX: number) {
+function calcTrioABtoAll(result: DB.HR, betA: number, betB: number, betC: number, betD: number, betX: number) {
   return {
     amount: (300 + 300 + 300 + 300 + 300 + 300) * 2,
     descriptions: [
@@ -138,13 +146,13 @@ function calcTrioABtoAll(raceResult: Data.Result, betA: number, betB: number, be
       `三連複 流し ${betB}-${betA},${betC},${betD},${betX} x 300円`,
     ],
     refunds: [
-      ...getRefundTrioThru(raceResult.refund, betA, [betB, betC, betD, betX], 3),
-      ...getRefundTrioThru(raceResult.refund, betB, [betB, betC, betD, betX], 3),
+      ...getRefundTrioThru(result, betA, [betB, betC, betD, betX], 3),
+      ...getRefundTrioThru(result, betB, [betB, betC, betD, betX], 3),
     ],
   }
 }
 
-function calcTrifectaAB(raceResult: Data.Result, betA: number, betB: number, betC: number, betD: number, betX: number) {
+function calcTrifectaAB(result: DB.HR, betA: number, betB: number, betC: number, betD: number, betX: number) {
   return {
     amount: 200 * 6 + 200 * 12,
     descriptions: [
@@ -152,7 +160,7 @@ function calcTrifectaAB(raceResult: Data.Result, betA: number, betB: number, bet
     ],
     refunds: [
       ...getRefundTrifectaFormation(
-        raceResult.refund,
+        result,
         [betA, betB],
         [betA, betB, betC, betX],
         [betA, betB, betC, betD, betX],
@@ -162,7 +170,7 @@ function calcTrifectaAB(raceResult: Data.Result, betA: number, betB: number, bet
   }
 }
 
-function calcTrifectaABX(raceResult: Data.Result, betA: number, betB: number, betC: number, betD: number, betX: number) {
+function calcTrifectaABX(result: DB.HR, betA: number, betB: number, betC: number, betD: number, betX: number) {
   return {
     amount: 200 * 18,
     descriptions: [
@@ -170,7 +178,7 @@ function calcTrifectaABX(raceResult: Data.Result, betA: number, betB: number, be
     ],
     refunds: [
       ...getRefundTrifectaFormation(
-        raceResult.refund,
+        result,
         [betA, betB, betX],
         [betA, betB, betX],
         [betA, betB, betC, betD, betX],
@@ -180,14 +188,14 @@ function calcTrifectaABX(raceResult: Data.Result, betA: number, betB: number, be
   }
 }
 
-export function makeBetResult(forecast: AI.ForecastResult[], raceResult: Data.Result, betStyle: Result.BetStyle): Result.BetResult {
+export function makeBetResult(forecast: AI.ForecastResult[], raceResult: DB.HR, betStyle: Result.BetStyle): Result.BetResult {
   const betA = forecast[0].horseId;
   const betB = forecast[1].horseId;
   const betC = forecast[2].horseId;
   const betD = forecast[3].horseId;
   const betX = forecast[4].horseId;
 
-  let func: (raceResult: Data.Result, ...bet : number[]) => { 
+  let func: (result: DB.HR, ...bet : number[]) => { 
     amount: number,
     descriptions: string[],
     refunds: number[]
@@ -207,11 +215,7 @@ export function makeBetResult(forecast: AI.ForecastResult[], raceResult: Data.Re
     case Result.BetStyle.TrifectaABX: func = calcTrifectaABX; break;
   }
 
-  const {
-    amount,
-    descriptions,
-    refunds
-  } = func(raceResult, betA, betB, betC, betD, betX);
+  const { amount, descriptions, refunds } = func(raceResult, betA, betB, betC, betD, betX);
 
   const result = refunds.reduce((p, c) => p + c);
 

@@ -1,5 +1,6 @@
 export * from './types';
 export * from './models';
+export * from './helper';
 import mongoose from 'mongoose';
 
 const databaseURL = `${process.env.MONGODB_URL}`;

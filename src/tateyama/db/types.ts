@@ -1,3 +1,12 @@
+export interface JVID {
+  Year: string;
+  MonthDay: string;
+  JyoCD: string;
+  Kaiji: string;
+  Nichiji: string;
+  RaceNum: string;
+}
+
 /**
  * レース情報
  */
@@ -13,14 +22,7 @@ export interface RA {
     }
   };
 
-  jvid: {
-    Year: string;
-    MonthDay: string;
-    JyoCD: string;
-    Kaiji: string;
-    Nichiji: string;
-    RaceNum: string;
-  };
+  jvid: JVID;
 
   RaceInfo: {
     YoubiCD: string;
@@ -193,14 +195,7 @@ export interface HR {
     }
   };
 
-  jvid: {
-    Year: string;
-    MonthDay: string;
-    JyoCD: string;
-    Kaiji: string;
-    Nichiji: string;
-    RaceNum: string;
-  };
+  jvid: JVID;
 
   TorokuTosu: string;
   SyussoTosu: string;
@@ -274,14 +269,7 @@ export interface SE {
     }
   };
 
-  jvid: {
-    Year: string;
-    MonthDay: string;
-    JyoCD: string;
-    Kaiji: string;
-    Nichiji: string;
-    RaceNum: string;
-  };
+  jvid: JVID;
 
   Wakuban: string;
   Umaban: string;
