@@ -161,8 +161,9 @@ async function cycle(cycleIndex: number, docs: Data.Race[], workDir: string, ini
 export default async (options: { workDir: string, cycle: string, init: boolean }) => {
   logger.info(options);
   const cycles = Number(options.cycle) || 1;
-  let init = options.init;
+  const init = options.init;
 
+  /*
   try {
     const { docs, warning } = await DB.query('.*');
     const filteredDocs = docs
@@ -185,4 +186,5 @@ export default async (options: { workDir: string, cycle: string, init: boolean }
   } catch (err) {
     logger.error(err);
   }
+  */
 }

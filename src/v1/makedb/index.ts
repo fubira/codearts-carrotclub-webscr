@@ -5,7 +5,9 @@ import parse from 'node-html-parser';
 import { readFileSync } from 'fs';
 
 import { Scrape } from 'v1/scrape';
-import { DB, Data, Helper } from 'tateyama';
+import * as DB from 'v1/tateyama-v1/db';
+import * as Data from 'v1/tateyama-v1/data';
+import * as Helper from 'v1/tateyama-v1/helper';
 
 import logger from 'logger';
 

@@ -2,8 +2,9 @@ import { writeFileSync, readFileSync } from 'fs';
 import papa from 'papaparse';
 import logger from 'logger';
 
-import { DB, Data } from 'tateyama';
 import * as TateyamaV1 from 'v1/tateyama-v1/types';
+import * as DB from 'v1/tateyama-v1/db';
+import * as Data from 'v1/tateyama-v1/data';
 import * as Helper from 'v1/tateyama-v1/helper';
 
 /**

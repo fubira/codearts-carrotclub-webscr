@@ -1,5 +1,5 @@
 export * from './types';
-import { DB } from 'tateyama';
+import * as DB from 'v1/tateyama-v1/db/types';
 
 import pouchdb from 'pouchdb';
 import pouchdbFind from 'pouchdb-find';

@@ -3,11 +3,12 @@ import process from 'process';
 import { Command } from 'commander';
 import logger from 'logger';
 
-import makedb from './v1/makedb';
-import dbutil from './dbutil';
-import scrape from './v1/scrape';
+import dbget from './dbget';
 import learn from './learn';
 import run from './run';
+
+import makedb from './v1/makedb';
+import scrape from './v1/scrape';
 
 import v1dataset from './v1/dataset';
 import v1tensor from './v1/tensor';
@@ -56,19 +57,17 @@ program
   });
 
 program
-  .command('dbutil')
-  .description('データベースの操作ツール')
+  .command('dbget')
+  .description('データベースの内容取得ツール')
   .argument('<sub-command>', 'string to sub command')
-  .command('get')
-  .description('DBからデータを取得')
-  .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
-  .action((str) => {
+  .argument('<id_regex>', '正規表現文字列')
+  .action((subCommand, idRegex) => {
     try {
-      dbutil('get', str);
+      dbget(subCommand, idRegex);
     } catch (err) {
       logger.error(err);
     }
-  });
+  })
 
   program
   .command('learn')

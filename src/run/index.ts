@@ -7,6 +7,7 @@ import { AI, DB } from 'tateyama';
 export default async (idReg: string, forecastName: string, options: { workDir: string }) => {
   logger.info(options);
 
+  /*
   try {
     const { docs } = await DB.query(idReg);
 
@@ -27,4 +28,5 @@ export default async (idReg: string, forecastName: string, options: { workDir: s
   } catch (err) {
     logger.error(err);
   }
+  */
 }
