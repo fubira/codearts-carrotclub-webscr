@@ -72,8 +72,8 @@ program
   program
   .command('learn')
   .description('Tateyama v2 学習実行')
-  .option('-d, --work-dir <work_dir>', 'ワークディレクトリの指定', '.v2work')
   .option('-c, --cycle <cycle>', '学習サイクルの指定', "100")
+  .option('-d, --name <name>', '予想AI名', 'forecaster')
   .option('-i, --init', '学習を最初からやり直す', false)
   .action((options) => {
     try {
@@ -87,11 +87,10 @@ program
   .command('run')
   .description('Tateyama v2 予想実行')
   .argument('<id_regex>', 'レースIDにマッチする正規表現文字列')
-  .argument('<forecast>', '予想AI名')
-  .option('-d, --work-dir <work_dir>', 'ワークディレクトリの指定', '.v2work')
-  .action((idRegex, forecast, options) => {
+  .option('-d, --name <name>', '予想AI名', 'forecaster')
+  .action((idRegex, options) => {
     try {
-      run(idRegex, forecast, { ...options });
+      run(idRegex, { ...options });
     } catch (err) {
       logger.error(err);
     }

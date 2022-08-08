@@ -307,8 +307,8 @@ export interface SE {
   ZogenSa: string;
   IJyoCD: string;
 
-  NyusenJuni: string;
-  KakuteiJuni: string;
+  NyusenJyuni: string;
+  KakuteiJyuni: string;
   DochakuKubun: string;
   DochakuTosu: string;
   Time: string;

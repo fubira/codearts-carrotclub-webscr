@@ -1,11 +1,15 @@
 import { AI } from 'tateyama';
+import * as brain from 'brain.js';
+
+export interface ForecasterParams {
+  name: string;
+}
 
 export interface ForecastResult {
   horseId: number,
   horseName: string,
   odds: number,
   forecastValue: number,
-  forecastWinRate: number,
   oddsWinRate: number,
   benefitRate: number,
 }

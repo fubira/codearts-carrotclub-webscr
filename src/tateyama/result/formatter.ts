@@ -2,31 +2,32 @@ import { AI, DB, Result } from 'tateyama';
 
 function getRefundWin(result: DB.HR, horseId: number, bet: number) {
   const payout = DB.HRtoPayoutWin(result);
-  return payout.map((p) => p.id === horseId ? p.pay * bet : 0);
+  return payout.map((p) => p.id === horseId ? p.pay * bet: 0);
 }
 function getRefundPlace(result: DB.HR, horseId: number, bet: number) {
+  console.log(horseId, bet);
   const payout = DB.HRtoPayoutPlace(result);
-  return payout.map((p) => p.id === horseId ? p.pay * bet : 0);
+  return payout.map((p) => p.id === horseId ? p.pay * bet: 0);
 }
 function getRefundQuinella(result: DB.HR, horseId1: number, horseId2: number, bet: number) {
   const payout = DB.HRtoPayoutQuinella(result);
-  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2)) ? p.pay * bet : 0);
+  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2)) ? p.pay * bet: 0);
 }
 function getRefundQuinellaPlace(result: DB.HR, horseId1: number, horseId2: number, bet: number) {
   const payout = DB.HRtoPayoutQuinellaPlace(result);
-  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2)) ? p.pay * bet : 0);
+  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2)) ? p.pay * bet: 0);
 }
 function getRefundExacta(result: DB.HR, horseId1: number, horseId2: number, bet: number) {
   const payout = DB.HRtoPayoutExacta(result);
-  return payout.map((p) => (p.ids[0] === horseId1 && p.ids[1] === horseId2) ? p.pay * bet : 0);
+  return payout.map((p) => (p.ids[0] === horseId1 && p.ids[1] === horseId2) ? p.pay * bet: 0);
 }
 function getRefundTrio(result: DB.HR, horseId1: number, horseId2: number, horseId3: number, bet: number) {
   const payout = DB.HRtoPayoutTrio(result);
-  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2) && p.ids.includes(horseId3)) ? p.pay * bet : 0);
+  return payout.map((p) => (p.ids.includes(horseId1) && p.ids.includes(horseId2) && p.ids.includes(horseId3)) ? p.pay * bet: 0);
 }
 function getRefundTrifecta(result: DB.HR, horseId1: number, horseId2: number, horseId3: number, bet: number) {
   const payout = DB.HRtoPayoutTrifecta(result);
-  return payout.map((p) => (horseId1 === p.ids[0] && horseId2 === p.ids[1] && horseId3 === p.ids[2]) ? p.pay * bet : 0);
+  return payout.map((p) => (horseId1 === p.ids[0] && horseId2 === p.ids[1] && horseId3 === p.ids[2]) ? p.pay * bet: 0);
 }
 
 function getRefundTrioThru(result: DB.HR, horseId: number, horseId23: number[], bet: number) {

@@ -55,5 +55,5 @@ build/
 /*.db
 /.site
 /.train
-/.v2work
+/.ai_work
 learning.json

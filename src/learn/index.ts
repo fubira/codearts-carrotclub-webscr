@@ -11,78 +11,78 @@ async function saveForecaster(forecaster: AI.Forecaster) {
   if (!existsSync(forecasterDir)) {
     mkdirSync(forecasterDir, { recursive: true });
   }
-
-  writeFileSync(`${forecasterDir}/${forecaster}.json`, forecaster.toJSON());
+  writeFileSync(`${forecasterDir}/${forecaster.name}.json`, forecaster.toJSON());
 }
 
-async function loadForecaster(forecasterName: string): AI.Forecaster {
+async function loadForecaster(forecasterName: string): Promise<AI.Forecaster> {
   const forecasterDir = `.ai_work/forecaster/`;
 
-  if (!existsSync(forecasterDir)) {
-    return [];
-  }
-
   if (forecasterName) {
-    return AI.Forecast.fromJSON(readFileSync(forecasterName).toString());
+    return AI.Forecaster.fromJSON(readFileSync(`${forecasterDir}/${forecasterName}.json`).toString());
   } else {
     const [firstFile] = await FastGlob(`${forecasterDir}/*.json`, { onlyFiles: true });
-    return AI.Forecast.fromJSON(readFileSync(firstFile).toString());
+    return AI.Forecaster.fromJSON(readFileSync(firstFile).toString());
   }
 }
 
-async function cycle(cycleIndex: number, forecasterName: string, init: boolean) {
-  const resultLogger = new Result.Logger();
-  let forecaster: AI.Forecast;
+async function cycle(forecasterName: string, init: boolean) {
+  let forecaster: AI.Forecaster;
 
   try {
     // 保存された予想AIの読み込み
     if (!init) {
       forecaster = await loadForecaster(forecasterName);
     }
+  } catch (err) {
+    console.log(err);
+  }
 
-    const progress = new cliProgress.SingleBar({
-      format: `# Cycle-${cycleIndex + 1} [{bar}] {percentage}% | {value}/{total}`
-    });
+  if (!forecaster) {
+    forecaster = new AI.Forecaster(forecasterName);
+  }
 
-    // データベース接続
-    await DB.connect();
-
+  try {
     // ランダムにレース情報を取得する
     const docs = await DB.RAModel.aggregate([{
-      $sample: { size: 10 }
+      $match: { 'head.DataKubun': '7' }
+    },{
+      $sample: { size: 1 }
     }]) as DB.RA[];
-    progress.start(docs.length, 0);
 
-    docs.forEach(async (race, index) => {
-      const forecastResult = forecaster.forecast(race);
-      const choice = AI.getForecastResultChoiced(forecastResult);
+    const races = docs;
+    const entries = await Promise.all(
+      docs.flatMap(async (race) => await DB.SEModel.find({ 'head.DataKubun': '7', jvid: race.jvid }).exec())
+    );
 
-      // 払戻情報を取得する
-      const result = await DB.HRModel.findOne({ jvid: race.jvid }).exec();
-      resultLogger.bet(choice, result);
-
-      progress.update(index);
-    });
-
-    progress.stop();
+    forecaster.train(races, entries.flat());
   } catch (err) {
     logger.error(err);
     return;
   }
 
   try {
-    resultLogger.dump();
+    // resultLogger.dump();
     await saveForecaster(forecaster);
   } catch (err) {
     logger.error(err);
   }
 }
 
-export default async (options: { workDir: string, cycle: string, init: boolean }) => {
-  logger.info(options);
+export default async (options: { name: string, cycle: string, init: boolean }) => {
   const cycles = Number(options.cycle) || 1;
 
+  const progress = new cliProgress.SingleBar({});
+  progress.start(cycles, 0);
+
+  // データベース接続
+  await DB.connect();
+
   for(let ii = 0; ii < cycles; ii = ii + 1) {
-    await cycle(ii, options.workDir, ii === 0 && options.init);
+    await cycle(options.name, ii === 0 && options.init);
+    progress.update(ii);
   }
+
+  DB.close();
+
+  progress.stop();
 }

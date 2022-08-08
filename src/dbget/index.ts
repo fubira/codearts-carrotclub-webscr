@@ -19,6 +19,7 @@ async function dbGetResult(idReg: string) {
   const Year = Date.slice(0, 4);
   const MonthDay = Date.slice(4);
   const param = {
+    'head.DataKubun': '7',
     'jvid.Year': Year,
     'jvid.MonthDay': MonthDay,
     'jvid.JyoCD': JyoCD,

@@ -1,4 +1,11 @@
-import { AI, Data } from 'tateyama';
+import { AI, Data, DB } from 'tateyama';
+
+export const softmax = (logits: number[]) => {
+  const maxLogit = Math.max(...logits);
+  const scores = logits.map(l => Math.exp(l - maxLogit));
+  const denom = scores.reduce((a, b) => a + b, 0);
+  return scores.map(s => s / denom);
+}
 
 /**
  * オッズから勝率レートを算出する
@@ -39,25 +46,23 @@ export function getForecastResultChoiced(results: AI.ForecastResult[]) {
   ]
 }
 
-export function dumpForecastResult(race: Data.Race, results: AI.ForecastResult[]) {
+export function dumpForecastResult(race: DB.RA, entries: DB.SE[], results: AI.ForecastResult[]) {
   const mark = ['A', 'B', 'C', 'D', 'X', 'R', 'R', 'R'];
 
   console.log('==========');
-  console.log(`${race.date} ${race.course.name} ${race.raceNo} ${race.raceTitle}`);
+  console.log(`${race.jvid.Year}${race.jvid.MonthDay} }${race.jvid.RaceNum} ${race.RaceInfo.Hondai}`);
 
   results.forEach((res, index) => {
     const horseId = res.horseId.toFixed(0).padStart(2, ' ');
     const horseName = res.horseName.padEnd(12, ' ');
-    const forecastValue = res.forecastValue.toFixed(2).padStart(10, ' ');
-    const forecastWinRate = (res.forecastWinRate).toFixed(2).padStart(6, ' ');
+    const forecastValue = (res.forecastValue * 100).toFixed(2).padStart(6, ' ');
     const benefitRate = res.benefitRate.toFixed(2).padStart(6, ' ');
-    const horseEntry = race.entries.find((e) => e.horseId === res.horseId);
+    const horseEntry = entries.find((e) => Number(e.Umaban) === res.horseId);
     
-    const horseResult = race.result?.detail.find((d) => d.horseId === res.horseId);
     let resultDetailText = "";
-    if (horseResult) {
-      const horseResultOrderText = !horseResult.order ? `競争中止` : `${horseResult.order}着`;
-      const horseResultDetailText = !horseEntry.oddsRank ? "競争除外" : `${horseEntry.oddsRank}人気 ${horseResultOrderText}`
+    if (horseEntry) {
+      const horseResultOrderText = !horseEntry.KakuteiJyuni ? `競争中止` : `${horseEntry.KakuteiJyuni}着`;
+      const horseResultDetailText = !horseEntry.Ninki ? '競争除外' : `${horseEntry.Ninki}人気 ${horseResultOrderText}`
       resultDetailText = `(-> ${horseResultDetailText})`;
     }
 

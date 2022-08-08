@@ -4,6 +4,16 @@ export const getRaceID = (jvid: DB.JVID) => {
   return JSON.stringify(jvid);
 }
 
+export const isMatchJVID = (id1: DB.JVID, id2: DB.JVID) => {
+  return id1 && id2 && (
+    id1.JyoCD === id2.JyoCD &&
+    id1.MonthDay === id2.MonthDay &&
+    id1.RaceNum === id2.RaceNum &&
+    id1.Year === id2.Year
+  );
+}
+
+
 export const HRtoPayoutWin = (result: DB.HR) => {
   return result.PayTansyo.map((pt) => {
     return {
@@ -27,7 +37,7 @@ export const HRtoPayoutPlace = (result: DB.HR) => {
 export const HRtoPayoutQuinella = (result: DB.HR) => {
   return result.PayUmaren.map((pt) => {
     return {
-      ids: pt.Kumi.split(/(??)(??)/).map(v => Number(v)),
+      ids: pt.Kumi.split(/(\d\d)(\d\d)/).map(v => Number(v)),
       order: Number(pt.Ninki),
       pay: Number(pt.Pay)
     }
@@ -37,7 +47,7 @@ export const HRtoPayoutQuinella = (result: DB.HR) => {
 export const HRtoPayoutQuinellaPlace = (result: DB.HR) => {
   return result.PayWide.map((pt) => {
     return {
-      ids: pt.Kumi.split(/(??)(??)/).map(v => Number(v)),
+      ids: pt.Kumi.split(/(\d\d)(\d\d)/).map(v => Number(v)),
       order: Number(pt.Ninki),
       pay: Number(pt.Pay)
     }
@@ -47,7 +57,7 @@ export const HRtoPayoutQuinellaPlace = (result: DB.HR) => {
 export const HRtoPayoutExacta = (result: DB.HR) => {
   return result.PayUmatan.map((pt) => {
     return {
-      ids: pt.Kumi.split(/(??)(??)/).map(v => Number(v)),
+      ids: pt.Kumi.split(/(\d\d)(\d\d)/).map(v => Number(v)),
       order: Number(pt.Ninki),
       pay: Number(pt.Pay)
     }
@@ -57,7 +67,7 @@ export const HRtoPayoutExacta = (result: DB.HR) => {
 export const HRtoPayoutTrio = (result: DB.HR) => {
   return result.PaySanrenpuku.map((pt) => {
     return {
-      ids: pt.Kumi.split(/(??)(??)(??)/).map(v => Number(v)),
+      ids: pt.Kumi.split(/(\d\d)(\d\d)(\d\d)/).map(v => Number(v)),
       order: Number(pt.Ninki),
       pay: Number(pt.Pay)
     }
@@ -67,7 +77,7 @@ export const HRtoPayoutTrio = (result: DB.HR) => {
 export const HRtoPayoutTrifecta = (result: DB.HR) => {
   return result.PaySanrentan.map((pt) => {
     return {
-      ids: pt.Kumi.split(/(??)(??)(??)/).map(v => Number(v)),
+      ids: pt.Kumi.split(/(\d\d)(\d\d)(\d\d)/).map(v => Number(v)),
       order: Number(pt.Ninki),
       pay: Number(pt.Pay)
     }

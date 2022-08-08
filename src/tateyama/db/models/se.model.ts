@@ -59,8 +59,8 @@ const schema = new mongoose.Schema<DB.SE>(
     ZogenSa: String,
     IJyoCD: String,
   
-    NyusenJuni: String,
-    KakuteiJuni: String,
+    NyusenJyuni: String,
+    KakuteiJyuni: String,
     DochakuKubun: String,
     DochakuTosu: String,
     Time: String,

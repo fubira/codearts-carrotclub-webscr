@@ -17,7 +17,7 @@ export class Logger {
 
   public bet(forecastResult: AI.ForecastResult[], raceResult: DB.HR) {
     this.logs.push({
-      raceId: DB.getRaceID(raceResult.jvid),
+      raceId: DB.getRaceID(raceResult?.jvid),
       bet: [
         Formatter.makeBetResult(forecastResult, raceResult, Result.BetStyle.WinShowA),
         Formatter.makeBetResult(forecastResult, raceResult, Result.BetStyle.QuinellaPlaceABC),
@@ -47,8 +47,8 @@ export class Logger {
       const hitRace = logMap.filter((log) => log.result > 0).length;
       const betRace = logMap.filter((log) => log.amount > 0).length;
 
-      const totalResult = logMap.map((lm) => lm.result).reduce((p, c) => p + c);
-      const totalAmount = logMap.map((lm) => lm.amount).reduce((p, c) => p + c);
+      const totalResult = logMap.map((lm) => lm.result)?.reduce((p, c) => p + c, 0);
+      const totalAmount = logMap.map((lm) => lm.amount)?.reduce((p, c) => p + c, 0);
 
       stats[betStyle] = {
         result: totalResult,
@@ -68,6 +68,7 @@ export class Logger {
 
     const topKeys = Object.keys(logStats)
       .sort((a, b) => logStats[b].hitRate - logStats[a].hitRate)
+      .filter((a) => logStats[a].amount > 0)
       .slice(0, 2);
 
     topKeys.forEach((key) => {
