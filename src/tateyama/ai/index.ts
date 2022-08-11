@@ -46,8 +46,8 @@ export class Forecaster {
 
       const data = entries.map((entry) => {
         const oddsWinRate = Number(entry.Odds) ? (1 / (Number(entry.Odds) / 10)) : 0;
-        const handicap = Number(entry.Futan) ? (Number(entry.Futan) / 10) - 48 : 0;
-        const heavyDiff = (Number(entry.ZogenSa) ? Number(entry.ZogenSa) : 0) * (entry.ZogenFugo === "-" ? -1 : 1);
+        const handicap = Number(entry.Futan) ? ((Number(entry.Futan) / 10) - 48) / 65: 0;
+        const heavyDiff = (Number(entry.ZogenSa) ? (Number(entry.ZogenSa)) / 50 : 0) * (entry.ZogenFugo === "-" ? -1 : 1);
         const result3 = Number(entry.KakuteiJyuni) <= 1 ? 1.0 : 0.0;
         
         return {

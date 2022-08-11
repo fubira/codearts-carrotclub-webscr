@@ -44,7 +44,12 @@ async function cycle(forecasterName: string, init: boolean) {
   try {
     // ランダムにレース情報を取得する
     const docs = await DB.RAModel.aggregate([{
-      $match: { 'head.DataKubun': '7' }
+      $match: {
+        $and: [
+          { 'head.DataKubun': '7', },           // 学習には結果のある情報が必要('7'=月曜配信)
+          { 'jvid.Year': { $lte: '2021' } },     // 学習用として2021年以前のデータを使用する
+        ]
+      }
     },{
       $sample: { size: 1 }
     }]) as DB.RA[];
