@@ -56,4 +56,5 @@ build/
 /.site
 /.train
 /.ai_work
+/.csv
 learning.json
