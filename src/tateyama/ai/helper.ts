@@ -1,4 +1,4 @@
-import { AI, Data, DB } from 'tateyama';
+import { AI, JVCsv } from 'tateyama';
 
 export const softmax = (logits: number[]) => {
   const maxLogit = Math.max(...logits);
@@ -46,11 +46,11 @@ export function getForecastResultChoiced(results: AI.ForecastResult[]) {
   ]
 }
 
-export function dumpForecastResult(race: DB.RA, entries: DB.SE[], results: AI.ForecastResult[]) {
+export function dumpForecastResult(race: JVCsv.RA, entries: JVCsv.SE[], results: AI.ForecastResult[]) {
   const mark = ['A', 'B', 'C', 'D', 'X', 'R', 'R', 'R'];
 
   console.log('==========');
-  console.log(`${race.jvid.Year}${race.jvid.MonthDay} }${race.jvid.RaceNum} ${race.RaceInfo.Hondai}`);
+  console.log(`${race.Year}${race.MonthDay} }${race.RaceNum} ${race.Hondai}`);
 
   results.forEach((res, index) => {
     const horseId = res.horseId.toFixed(0).padStart(2, ' ');

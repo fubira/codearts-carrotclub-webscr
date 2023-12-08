@@ -2,7 +2,7 @@ import logger from 'logger';
 import FastGlob from 'fast-glob';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 
-import { Result, DB, AI } from 'tateyama';
+import { Result, AI, JVCsv } from 'tateyama';
 
 async function saveForecaster(forecaster: AI.Forecaster) {
   const forecasterDir = `.ai_work/forecaster/`;

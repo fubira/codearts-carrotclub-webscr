@@ -3,7 +3,7 @@ import FastGlob from 'fast-glob';
 import cliProgress from 'cli-progress';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 
-import { Result, DB, AI } from 'tateyama';
+import { AI, JVCsv } from 'tateyama';
 
 async function saveForecaster(forecaster: AI.Forecaster) {
   const forecasterDir = `.ai_work/forecaster/`;
@@ -42,24 +42,14 @@ async function cycle(forecasterName: string, init: boolean) {
   }
 
   try {
-    // ランダムにレース情報を取得する
-    const docs = await DB.RAModel.aggregate([{
-      $match: {
-        $and: [
-          { 'head.DataKubun': '7', },           // 学習には結果のある情報が必要('7'=月曜配信)
-          { 'jvid.Year': { $lte: '2021' } },     // 学習用として2021年以前のデータを使用する
-        ]
-      }
-    },{
-      $sample: { size: 1 }
-    }]) as DB.RA[];
-
+    /*
     const races = docs;
     const entries = await Promise.all(
       docs.flatMap(async (race) => await DB.SEModel.find({ 'head.DataKubun': '7', jvid: race.jvid }).exec())
     );
 
     forecaster.train(races, entries.flat());
+    */
   } catch (err) {
     logger.error(err);
     return;
@@ -79,15 +69,13 @@ export default async (options: { name: string, cycle: string, init: boolean }) =
   const progress = new cliProgress.SingleBar({});
   progress.start(cycles, 0);
 
-  // データベース接続
-  await DB.connect();
+  const hc = JVCsv.loadCsvHC();
+  console.log(hc.length);
 
   for(let ii = 0; ii < cycles; ii = ii + 1) {
     await cycle(options.name, ii === 0 && options.init);
     progress.update(ii);
   }
-
-  DB.close();
 
   progress.stop();
 }

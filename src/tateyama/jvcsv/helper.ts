@@ -1,10 +1,10 @@
-import { DB } from 'tateyama';
+import { JVID } from './types';
 
-export const getRaceID = (jvid: DB.JVID) => {
+export const getRaceID = (jvid: JVID) => {
   return JSON.stringify(jvid);
 }
 
-export const isMatchJVID = (id1: DB.JVID, id2: DB.JVID) => {
+export const isMatchJVID = (id1: JVID, id2: JVID) => {
   return id1 && id2 && (
     id1.JyoCD === id2.JyoCD &&
     id1.MonthDay === id2.MonthDay &&
@@ -49,6 +49,39 @@ export const HRtoPayoutQuinellaPlace = (result: DB.HR) => {
     return {
       ids: pt.Kumi.split(/(\d\d)(\d\d)/).map(v => Number(v)),
       order: Number(pt.Ninki),
+      pay: Number(pt.Pay)
+    }
+  });
+}
+
+export const HRtoPayoutExacta = (result: DB.HR) => {
+  return result.PayUmatan.map((pt) => {
+    return {
+      ids: pt.Kumi.split(/(\d\d)(\d\d)/).map(v => Number(v)),
+      order: Number(pt.Ninki),
+      pay: Number(pt.Pay)
+    }
+  });
+}
+
+export const HRtoPayoutTrio = (result: DB.HR) => {
+  return result.PaySanrenpuku.map((pt) => {
+    return {
+      ids: pt.Kumi.split(/(\d\d)(\d\d)(\d\d)/).map(v => Number(v)),
+      order: Number(pt.Ninki),
+      pay: Number(pt.Pay)
+    }
+  });
+}
+
+export const HRtoPayoutTrifecta = (result: DB.HR) => {
+  return result.PaySanrentan.map((pt) => {
+    return {
+      ids: pt.Kumi.split(/(\d\d)(\d\d)(\d\d)/).map(v => Number(v)),
+      order: Number(pt.Ninki),
+      pay: Number(pt.Pay)
+    }
+  });
       pay: Number(pt.Pay)
     }
   });

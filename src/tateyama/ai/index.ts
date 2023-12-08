@@ -4,13 +4,12 @@ export * from './state-factor';
 export * from './value-factor';
 
 import { generateSlug } from 'random-word-slugs';
-import { AI, Data, DB } from 'tateyama';
+import * as Tateyama from 'tateyama';
 import * as brain from 'brain.js';
-
 
 export class Forecaster {
   private networks: { [key: string]: brain.NeuralNetwork<any, any> } = {};
-  private params: AI.ForecasterParams;
+  private params: Tateyama.AI.ForecasterParams;
 
   constructor (name?: string) {
     this.params = {
@@ -38,11 +37,11 @@ export class Forecaster {
    * 
    * @param race 
    */
-   public train(races: DB.RA[], entriesAll: DB.SE[]) {
+   public train(races: Tateyama.JVCsv.RA[], entriesAll: Tateyama.JVCsv.SE[]) {
     const network = this.getNeuralNetwork('odds');
 
     races.forEach((race) => {
-      const entries = entriesAll.filter((entry) => DB.isMatchJVID(entry.jvid, race.jvid));
+      const entries = entriesAll.filter((entry) => Tateyama.JVCsv.isMatchJVID(entry, race));
 
       const data = entries.map((entry) => {
         const oddsWinRate = Number(entry.Odds) ? (1 / (Number(entry.Odds) / 10)) : 0;
@@ -74,7 +73,7 @@ export class Forecaster {
    * 
    * @param race 
    */
-  public run(raceEntries: DB.SE[]): AI.ForecastResult[] {
+  public run(raceEntries: Tateyama.JVCsv.SE[]): Tateyama.AI.ForecastResult[] {
     const network = this.getNeuralNetwork('odds');
 
 
@@ -94,7 +93,7 @@ export class Forecaster {
 
     console.log({ data });
 
-    return raceEntries.map((entry: DB.SE, index: number) => {
+    return raceEntries.map((entry: Tateyama.JVCsv.SE, index: number) => {
       const value = data[index].result3;
       const odds = Number(entry?.Odds) / 10;
       const oddsWinRate = 1 / odds;

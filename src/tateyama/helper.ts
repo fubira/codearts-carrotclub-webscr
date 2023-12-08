@@ -32,8 +32,7 @@
 /**
  * オッズから勝率レートを算出する
  * 
- * 
- *   100 - ((秒数 / 距離) * 1000)
+ *   1 / (オッズ || 1)
  *
  * @param value 
  * @returns 
@@ -41,4 +40,3 @@
 export const CalcWinningRate = (value: number) => {
   return 1 / (value || 1);
 }
-
